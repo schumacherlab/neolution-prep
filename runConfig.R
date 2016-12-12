@@ -1,15 +1,15 @@
-# set root directory
-# rootDirectory = '/home/NFS/users/l.fanchi/projects/opacin'
-
+## set runtime configuration
 runOptions = list(general = c(),
-									varcontext = c(),
-									neolution = c(),
-									snpeff = c())
+                  varcontext = c(),
+                  neolution = c(),
+                  snpeff = c())
 
-# set general options
-runOptions$general$numberOfWorkers = 3
+# set number of concurrent predictions
+
 
 # set varcontext options
+runOptions$varcontext$numberOfWorkers = 10
+
 runOptions$varcontext$fieldSeparator = '"\t"';
 runOptions$varcontext$canonicalOnly = FALSE;
 runOptions$varcontext$peptideContext = FALSE;
@@ -21,6 +21,8 @@ runOptions$varcontext$perlLibs = paste('/home/NFS/users/l.fanchi/perl5/lib/perl5
 																			 '/home/NFS/users/l.fanchi/libs/ensembl/modules','/home/NFS/users/l.fanchi/libs/ensembl-variation/modules', sep = ':')
 
 # set neolution options
+runOptions$neolution$numberOfWorkers = 3 # number of prediction thread (each thread spawns 16 children during self-sim checking)
+
 runOptions$neolution$rankCutoff = 3
 runOptions$neolution$processingCutoff = 0.5
 runOptions$neolution$xmer = c(9:11)
