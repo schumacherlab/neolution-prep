@@ -1,7 +1,7 @@
 ## Script prepares files for neolution pipeline
 # make sure to edit runConfig before running this script
 
-rootDirectory = dirname(sys.frame(1)$ofile)
+rootDirectory = getwd()
 setwd(rootDirectory)
 
 source('./helperFunctions.R')
