@@ -112,7 +112,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 														 nm = list.files(path = varcontext_path,
 														 								pattern = 'varcontext\\.tsv'))
 
-	dir.create(file.path(rootDirectory, '3_neolution_input'),
+	dir.create(file.path(rootDirectory, '3_neolution'),
 						 showWarnings = FALSE)
 
 	if (file.exists(sample_info_path) & file.exists(rna_path)) {
@@ -171,7 +171,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 										 										 names(prediction_input)[y], ' - ',
 										 										 round(x = length(which(!is.na(x[[expression_unit]])))/ nrow(x) * 100,
 										 										 			digits = 1), '%', '\n',
-										 										 file = file.path(rootDirectory, '3_neolution_input', 'rna_expression_coverage_info.log'),
+										 										 file = file.path(rootDirectory, '3_neolution', 'rna_expression_coverage_info.log'),
 										 										 append = TRUE),
 										 prediction_input,
 										 seq(1, length(prediction_input))))
@@ -191,7 +191,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 	invisible(mapply(FUN =
 									 	function(x, y) {
 									 		write.table(x = x,
-									 								file = file.path(rootDirectory, '3_neolution_input', paste0(names(prediction_input)[y], '_rna.tsv')),
+									 								file = file.path(rootDirectory, '3_neolution', paste0(names(prediction_input)[y], '_rna.tsv')),
 									 								sep = '\t',
 									 								row.names = F)
 									 	},
@@ -213,7 +213,7 @@ mergeByEnsemblId = function(variant_table, expression_table, expression_unit = '
 	}
 }
 
-findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(rootDirectory, '3_neolution_input'),
+findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(rootDirectory, '3_neolution'),
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data/bam'),
 																							 sample_info_path = file.path(rootDirectory, 'sample_info.tsv')) {
 	if (!file.exists(rna_path)) {
@@ -366,7 +366,7 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 	invisible(mapply(FUN =
 									 	function(x, y) {
 									 		write.table(x = x,
-									 								file = file.path(rootDirectory, '3_neolution_input', names(input_data)[y]),
+									 								file = file.path(rootDirectory, '3_neolution', names(input_data)[y]),
 									 								sep = '\t',
 									 								row.names = F)
 									 	},

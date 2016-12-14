@@ -8,7 +8,7 @@ source('./runConfig.R')
 registerDoMC(runOptions$neolution$numberOfWorkers)
 
 # inventorize input files
-contextLists = list.files(path = file.path(rootDirectory, "3_neolution_input"),
+contextLists = list.files(path = file.path(rootDirectory, "3_neolution"),
 													pattern = "varcontext_rna.tsv$",
 													full.names = TRUE)
 
