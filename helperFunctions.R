@@ -217,7 +217,7 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data/bam'),
 																							 sample_info_path = file.path(rootDirectory, 'sample_info.tsv')) {
 	if (!file.exists(rna_path)) {
-		break
+		stop('Please put RNAseq BAM files in "./1b_rnaseq_data/bam" subdirectory')
 	}
 
 	# parse neolution input data
@@ -341,15 +341,20 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 																x$rna_alt_expression = sapply(seq(1, nrow(x)),
 																															function(y){
 																																if (is.na(x$rna_ref_read_count[y]) | is.na(x$rna_alt_read_count[y]) | is.na(x$rna_total_read_count[y])) return(NA)
-																																if (x$rna_ref_read_count[y] >= median(x$rna_ref_read_count, na.rm = T)
-																																		| x$rna_total_read_count[y] >= median(x$rna_total_read_count, na.rm = T)
-																																		)
+																																if (# x$rna_ref_read_count[y] >= median(x$rna_ref_read_count, na.rm = T) |
+																																	# x$rna_total_read_count[y] >= median(x$rna_total_read_count, na.rm = T)
+																																	x$rna_total_read_count[y] >= summary(unique(x = x,
+																																																							by = c('chromosome', 'start_position'))$rna_total_read_count,
+																																																			 na.rm = T)[["1st Qu."]]
+																																)
 																																{
 																																	if (x$rna_alt_read_count[y] < 1) {
 																																		return(FALSE)
 																																	} else {
 																																		return(TRUE)
 																																	}
+																																} else {
+																																	return(NA)
 																																}
 																															},
 																															USE.NAMES = F)
