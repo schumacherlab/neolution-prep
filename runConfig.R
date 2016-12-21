@@ -4,9 +4,6 @@ runOptions = list(general = c(),
                   neolution = c(),
                   snpeff = c())
 
-# set number of concurrent predictions
-
-
 # set varcontext options
 runOptions$varcontext$numberOfWorkers = 10
 
@@ -21,7 +18,7 @@ runOptions$varcontext$perlLibs = paste('/home/NFS/users/l.fanchi/perl5/lib/perl5
 																			 '/home/NFS/users/l.fanchi/libs/ensembl/modules','/home/NFS/users/l.fanchi/libs/ensembl-variation/modules', sep = ':')
 
 # set neolution options
-runOptions$neolution$numberOfWorkers = 3 # number of prediction thread (each thread spawns 16 children during self-sim checking)
+runOptions$neolution$numberOfWorkers = 3 # number of threads for predictions (each thread spawns 16 children during self-sim checking)
 
 runOptions$neolution$rankCutoff = 3
 runOptions$neolution$processingCutoff = 0.5
