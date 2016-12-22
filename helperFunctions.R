@@ -127,7 +127,12 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 		}
 
 		rnaseq_data = lapply(rnaseq_files,
-												 fread)
+												 function(x) {
+												 	data = fread(x,
+												 							 colClasses = list(character = c(expression_unit)))
+												 	data[[expression_unit]] = as.numeric(data[[expression_unit]])
+												 })
+
 		rnaseq_data = setNames(object = rnaseq_data,
 													 nm = list.files(path = rna_path,
 													 								pattern = rna_file_suffix))
