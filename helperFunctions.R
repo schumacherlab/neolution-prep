@@ -41,7 +41,7 @@ performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_v
 extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
 	extractFields = paste("export SHELL=/bin/bash;",
 												"find", vcf_path, "-name \'*.vcf\' -print0",
-												"| sed s/\\.vcf//g",
+												"| sed s/\\\\.vcf//g",
 												"| xargs -0 -I % echo java -jar -Xmx2G", file.path(runOptions$snpeff$path, "SnpSift.jar"), "extractFields -s \\\",\\\" -e \\\".\\\" %.vcf", paste(vcf_fields, collapse = ' '),
 												"\\> %.tsv",
 												"| cat | parallel -j8")
