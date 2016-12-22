@@ -106,7 +106,8 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 	varcontext_data = lapply(list.files(path = varcontext_path,
 																			pattern = 'varcontext\\.tsv',
 																			full.names = TRUE),
-													 fread)
+													 fread,
+													 colClasses = list(character = c('chromosome', 'nmd_remark')))
 	varcontext_data = setNames(object = varcontext_data,
 														 nm = list.files(path = varcontext_path,
 														 								pattern = 'varcontext\\.tsv'))
@@ -224,7 +225,7 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 																 pattern = '\\.tsv',
 																 full.names = TRUE),
 											fread,
-											colClasses = c(chromosome = 'character'))
+											colClasses = list(character = c('chromosome', 'nmd_remark')))
 	input_data = setNames(object = input_data,
 												nm = list.files(path = neolution_input_path,
 																				pattern = '\\.tsv'))
@@ -235,7 +236,6 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 	} else {
 		stop('Sample info file missing, please provide path in argument to findRnaReadLevelEvidenceForVariants')
 	}
-
 
 	# make list of all unique variants found in varcontext (mapping to an exon)
 	snv_positions = lapply(input_data,
