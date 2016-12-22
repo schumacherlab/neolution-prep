@@ -1,7 +1,8 @@
 ## Script prepares files for neolution pipeline
 # make sure to edit runConfig before running this script
 
-rootDirectory = getwd()
+# rootDirectory = path.expand(getwd())
+rootDirectory = path.expand('~/projects/mypetproject')
 setwd(rootDirectory)
 
 source('./helperFunctions.R')
