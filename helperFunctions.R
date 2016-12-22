@@ -1,11 +1,10 @@
 # load required packages
-suppressPackageStartupMessages(library(data.table))
-suppressPackageStartupMessages(library(naturalsort))
-suppressPackageStartupMessages(library(parallel))
-suppressPackageStartupMessages(library(stringr))
-suppressPackageStartupMessages(library(foreach))
-suppressPackageStartupMessages(library(tidyr))
-suppressPackageStartupMessages(library(doMC))
+if (!require("pacman")) install.packages("pacman")
+
+required_packages = c('data.table', 'gtools', 'utils', 'optparse', 'RMySQL', 'compiler', 'naturalsort', 'parallel', 'doMC', 'stringr', 'tidyr', 'foreach', 'Rmpfr')
+
+library(pacman)
+pacman::p_load(char = required_packages)
 
 # helper functions
 performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_variants'), vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
