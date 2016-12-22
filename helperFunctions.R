@@ -131,6 +131,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 												 	data = fread(x,
 												 							 colClasses = list(character = c(expression_unit)))
 												 	data[[expression_unit]] = as.numeric(data[[expression_unit]])
+												 	return(data)
 												 })
 
 		rnaseq_data = setNames(object = rnaseq_data,
