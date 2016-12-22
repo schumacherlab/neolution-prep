@@ -1,10 +1,10 @@
 ### Script for preparing input for neolution pipeline
 
-1. Make project folder and navigate to it in the Terminal
-2. Do 'git clone http://gitlab.nki.nl/l.fanchi/neolution-prep.git .' (the dot matters)
-3. In the project folder, create directory '1a\_variants' and copy VCF files to it
+1. Make project directory and navigate to it in the Terminal
+2. Do 'git clone http://gitlab.nki.nl/l.fanchi/neolution-prep.git .' (the dot matters) **NOTE: directory must be EMPTY**
+3. In the project directory, create sub-directories '1a\_variants' and 'vcf' and copy VCF file(s) to it
 4. Optional: Create directory '1b\_rnaseq\_data' in project folder
-	* create sub-directory 'bam' and copy BAM and BAI files to it
+	* create sub-directory 'bam' and copy BAM and BAI file(s) to it
 	* create sub-directory 'processed' and copy expression level data to it (e.g. cufflinks output)
 5. Create a TSV file with sample information. See below for format & required info
 
