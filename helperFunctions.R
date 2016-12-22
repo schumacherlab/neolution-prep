@@ -7,13 +7,12 @@ library(pacman)
 pacman::p_load(char = required_packages)
 
 # helper functions
-performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_variants'), vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
+performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
 	registerDoMC(runOptions$varcontext$numberOfWorkers)
 
 	# extract relevant fields from VCFs
 	message('Step 1: Extracting "', paste(vcf_fields, collapse = ' '), '" fields from VCF')
 
-	dir.create(file.path(rootDirectory, '1a_variants', 'vcf'), showWarnings = F)
 	dir.create(file.path(rootDirectory, '1a_variants', 'extr_fields'), showWarnings = F)
 
 	extractFieldsFromVCF(vcf_path = vcf_path,
@@ -36,8 +35,7 @@ performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_v
 	generateVarcontext(input_list = variantLists)
 
 	# move files
-	system(command = paste('cd', vcf_path, ';', 'mv -f *.vcf vcf'))
-	system(command = paste('cd', vcf_path, ';', 'mv -f *.tsv extr_fields'))
+	system(command = paste('cd', vcf_path, ';', 'mv -f *.tsv ../extr_fields'))
 }
 
 extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
