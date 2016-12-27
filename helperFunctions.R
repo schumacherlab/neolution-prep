@@ -265,6 +265,7 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 									 												col.names = FALSE,
 									 												row.names = FALSE)))
 
+	# make overview of sample input files
 	sample_combinations = data.table(variants = sapply(sample_info$dna_data_prefix, function(x) grep(pattern = x,
 																																																x = list.files(path = file.path(rootDirectory, '1a_variants', 'poslist'),
 																																																							 pattern = '_poslist\\.tsv',
