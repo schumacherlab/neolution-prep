@@ -11,8 +11,8 @@ Example data:
 
 |  patient_id  |     dna\_data\_prefix     |      rna\_data\_prefix       |  hla\_a\_1  |  hla\_a\_2  |  hla\_b\_1  |  hla\_b\_2  |  hla\_c\_1  |  hla\_c\_2  |
 |:------------:|:-------------------------:|:----------------------------:|:---------:|:---------:|:---------:|:---------:|:---------:|:---------:|
-|  ID #1       | 4152\_1\_CF8585\_GATAGACA |  4153\_1\_CF8597\_TTAGGCA\  |  A0301   |  A0101   |  B0801   |  B1601   |    NA     |    NA     |
-|  ID #2       | 4152\_2\_CF8714\_GCCACATA |  4153\_2\_CF8716\_ACTTGAA\  |  A0201   |  A0901   |  B3603   |  B5201   |    NA     |    NA     |
+|  ID #1       | 4152\_1\_CF8585\_GATAGACA |  4153\_1\_CF8597\_TTAGGCA  |  A0301   |  A0101   |  B0801   |  B1601   |    NA     |    NA     |
+|  ID #2       | 4152\_2\_CF8714\_GCCACATA |  4153\_2\_CF8716\_ACTTGAA  |  A0201   |  A0901   |  B3603   |  B5201   |    NA     |    NA     |
 
 * The '_prefix' columns should contain the (unique) beginnings of the dna and rna input filenames
 * Don't use special characters in HLA allele names (no asterix '*' or colon ':')  
