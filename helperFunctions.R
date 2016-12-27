@@ -209,7 +209,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 	invisible(mapply(FUN =
 									 	function(x, y) {
 									 		write.table(x = x,
-									 								file = file.path(rootDirectory, '3_neolution', paste0(names(prediction_input)[y], '_rna.tsv')),
+									 								file = file.path(rootDirectory, '3_neolution', paste0(names(prediction_input)[y], '.tsv')),
 									 								sep = '\t',
 									 								row.names = F)
 									 	},
@@ -240,13 +240,13 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 
 	# parse neolution input data
 	input_data = lapply(list.files(path = neolution_input_path,
-																 pattern = '\\.tsv',
+																 pattern = 'varcontext\\.tsv',
 																 full.names = TRUE),
 											fread,
 											colClasses = list(character = c('chromosome', 'nmd_remark')))
 	input_data = setNames(object = input_data,
 												nm = list.files(path = neolution_input_path,
-																				pattern = '\\.tsv'))
+																				pattern = 'varcontext\\.tsv'))
 
 	# load sample info
 	if (file.exists(sample_info_path)) {
