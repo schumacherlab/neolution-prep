@@ -172,13 +172,23 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 
 		rna_coverage_summary = data.table(sample = names(prediction_input),
 																			percent_ensg_coverage = sapply(prediction_input, function(x) round(x = length(which(!is.na(x[[expression_unit]]))) / nrow(x) * 100,
-																																																				 digits = 1)),
-																			percent_no_expression = sapply(prediction_input, function(x) round(x = length(which(x[[expression_unit]] == 0)) / nrow(x) * 100,
 																																																				 digits = 1))
 		)
 
+		rna_expression_summary = data.table(sample = names(prediction_input),
+																				percent_no_expression = sapply(rnaseq_data, function(x) round(x = length(which(x[[expression_unit]] == 0)) / nrow(x) * 100,
+																																																			digits = 1))
+		)
+
+		write.table(x = rna_expression_summary,
+								file = file.path(rootDirectory, '1b_rnaseq_data', 'rna_expression_info.tsv'),
+								sep = '\t',
+								row.names = FALSE,
+								quote = FALSE,
+								append = FALSE)
+
 		write.table(x = rna_coverage_summary,
-								file = file.path(rootDirectory, '3_neolution', 'rna_expression_coverage_info.tsv'),
+								file = file.path(rootDirectory, '3_neolution', 'rna_coverage_info.tsv'),
 								sep = '\t',
 								row.names = FALSE,
 								quote = FALSE,
