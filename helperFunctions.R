@@ -384,7 +384,7 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 																															function(y){
 																																if (is.na(x$rna_ref_read_count[y]) | is.na(x$rna_alt_read_count[y]) | is.na(x$rna_total_read_count[y])) return(NA)
 																																if (x$rna_ref_read_count[y] >= 5
-																																		| x$rna_alt_read_count >= 5
+																																		| x$rna_alt_read_count[y] >= 5
 																																	# x$rna_total_read_count[y] >= 5 &
 																																	# x$rna_total_read_count[y] >= summary(unique(x = x,
 																																	#																							by = c('chromosome', 'start_position'))$rna_total_read_count,
