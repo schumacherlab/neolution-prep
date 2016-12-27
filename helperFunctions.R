@@ -280,33 +280,34 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 																	 												USE.NAMES = FALSE)
 	)
 
+	# perform pileups on variant locations
 	invisible(sapply(seq(1, nrow(sample_combinations)),
 									 function(x) {
-									 	if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('[.][^.]*$', '', basename(sample_combinations$rna_bam_file[x])), '_mpil.tsv')))) {
-									 		performSamtoolsPileup(input_file = sample_combinations$variants[x], rna_file = sample_combinations$rna_bam_file[x])
+									 	if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('[.][^.]*$', '', basename(sample_combinations$rna_bam_file[x])), '_mpil_loc.tsv')))) {
+									 		performSamtoolsPileup(locations_file = sample_combinations$variants[x], bam_file = sample_combinations$rna_bam_file[x])
 									 	}})
 						)
 
-	pileup_data = lapply(list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-																	pattern = '_mpil.tsv',
-																	full.names = TRUE),
-											 fread,
-											 colClasses = c(V1 = 'character'),
-											 col.names = c('chromosome', 'start_position', 'ref_base', 'number_of_reads', 'rna_read_bases', 'base_quality'))
+	pileup_loc_data = lapply(list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
+																			pattern = '_mpil_loc.tsv',
+																			full.names = TRUE),
+													 fread,
+													 colClasses = c(V1 = 'character'),
+													 col.names = c('chromosome', 'start_position', 'ref_base', 'number_of_reads', 'rna_read_bases', 'base_quality'))
 
-	pileup_data = setNames(object = pileup_data, nm = list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-																															 pattern = '_mpil.tsv',
-																															 full.names = FALSE))
+	pileup_loc_data = setNames(object = pileup_loc_data, nm = list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
+																																			 pattern = '_mpil_loc.tsv',
+																																			 full.names = FALSE))
 
 	input_pileup_merge = lapply(seq(1, length(input_data)),
 															function(index_input_data) {
 																index_prefix_dna = which(sapply(sample_info$dna_data_prefix, function(y) grepl(pattern = y, x = names(input_data)[index_input_data], fixed = T), USE.NAMES = F))
 																if (index_prefix_dna > 0) {
-																	index_pileup_data = which(grepl(pattern = sample_info$rna_data_prefix[index_prefix_dna], x = names(pileup_data), fixed = T))
+																	index_pileup_data = which(grepl(pattern = sample_info$rna_data_prefix[index_prefix_dna], x = names(pileup_loc_data), fixed = T))
 																}
 																if (index_pileup_data > 0) {
 																	merged_data = merge(x = input_data[[index_input_data]],
-																											y = pileup_data[[index_pileup_data]][, .(chromosome, start_position, rna_read_bases)],
+																											y = pileup_loc_data[[index_pileup_data]][, .(chromosome, start_position, rna_read_bases)],
 																											by = c('chromosome', 'start_position'),
 																											all.x = TRUE)
 																	setorder(merged_data, variant_id, chromosome, start_position)
@@ -386,13 +387,20 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 									 seq(1, length(input_pileup_merge))))
 }
 
-performSamtoolsPileup = function(input_file, rna_file) {
+performSamtoolsPileup = function(locations_file = NULL, bam_file) {
 	dir.create(file.path(rootDirectory, '1b_rnaseq_data', 'pileups'), showWarnings = FALSE)
 
-	system(command = paste('samtools mpileup -l', input_file, rna_file, '>',
-												 file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('\\.[^.]*$', '', basename(rna_file)), '_mpil.tsv'))),
-					intern = FALSE,
-					wait = TRUE)
+	system(command = paste('samtools mpileup',
+												 ifelse(test = is.null(locations_file),
+												 			 yes = '',
+												 			 no = paste('-l', locations_file)),
+												 bam_file, '>',
+												 file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('\\.[^.]*$', '', basename(bam_file)),
+												 																														 ifelse(test = is.null(locations_file),
+												 																														 			 yes = '_mpil.tsv',
+												 																														 			 no = '_mpil_loc.tsv')))),
+				 intern = FALSE,
+				 wait = TRUE)
 
 	Sys.sleep(time = 1)
 }
