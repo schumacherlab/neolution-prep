@@ -383,11 +383,12 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 																x$rna_alt_expression = sapply(seq(1, nrow(x)),
 																															function(y){
 																																if (is.na(x$rna_ref_read_count[y]) | is.na(x$rna_alt_read_count[y]) | is.na(x$rna_total_read_count[y])) return(NA)
-																																if (# x$rna_ref_read_count[y] >= median(x$rna_ref_read_count, na.rm = T) |
-																																	# x$rna_total_read_count[y] >= median(x$rna_total_read_count, na.rm = T)
-																																	x$rna_total_read_count[y] >= summary(unique(x = x,
-																																																							by = c('chromosome', 'start_position'))$rna_total_read_count,
-																																																			 na.rm = T)[["1st Qu."]]
+																																if (x$rna_ref_read_count[y] >= 5
+																																		| x$rna_alt_read_count >= 5
+																																	# x$rna_total_read_count[y] >= 5 &
+																																	# x$rna_total_read_count[y] >= summary(unique(x = x,
+																																	#																							by = c('chromosome', 'start_position'))$rna_total_read_count,
+																																	#																			 na.rm = T)[["1st Qu."]]
 																																)
 																																{
 																																	if (x$rna_alt_read_count[y] < 1) {
