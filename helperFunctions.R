@@ -159,7 +159,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 																										 &
 																										 	file.exists(file.path(rna_path, sample_combinations$rna_expression_data[x])))]
 
-		if(nrow(sample_combinations) < 1) {
+		if (nrow(sample_combinations) < 1) {
 			stop('No samples left after file checking, please check sample combinations')
 		}
 
@@ -170,15 +170,18 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 															})
 		prediction_input = setNames(object = prediction_input, nm = sub("[.][^.]*$", "", sample_combinations$variants))
 
-		invisible(mapply(FUN =
-										 	function(x, y) cat('Coverage of RNA expression data: ',
-										 										 names(prediction_input)[y], ' - ',
-										 										 round(x = length(which(!is.na(x[[expression_unit]])))/ nrow(x) * 100,
-										 										 			digits = 1), '%', '\n',
-										 										 file = file.path(rootDirectory, '3_neolution', 'rna_expression_coverage_info.log'),
-										 										 append = TRUE),
-										 prediction_input,
-										 seq(1, length(prediction_input))))
+		rna_coverage_summary = data.table(sample = names(prediction_input),
+																			percent_ensg_coverage = sapply(prediction_input, function(x) round(x = length(which(!is.na(x[[expression_unit]]))) / nrow(x) * 100,
+																																																				 digits = 1)),
+																			percent_no_expression = sapply(prediction_input, function(x) round(x = length(which(x[[expression_unit]] == 0)) / nrow(x) * 100,
+																																																				 digits = 1))
+		)
+
+		write.table(x = rna_coverage_summary,
+								file = file.path(rootDirectory, '3_neolution', 'rna_expression_coverage_info.tsv'),
+								sep = '\t',
+								quote = FALSE,
+								append = FALSE)
 
 		message('Step 3b: Generating Neolution pipeline input')
 	} else {
