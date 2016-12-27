@@ -2,9 +2,9 @@
 
 1. Make project directory and navigate to it in the Terminal
 2. Do 'git clone http://gitlab.nki.nl/l.fanchi/neolution-prep.git .' (the dot matters) **NOTE: directory must be EMPTY**
-3. In the project directory, create sub-directory '1a\_variants' 
+3. **Required**: In the project directory, create sub-directory '1a\_variants' 
 	* in it, create sub-directory 'vcf' and copy VCF file(s) to it  
-4. Optional: Create directory '1b\_rnaseq\_data' in project folder
+4. **Optional**: Create directory '1b\_rnaseq\_data' in project folder
 	* create sub-directory 'processed' and copy expression level data to it (e.g. cufflinks output)
 	* create sub-directory 'bam' and copy BAM and BAI file(s) to it (necessary in case you want to determine expression of mutant allele)
 5. Edit the sample_info.tsv file. **Make sure to leave tab separation between data!**  
