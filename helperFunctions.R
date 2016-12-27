@@ -280,6 +280,43 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 																	 												USE.NAMES = FALSE)
 	)
 
+	# # perform pileups on whole bams
+	# invisible(sapply(seq(1, nrow(sample_combinations)),
+	# 								 function(x) {
+	# 								 	if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('[.][^.]*$', '', basename(sample_combinations$rna_bam_file[x])), '_mpil.tsv')))) {
+	# 								 		performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[x])
+	# 								 	}})
+	# )
+	#
+	# # determine bam read depth summary
+	# pileup_data = lapply(list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
+	# 																pattern = '_mpil.tsv',
+	# 																full.names = TRUE),
+	# 										 fread,
+	# 										 colClasses = c(V1 = 'character'),
+	# 										 col.names = c('chromosome', 'start_position', 'ref_base', 'number_of_reads', 'rna_read_bases', 'base_quality'))
+	#
+	# pileup_data = lapply(pileup_data,
+	# 										 function(x) {
+	# 										 	x$rna_read_bases = gsub(pattern = '[^atgcATGC]',
+	# 										 													replacement = '',
+	# 										 													x = x$rna_read_bases)
+	# 										 	x$rna_read_bases = ifelse(test = is.na(x$rna_read_bases) | x$rna_read_bases == '',
+	# 										 														yes = NA,
+	# 										 														no = x$rna_read_bases)
+	#
+	# 										 	x$rna_total_read_count = ifelse(test = is.na(x$rna_read_bases),
+	# 										 																	yes = NA,
+	# 										 																	no = nchar(x$rna_read_bases))
+	# 										 })
+	#
+	# read_depth_summary = lapply(pileup_data,
+	# 														function(x) summary(x$rna_total_read_count))
+	#
+	# read_depth_summary = setNames(object = read_depth_summary, nm = list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
+	# 																																					 pattern = '_mpil.tsv',
+	# 																																					 full.names = FALSE))
+
 	# perform pileups on variant locations
 	invisible(sapply(seq(1, nrow(sample_combinations)),
 									 function(x) {
