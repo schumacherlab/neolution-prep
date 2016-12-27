@@ -180,6 +180,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 		write.table(x = rna_coverage_summary,
 								file = file.path(rootDirectory, '3_neolution', 'rna_expression_coverage_info.tsv'),
 								sep = '\t',
+								row.names = FALSE,
 								quote = FALSE,
 								append = FALSE)
 
