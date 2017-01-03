@@ -9,7 +9,7 @@ registerDoMC(runOptions$neolution$numberOfWorkers)
 
 # inventorize input files
 contextLists = list.files(path = file.path(rootDirectory, "3_neolution"),
-													pattern = "varcontext_rna.tsv$",
+													pattern = "varcontext.tsv$",
 													full.names = TRUE)
 
 # load HLA typing info
