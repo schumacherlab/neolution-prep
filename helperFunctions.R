@@ -518,7 +518,7 @@ applyCutoffs = function(predictions, rank = 3, processing = 0.5, expression = 0,
 									 											 subset = predictions[[x]][[grep(pattern = 'tumor.+rank',
 									 											 																x = colnames(predictions[[x]]),
 									 											 																value = T)]] <= rank)
-									 	data_subset = data_subset[tumor_processing_score >= processing & rna_expression > expression & different_from_self == selfsim]
+									 	data_subset = data_subset[tumor_processing_score >= processing & (rna_expression > expression | is.na(rna_expression)) & different_from_self == selfsim]
 									 	# data_subset = data_subset[rna_expression > expression]
 									 	# data_subset = data_subset[different_from_self == selfsim]
 									 	return(data_subset)
