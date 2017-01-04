@@ -1,7 +1,7 @@
 # load required packages
 if (!require("pacman")) install.packages("pacman")
 
-required_packages = c('data.table', 'gtools', 'utils', 'optparse', 'RMySQL', 'compiler', 'naturalsort', 'parallel', 'doMC', 'stringr', 'tidyr', 'foreach')
+required_packages = c('data.table', 'gtools', 'utils', 'optparse', 'RMySQL', 'compiler', 'naturalsort', 'parallel', 'doMC', 'stringr', 'tidyr', 'foreach', 'pander')
 
 library(pacman)
 pacman::p_load(char = required_packages)
