@@ -6,7 +6,7 @@ required_packages = c('data.table', 'gtools', 'utils', 'optparse', 'RMySQL', 'co
 library(pacman)
 pacman::p_load(char = required_packages)
 
-# helper functions
+# helper functions for input file generation
 performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
 	registerDoMC(runOptions$varcontext$numberOfWorkers)
 
@@ -480,3 +480,86 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf')) 
 					 wait = TRUE)
 	})
 }
+
+# helper functions for analysis document
+"%nin%" = Negate("%in%")
+
+parseEpitopePredictions = function(path, pattern = '_epitopes\\.csv') {
+	require(stringr)
+	require(data.table)
+
+	# get predictions paths
+	files = list.files(path = path,
+										 pattern = pattern,
+										 full.names = TRUE)
+
+	# extract filenames
+	short_names = sub(pattern = '.+[/]', replacement = '', x = files)
+	short_names = sub(pattern = '_epitopes\\.csv', replacement = '', x = short_names)
+
+	# get data in & sort by tumor peptide affinity
+	predictions = lapply(files,
+											 fread)
+	sapply(predictions,
+				 function(x) setkeyv(x = x, grep(pattern = 'tumor_.+affinity', x = names(x), value = TRUE)))
+
+	# set table names
+	predictions = setNames(object = predictions,
+												 nm = short_names)
+
+	return(predictions)
+}
+
+applyCutoffs = function(predictions, rank = 3, processing = 0.5, expression = 0, selfsim = TRUE) {
+	# take subsets
+	subsets = lapply(seq(1, length(predictions), 1),
+									 function(x) {
+									 	data_subset = subset(x = predictions[[x]],
+									 											 subset = predictions[[x]][[grep(pattern = 'tumor.+rank',
+									 											 																x = colnames(predictions[[x]]),
+									 											 																value = T)]] <= rank)
+									 	data_subset = data_subset[tumor_processing_score >= processing & rna_expression > expression & different_from_self == selfsim]
+									 	# data_subset = data_subset[rna_expression > expression]
+									 	# data_subset = data_subset[different_from_self == selfsim]
+									 	return(data_subset)
+									 })
+
+	# set table names
+	subsets = setNames(object = subsets,
+										 nm = names(predictions))
+
+	return(subsets)
+}
+
+prepareEpitopeLists = function(list_of_predictions, split_by= c('9mer', '10mer', '11mer')) {
+	# split all predictions by xmer
+	split_by_xmer = lapply(split_by,
+												 function(x) {
+												 	join_by_xmer = rbindlist(list_of_predictions[grepl(pattern = x,
+												 																										 x = names(list_of_predictions))])
+												 	subset_by_xmer = subset(x = join_by_xmer,
+												 													select = c("hla_allele", "tumor_peptide"))
+												 	subset_by_xmer[, hla_allele := gsub(pattern = "*",
+												 																			replacement = "\\*",
+												 																			x = subset_by_xmer$hla_allele,
+												 																			fixed = TRUE)]
+												 	return(subset_by_xmer)
+												 })
+
+	# add info required by peptide synth facility (add xmer, n-1 peptides and ni column)
+	split_by_xmer_info = lapply(split_by_xmer,
+															function(x) {
+																xmer = nchar(x$tumor_peptide)
+																tumor_peptide_trunc = substr(x = x$tumor_peptide,
+																														 start = 1,
+																														 stop = nchar(x$tumor_peptide) - 1)
+																tumor_peptide_resin = substr(x = x$tumor_peptide,
+																														 start = nchar(x$tumor_peptide),
+																														 stop = nchar(x$tumor_peptide))
+																table = as.data.table(cbind(x, tumor_peptide_trunc, tumor_peptide_resin, xmer))
+																setkey(x = table, tumor_peptide_resin, hla_allele)
+																return(table)
+															})
+	return(split_by_xmer_info)
+}
+
