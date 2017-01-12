@@ -448,11 +448,6 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 		prediction_input = varcontext_data
 	}
 
-	prediction_input = lapply(prediction_input,
-														function(x) {
-															if (all(is.na(x[, rna_expression]))) return(x[, !names(x) == 'rna_expression', with = F])
-														})
-
 	invisible(mapply(FUN =
 									 	function(x, y) {
 									 		write.table(x = x,
@@ -465,8 +460,9 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 }
 
 mergeByEnsemblId = function(variant_table, expression_table, expression_unit = 'FPKM') {
-	if (is.null(expression_table)){
-		return(variant_table[, rna_expression := NA])
+	if (is.null(expression_table)) {
+		variant_table[[expression_unit]] = NA
+		return(variant_table)
 	} else if ('gene_id' %in% names(variant_table) && 'gene_id' %in% names(expression_table)) {
 		table_merged = merge(x = variant_table,
 												 y = expression_table[!duplicated(gene_id), c('gene_id', expression_unit), with = FALSE],
