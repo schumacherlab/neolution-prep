@@ -39,16 +39,16 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
                       return(data)
                     })
 
-  mapply(function(vcf, index) {
-           write.table(x = vcf,
-                       file = file.path(rootDirectory, '1a_variants', 'parsed', paste0(names(vcf_data)[index], '.tsv')),
-                       sep = '\t',
-                       append = FALSE,
-                       quote = FALSE,
-                       row.names = FALSE)
-         },
-         vcf_data,
-         seq(1, length(vcf_data)))
+  invisible(mapply(function(vcf, index) {
+  	write.table(x = vcf,
+  							file = file.path(rootDirectory, '1a_variants', 'parsed', paste0(names(vcf_data)[index], '.tsv')),
+  							sep = '\t',
+  							append = FALSE,
+  							quote = FALSE,
+  							row.names = FALSE)
+  },
+  vcf_data,
+  seq(1, length(vcf_data))))
 }
 
 parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
