@@ -7,8 +7,50 @@ library(pacman)
 pacman::p_load(char = required_packages)
 
 # helper functions for input file generation
-performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
-	registerDoMC(runOptions$varcontext$numberOfWorkers)
+parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf')) {
+  # extract relevant info from VCF
+  message('Step 1: Parsing & extracting fields from VCF')
+
+  dir.create(file.path(rootDirectory, '1a_variants', 'parsed'), showWarnings = F)
+
+  # make list of VCF files
+  vcf_files = list.files(path = vcf_path,
+                         pattern = '\\.vcf$',
+                         recursive = FALSE,
+                         full.names = TRUE)
+
+  vcf_files = setNames(object = vcf_files,
+                       nm = sub("[.][^.]*$", "",
+                                list.files(path = vcf_path,
+                                           pattern = '\\.vcf$')))
+
+  if (length(vcf_files) < 1) stop('No VCF files found in ', vcf_path)
+
+  vcf_data = lapply(vcf_files,
+                    function(file_path) parseVcf(vcf_path = file_path,
+                                                 sample_tag = 'TUMOR'))
+
+  vcf_data = lapply(vcf_data,
+                    function(vcf) {
+                      data = vcf[grepl('^[gr]s\\d+$', variant_id) # always include SNPs
+                      					 | sapply(1:nrow(vcf), function(index) nchar(vcf_data$ref_allele[index]) != nchar(vcf_data$alt_allele[index])) # include all indels, since sample order is inconsistent (can't be sure we're looking at NORMAL or TUMOR sample)
+                      					 | genotype != '0/0', # exclude tumor-specific variants which are ref
+                                 .(variant_id, chromosome, start_position, ref_allele, alt_allele, dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
+                      return(data)
+                    })
+
+  mapply(function(vcf, index) {
+           write.table(x = vcf,
+                       file = file.path(rootDirectory, '1a_variants', 'parsed', paste0(names(vcf_data)[index], '.tsv')),
+                       sep = '\t',
+                       append = FALSE,
+                       quote = FALSE,
+                       row.names = FALSE)
+         },
+         vcf_data,
+         seq(1, length(vcf_data)))
+}
+
 parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
 	require(data.table)
 	require(stringr)
@@ -114,8 +156,6 @@ parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
 	return(vcf_parsed)
 }
 
-	# extract relevant fields from VCFs
-	message('Step 1: Extracting "', paste(vcf_fields, collapse = ' '), '" fields from VCF')
 extractDataFromVcfField = function(vcf_table, sample_tag, format_tag) {
 	tag_positions = unlist(sapply(str_split(vcf_table$format, pattern = ':'),
 																function(x) {
@@ -202,17 +242,20 @@ extractVariantSupportingReadCountsFromVcf = function(vcf_table, sample_tag) {
 	return(list(ref_supporting_read_counts, alt_supporting_read_counts))
 }
 
+performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_variants', 'parsed'), vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
+	registerDoMC(runOptions$varcontext$numberOfWorkers)
+
 	# make list of input files
 	variantLists = list.files(path = vcf_path,
 														pattern = '\\.tsv$',
 														recursive = FALSE,
 														full.names = TRUE)
 
-	# remove 'chr' prefix, if present
-	invisible(sapply(variantLists,
-									 function(x) {
-									 	system(command = paste("perl -p -i -e 's/chr//g'", x))
-									 }))
+	# # remove 'chr' prefix, if present
+	# invisible(sapply(variantLists,
+	# 								 function(x) {
+	# 								 	system(command = paste("perl -p -i -e 's/chr//g'", x))
+	# 								 }))
 
 	# generate variant contexts
 	message('Step 2: Generating context for variants')
@@ -285,6 +328,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 																 sample_info_path = file.path(rootDirectory, 'sample_info.tsv'),
 																 rna_file_suffix = 'genes\\.fpkm_tracking',
 																 expression_unit = 'FPKM') {
+
 	varcontext_data = lapply(list.files(path = varcontext_path,
 																			pattern = 'varcontext\\.tsv',
 																			full.names = TRUE),
