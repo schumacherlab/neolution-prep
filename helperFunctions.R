@@ -9,14 +9,198 @@ pacman::p_load(char = required_packages)
 # helper functions for input file generation
 performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
 	registerDoMC(runOptions$varcontext$numberOfWorkers)
+parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
+	require(data.table)
+	require(stringr)
+
+	if (!file.exists(vcf_path)) stop('VCF not found')
+
+	# read data
+	vcf_lines = readLines(vcf_path)
+	# find table header line & read table
+	vcf_dt = fread(input = vcf_path,
+								 skip = max(grep(pattern = '^#CHROM', x = vcf_lines)) - 1,
+								 sep = '\t',
+								 colClasses = list(character = c('#CHROM')))
+	setnames(x = vcf_dt,
+					 old = c('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'),
+					 new = c('chromosome', 'start_position', 'variant_id', 'ref_allele', 'alt_allele', 'quality', 'filter', 'info', 'format'))
+
+	vcf_parsed = vcf_dt[, .(chromosome, start_position, variant_id, ref_allele, alt_allele)]
+
+	# replace 'chr' prefix in chromosome, if present
+	vcf_parsed[, chromosome := gsub('^chr', '', chromosome)]
+
+	# extract various tags from sample
+	vcf_parsed[, genotype := extractDataFromVcfField(vcf_table = vcf_dt,
+																									 sample_tag = sample_tag,
+																									 format_tag = 'GT')]
+
+	vcf_parsed[, genotype_quality := as.numeric(extractDataFromVcfField(vcf_table = vcf_dt,
+																																			sample_tag = sample_tag,
+																																			format_tag = 'GQ'))]
+
+	vcf_parsed[, variant_allele_quality := as.numeric(extractDataFromVcfField(vcf_table = vcf_dt,
+																																						sample_tag = sample_tag,
+																																						format_tag = 'VAQ'))]
+
+	# vcf_parsed[, average_base_quality := extractDataFromVcfField(vcf_table = vcf_dt,
+	# 																														 sample_tag = sample_tag,
+	# 																														 format_tag = 'BQ')]
+
+	vcf_parsed[, average_mapping_quality := as.numeric(extractDataFromVcfField(vcf_table = vcf_dt,
+																																						 sample_tag = sample_tag,
+																																						 format_tag = 'MQ'))]
+
+	# extract sample base read counts
+	vcf_parsed = cbind(vcf_parsed, extractVariantReadCountsFromVcf(vcf_table = vcf_dt,
+																																 sample_tag = sample_tag,
+																																 count_tag = 'BCOUNT'))
+
+	# pick alt allele with highest read count (in case two alt's are given)
+	vcf_parsed[, alt_allele := sapply(seq(1, nrow(vcf_parsed)),
+																		function(row_index) {
+																			if (any(is.na(vcf_parsed[, .(A,C,G,T)][row_index])) | nchar(vcf_parsed$alt_allele[row_index]) == 1) {
+																				return(vcf_parsed$alt_allele[row_index])
+																			} else {
+																				alts = unlist(str_split(vcf_parsed$alt_allele[row_index], ','))
+																				counts = sapply(alts,
+																												function(alt) {
+																													count = vcf_parsed[[alt]][row_index]
+																												})
+																				base = names(which.max(counts))
+																				return(base)
+																			}
+																		})]
+
+	# extract ref and alt read counts
+	dna_read_counts = extractVariantSupportingReadCountsFromVcf(vcf_table = vcf_dt, sample_tag = sample_tag)
+
+	vcf_parsed[, dna_ref_read_count := dna_read_counts[[1]]]
+	vcf_parsed[, dna_alt_read_count := dna_read_counts[[2]]]
+
+	# vcf_parsed[, dna_ref_read_count := sapply(seq(1, nrow(vcf_parsed)),
+	# 																										 function(row_index) {
+	# 																										 	if (any(is.na(vcf_parsed[, .(A,C,G,T)][row_index])) | nchar(vcf_parsed$ref_allele[row_index]) != 1) {
+	# 																										 		return(NA)
+	# 																										 	} else {
+	# 																										 		return(vcf_parsed[[vcf_parsed$ref_allele[row_index]]][row_index])
+	# 																										 	}
+	# 																										 })]
+	# vcf_parsed[, dna_alt_read_count := sapply(seq(1, nrow(vcf_parsed)),
+	# 																										 function(row_index) {
+	# 																										 	if (any(is.na(vcf_parsed[, .(A,C,G,T)][row_index])) | nchar(vcf_parsed$alt_allele[row_index]) != 1) {
+	# 																										 		return(NA)
+	# 																										 	} else {
+	# 																										 		return(vcf_parsed[[vcf_parsed$alt_allele[row_index]]][row_index])
+	# 																										 	}
+	# 																										 })]
+
+	# extract total read counts
+	vcf_parsed[, dna_total_read_count := as.numeric(extractDataFromVcfField(vcf_table = vcf_dt,
+																																					sample_tag = sample_tag,
+																																					format_tag = 'DP'))]
+
+	# compute dna_vaf
+	vcf_parsed[, dna_vaf := sapply(seq(1, nrow(vcf_parsed)),
+																 function(row_index) {
+																 	if (is.numeric(vcf_parsed$dna_alt_read_count[row_index]) & is.numeric(vcf_parsed$dna_total_read_count[row_index])) {
+																 		return(vcf_parsed$dna_alt_read_count[row_index] / vcf_parsed$dna_total_read_count[row_index])
+																 	} else {
+																 		return(NA)
+																 	}
+																 })]
+
+	return(vcf_parsed)
+}
 
 	# extract relevant fields from VCFs
 	message('Step 1: Extracting "', paste(vcf_fields, collapse = ' '), '" fields from VCF')
+extractDataFromVcfField = function(vcf_table, sample_tag, format_tag) {
+	tag_positions = unlist(sapply(str_split(vcf_table$format, pattern = ':'),
+																function(x) {
+																	match(x = format_tag, table = x, nomatch = NA)
+																}))
 
-	dir.create(file.path(rootDirectory, '1a_variants', 'extr_fields'), showWarnings = F)
+	vcf_tumor_split = str_split(vcf_table[[sample_tag]], pattern = ':')
 
-	extractFieldsFromVCF(vcf_path = vcf_path,
-											 vcf_fields = vcf_fields)
+	tag_data = sapply(seq(1, length(tag_positions)),
+										function(x) {
+											if (grepl(pattern = '^[gr]s\\d+$', x = vcf_table$variant_id[x]) & is.na(tag_positions[[x]])) {
+												snp_split = unlist(str_split(string = vcf_table$info[x], pattern = ';'))
+												tag_data = grep(pattern = paste0('^', format_tag, '='), x = snp_split, value = TRUE)
+
+												if (length(tag_data) < 1) return(NA)
+
+												return(sub(pattern = paste0('^', format_tag, '='), replacement = '', x = tag_data))
+											}
+
+											vcf_tumor_split[[x]][tag_positions[x]]
+										})
+
+	return(tag_data)
+}
+
+extractVariantReadCountsFromVcf = function(vcf_table, sample_tag, count_tag) {
+	count_data = extractDataFromVcfField(vcf_table = vcf_table,
+																			 sample_tag = sample_tag,
+																			 format_tag = count_tag)
+
+	count_data = lapply(str_split(string = count_data, pattern = ','), as.numeric)
+
+	count_data = lapply(count_data,
+											function(counts) {
+												if (any(!is.na(counts))) {
+													data = setNames(object = counts, nm = c('A', 'C', 'G', 'T'))
+													data = as.data.table(as.list(data))
+												} else {
+													data = as.data.table(as.list(rep(x = NA, 4)))
+													data = setNames(object = data, nm = c('A', 'C', 'G', 'T'))
+												}
+												return(data)
+											})
+
+	count_data = rbindlist(count_data, use.names = TRUE)
+}
+
+extractVariantSupportingReadCountsFromVcf = function(vcf_table, sample_tag) {
+
+	##### sample order is not consistent for somaticIndelCaller (seems alphabetically ordered by filename, instead of NORMAL-TUMOR)
+	##### end result is we don't know which column is TUMOR, therefore don't process indels at this moment in time
+
+	# # SC field: "counts of forward-/reverse-aligned indel-supporting reads / forward-/reverse-aligned reference supporting reads"
+	# count_data_indels = extractDataFromVcfField(vcf_table = vcf_table,
+	# 																						sample_tag = sample_tag,
+	# 																						format_tag = 'SC')
+	#
+	# # reverse 'counts_data_indels' so that order is identical to 'counts_data_snvs'
+	# count_data_indels = lapply(str_split(string = count_data_indels, pattern = ','),
+	# 													 function(counts) {
+	# 													 	as.numeric(counts[c(3, 4, 1, 2)])
+	# 													 })
+
+	# DP4 field: "# high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases"
+	count_data_snvs = extractDataFromVcfField(vcf_table = vcf_table,
+																						sample_tag = sample_tag,
+																						format_tag = 'DP4')
+
+	# pre-process 'count_data_snvs' for merge
+	count_data_snvs = lapply(str_split(string = count_data_snvs, pattern = ','),
+													 as.numeric)
+
+	# # merge count data from indels and snvs
+	# count_data = lapply(seq(1, length(count_data_snvs)),
+	# 										function(index) {
+	# 											if (any(is.na(count_data_snvs[[index]]))) return(count_data_indels[[index]]) else return(count_data_snvs[[index]])
+	# 										})
+
+	count_data = count_data_snvs
+
+	ref_supporting_read_counts = sapply(count_data, function(counts) sum(counts[c(1,2)]))
+	alt_supporting_read_counts = sapply(count_data, function(counts) sum(counts[c(3,4)]))
+
+	return(list(ref_supporting_read_counts, alt_supporting_read_counts))
+}
 
 	# make list of input files
 	variantLists = list.files(path = vcf_path,
