@@ -459,36 +459,46 @@ mergeByEnsemblId = function(variant_table, expression_table, expression_unit = '
 	}
 }
 
-findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(rootDirectory, '3_neolution'),
-																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data/bam'),
+findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
+																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'bam'),
 																							 sample_info_path = file.path(rootDirectory, 'sample_info.tsv')) {
-	if (!file.exists(rna_path)) {
-		stop('Please put RNAseq BAM files in "./1b_rnaseq_data/bam" subdirectory')
+
+	if (!dir.exists(rna_path)) {
+		message('RNAseq data directory does not exist at ', rna_path)
+		user_choice = menu(choices = c('yes', 'no'), title = 'Do you want to continue without RNAseq data?')
+
+		if (user_choice == 2) {
+			q()
+		} else if (user_choice == 1) {
+			# insert code to add empty rna_* columns to tsv files
+		} else {
+			stop('Please enter a valid option (1 or 2)')
+		}
 	}
 
-	# parse neolution input data
-	input_data = lapply(list.files(path = neolution_input_path,
-																 pattern = 'varcontext\\.tsv',
+	# parse input data
+	input_data = lapply(list.files(path = vcf_input_path,
+																 pattern = '\\.tsv',
 																 full.names = TRUE),
 											fread,
-											colClasses = list(character = c('chromosome', 'nmd_remark')))
+											colClasses = list(character = c('chromosome')))
 	input_data = setNames(object = input_data,
-												nm = list.files(path = neolution_input_path,
-																				pattern = 'varcontext\\.tsv'))
+												nm = list.files(path = vcf_input_path,
+																				pattern = '\\.tsv'))
 
 	# load sample info
 	if (file.exists(sample_info_path)) {
 		sample_info = fread(sample_info_path, sep = '\t', header = T, na.strings = c('','NA', 'N.A.'))
 	} else {
-		stop('Sample info file missing, please provide path in argument to findRnaReadLevelEvidenceForVariants')
+		stop('Sample info file missing at "', sample_info_path, '", please provide correct path in argument to findRnaReadLevelEvidenceForVariants')
 	}
 
-	# make list of all unique variants found in varcontext (mapping to an exon)
+	# make list of all unique variants found in parsed VCF
 	snv_positions = lapply(input_data,
 												 function(x) {
 												 	setorder(x = unique(x[grepl(pattern = '^[0-9]{1,2}$|^[XY]$',
 												 															x = x$chromosome) &
-												 													!grepl(pattern = '[rg]s[0-9]+',
+												 													!grepl(pattern = '^[rg]s\\d+$',
 												 																 x = x$variant_id) &
 												 													nchar(x$ref_allele) == 1 &
 												 													nchar(x$alt_allele) == 1,
@@ -633,10 +643,12 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 																																	#																			 na.rm = T)[["1st Qu."]]
 																																)
 																																{
-																																	if (x$rna_alt_read_count[y] < 1) {
+																																	if (x$rna_alt_read_count[y] > 0) {
+																																		return(TRUE)
+																																	} else if (x$rna_alt_read_count[y] < 1) {
 																																		return(FALSE)
 																																	} else {
-																																		return(TRUE)
+																																	  return(NA)
 																																	}
 																																} else {
 																																	return(NA)
@@ -649,8 +661,7 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 	input_pileup_merge = lapply(input_pileup_merge,
 															function(x) {
 																order = c('variant_id', 'chromosome', 'start_position', 'end_position', 'variant_strand', 'ref_allele' , 'alt_allele',
-																					'dna_ref_read_count', 'dna_alt_read_count', 'dna_vaf', 'rna_ref_read_count', 'rna_alt_read_count', 'rna_total_read_count', 'rna_vaf', 'rna_alt_expression',
-																					'gene_id', 'transcript_id', 'transcript_strand')
+																					'dna_ref_read_count', 'dna_alt_read_count', 'dna_total_read_count', 'dna_vaf', 'rna_ref_read_count', 'rna_alt_read_count', 'rna_total_read_count', 'rna_vaf', 'rna_alt_expression')
 																setcolorder(x = x,
 																						neworder = c(order, names(x)[-match(x = order, table = names(x))]))
 																return(x)
@@ -659,7 +670,7 @@ findRnaReadLevelEvidenceForVariants = function(neolution_input_path = file.path(
 	invisible(mapply(FUN =
 									 	function(x, y) {
 									 		write.table(x = x,
-									 								file = file.path(rootDirectory, '3_neolution', names(input_data)[y]),
+									 								file = file.path(rootDirectory, '1a_variants', 'parsed', names(input_data)[y]),
 									 								sep = '\t',
 									 								row.names = F)
 									 	},
