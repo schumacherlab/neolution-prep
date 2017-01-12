@@ -660,10 +660,10 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 
 	input_pileup_merge = lapply(input_pileup_merge,
 															function(x) {
-																order = c('variant_id', 'chromosome', 'start_position', 'end_position', 'variant_strand', 'ref_allele' , 'alt_allele',
+																order = c('variant_id', 'chromosome', 'start_position', 'ref_allele' , 'alt_allele',
 																					'dna_ref_read_count', 'dna_alt_read_count', 'dna_total_read_count', 'dna_vaf', 'rna_ref_read_count', 'rna_alt_read_count', 'rna_total_read_count', 'rna_vaf', 'rna_alt_expression')
 																setcolorder(x = x,
-																						neworder = c(order, names(x)[-match(x = order, table = names(x))]))
+																						neworder = order)
 																return(x)
 															})
 
