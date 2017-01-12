@@ -8,14 +8,17 @@ setwd(rootDirectory)
 source('./helperFunctions.R')
 source('./runConfig.R')
 
-# extract fields from VCF files and run variant context generation
+# parse and clean VCF
+parseAndExtractFieldsFromVcf()
+
+# find evidence for variants in RNAseq data (skipped if no RNAseq data is found)
+findRnaReadLevelEvidenceForVariants()
+
+# run variant context generation
 performVarcontextGeneration()
 
-# prepare Neolution input files (also allows optional merging with RNAseq data)
+# prepare Neolution input files (also allows optional merging with RNAseq data; skipped if no RNAseq data found)
 prepareNeolutionInput()
-
-# find evidence for variants in RNAseq data (optional)
-findRnaReadLevelEvidenceForVariants()
 
 # generate SnpEff output
 runSnpEff()
