@@ -272,7 +272,7 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
 													})
 	}
 
-	invisble(mapply(function(x, y) {
+	invisible(mapply(function(x, y) {
 		write.table(x = x,
 								file = file.path(rootDirectory, '2_varcontext', 'input_lists', names(variant_data)[y]),
 								sep = '\t',
