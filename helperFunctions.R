@@ -403,20 +403,27 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 																		 														 USE.NAMES = FALSE)
 		)
 
-		# check if both varcontext and rna_expression data are present before merge
-		sample_combinations = sample_combinations[sapply(1:nrow(sample_combinations),
-																										 function(x) file.exists(file.path(varcontext_path, sample_combinations$variants[x]))
-																										 &
-																										 	file.exists(file.path(rna_path, sample_combinations$rna_expression_data[x])))]
+		if (nrow(sample_combinations) < 1) stop('Input files not found, check directory structure and/or sample_info.tsv')
 
-		if (nrow(sample_combinations) < 1) {
-			stop('No samples left after file checking, please check sample combinations')
-		}
+		# check if both varcontext and rna_expression data are present before merge
+		sample_combinations[, dna_data_present := sapply(1:nrow(sample_combinations),
+																										 function(x) file.exists(file.path(varcontext_path, sample_combinations$variants[x])))]
+		sample_combinations[, rna_data_present := sapply(1:nrow(sample_combinations),
+																										 function(x) file.exists(file.path(rna_path, sample_combinations$rna_expression_data[x])))]
 
 		prediction_input = lapply(seq(1, nrow(sample_combinations)),
 															function(x) {
-																mergeByEnsemblId(variant_table = varcontext_data[[sample_combinations[x, variants]]],
-																								 expression_table = rnaseq_data[[sample_combinations[x, rna_expression_data]]])
+																if (sample_combinations$dna_data_present[x] & sample_combinations$rna_data_present[x]) {
+																	message('Merging RNA expression data for: ', sample_combinations[x, variants], ' & ', sample_combinations[x, rna_expression_data])
+																	mergeByEnsemblId(variant_table = varcontext_data[[sample_combinations[x, variants]]],
+																									 expression_table = rnaseq_data[[sample_combinations[x, rna_expression_data]]])
+																} else if (sample_combinations$dna_data_present[x]) {
+																	message('Adding empty rna_expression column for ', sample_combinations[x, variants])
+																	mergeByEnsemblId(variant_table = varcontext_data[[sample_combinations[x, variants]]],
+																									 expression_table = NULL)
+																} else {
+																	warning('No input data present for ', sample_combinations[x, variants], ' & ', sample_combinations[x, rna_expression_data])
+																}
 															})
 		prediction_input = setNames(object = prediction_input, nm = sub("[.][^.]*$", "", sample_combinations$variants))
 
