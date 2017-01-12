@@ -242,27 +242,53 @@ extractVariantSupportingReadCountsFromVcf = function(vcf_table, sample_tag) {
 	return(list(ref_supporting_read_counts, alt_supporting_read_counts))
 }
 
-performVarcontextGeneration = function(vcf_path = file.path(rootDirectory, '1a_variants', 'parsed'), vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
+performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '1a_variants', 'parsed'), filter_rna_alt_expression = TRUE, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
 	registerDoMC(runOptions$varcontext$numberOfWorkers)
 
+	dir.create(file.path(rootDirectory, '2_varcontext'),
+						 showWarnings = FALSE)
+	dir.create(file.path(rootDirectory, '2_varcontext', 'input_lists'),
+						 showWarnings = FALSE)
+	dir.create(file.path(rootDirectory, '2_varcontext', 'varcontext_logs'),
+						 showWarnings = FALSE)
+
 	# make list of input files
-	variantLists = list.files(path = vcf_path,
+	variant_lists = list.files(path = variant_path,
 														pattern = '\\.tsv$',
 														recursive = FALSE,
 														full.names = TRUE)
+	variant_data = lapply(variant_lists,
+											 fread,
+											 colClasses = list(character = c('chromosome')))
+	variant_data = setNames(object = variant_data,
+												 nm = list.files(path = variant_path,
+												 								pattern = '\\.tsv$'))
 
-	# # remove 'chr' prefix, if present
-	# invisible(sapply(variantLists,
-	# 								 function(x) {
-	# 								 	system(command = paste("perl -p -i -e 's/chr//g'", x))
-	# 								 }))
+	# remove variants without rna_alt_expression
+	if (filter_rna_alt_expression) {
+		variant_data = lapply(variant_data,
+													function(variants) {
+														return(variants[rna_alt_expression == TRUE | is.na(rna_alt_expression)])
+													})
+	}
+
+	invisble(mapply(function(x, y) {
+		write.table(x = x,
+								file = file.path(rootDirectory, '2_varcontext', 'input_lists', names(variant_data)[y]),
+								sep = '\t',
+								row.names = F)
+	},
+	variant_data,
+	seq(1, length(variant_data))))
 
 	# generate variant contexts
 	message('Step 2: Generating context for variants')
-	generateVarcontext(input_list = variantLists)
+	generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
+																						 pattern = '\\.tsv',
+																						 full.names = TRUE))
 
 	# move files
-	system(command = paste('cd', vcf_path, ';', 'mv -f *.tsv ../extr_fields'))
+	# system(command = paste('cd', variant_path, ';', 'mv -f *.tsv ../extr_fields'))
 }
 
 extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
@@ -279,10 +305,6 @@ generateVarcontext = function(input_list) {
 	if (length(input_list) < 1) {
 		stop('No input lists found...')
 	}
-	dir.create(file.path(rootDirectory, '2_varcontext'),
-						 showWarnings = FALSE)
-	dir.create(file.path(rootDirectory, '2_varcontext', 'varcontext_logs'),
-						 showWarnings = FALSE)
 
 	setwd(runOptions$varcontext$varcontextDirectory)
 
