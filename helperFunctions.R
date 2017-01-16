@@ -636,10 +636,6 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 																																yes = NA,
 																																no = nchar(x$rna_read_bases))
 
-																x$rna_vaf = str_count(string = toupper(x$rna_read_bases),
-																											pattern = toupper(x$alt_allele)) /
-																	nchar(x$rna_read_bases)
-
 																x$rna_read_bases = NULL
 
 																return(x)
@@ -652,24 +648,32 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 																																if (is.na(x$rna_ref_read_count[y]) | is.na(x$rna_alt_read_count[y]) | is.na(x$rna_total_read_count[y])) return(NA)
 																																if (x$rna_ref_read_count[y] >= 5
 																																		| x$rna_alt_read_count[y] >= 5
-																																	# x$rna_total_read_count[y] >= 5 &
-																																	# x$rna_total_read_count[y] >= summary(unique(x = x,
-																																	#																							by = c('chromosome', 'start_position'))$rna_total_read_count,
-																																	#																			 na.rm = T)[["1st Qu."]]
-																																)
-																																{
+																																) {
 																																	if (x$rna_alt_read_count[y] > 0) {
 																																		return(TRUE)
 																																	} else if (x$rna_alt_read_count[y] < 1) {
 																																		return(FALSE)
 																																	} else {
-																																	  return(NA)
+																																		return(NA)
 																																	}
 																																} else {
 																																	return(NA)
 																																}
 																															},
 																															USE.NAMES = F)
+
+																x$rna_vaf = sapply(seq(1, nrow(x)),
+																									 function(y){
+																									 	if (is.na(x$rna_alt_read_count[y]) | is.na(x$rna_total_read_count[y])) return(NA)
+																									 	if (x$rna_ref_read_count[y] >= 5
+																									 			| x$rna_alt_read_count[y] >= 5
+																									 	) {
+																									 		return(x$rna_alt_read_count[y] / x$rna_total_read_count[y])
+																									 	} else {
+																									 		return(NA)
+																									 	}
+																									 },
+																									 USE.NAMES = F)
 																return(x)
 															})
 
