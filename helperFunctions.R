@@ -759,7 +759,7 @@ parseEpitopePredictions = function(path, pattern = '_epitopes\\.csv') {
 	predictions = lapply(seq(1, length(files)),
 											 function(i) {
 											 	data = fread(files[i])
-											 	data[, patient_id := sub(pattern = '_mg.+', replacement = '', x = short_names[i])]
+											 	data[, patient_id := sub(pattern = '_mg.+|_L[0-9]{3}.+', replacement = '', x = short_names[i])]
 
 											 	return(data)
 											 })
