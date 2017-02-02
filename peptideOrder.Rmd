@@ -1,0 +1,152 @@
+---
+title: "## INSERT PROJECT TITLE ## - neo-antigen screen"
+author: "Lorenzo Fanchi"
+date: "## INSERT DATE ##"
+output: 
+  html_document: 
+    theme: cerulean
+    toc: yes
+    toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+source('helperFunctions.R')
+```
+
+```{r interactive_only, eval = F}
+setwd('~/projects/## PROJECT DIR ##')
+```
+
+```{r define_cutoffs}
+runParameters = list('predictions' = list('rank_cutoff' = 3,
+																					'processing_cutoff' = 0.5,
+																					'expression_cutoff' = 0,
+																					'selfsim_filter' = TRUE,
+																					'selfsim_filter_mode' = 'simple'))
+```
+<link href="style.css" rel="stylesheet" type="text/css" />
+
+#### Introduction
+
+This document contains the order and set-up lists of the epitopes for ## PROJECT TITLE ## project.
+
+Variants were called by SomaticSniper and SomaticIndelCaller (GATK). 
+
+<br>
+
+
+* Transcript effects of called variants were determined by our in-house 'varcontext' tool with the following parameters:  
+
+| parameter                    | value              |
+|------------------------------|--------------------|
+| _Ensembl version_            |    81 (GRCh38)     |
+| _Canonical transcripts only_ |      FALSE         |
+
+<br>
+
+* The following default filtering parameters were used for epitope selection:  
+
+| parameter                    | value                      |
+|------------------------------|----------------------------|
+| _netMHCpan rank cutoff_      |     `r runParameters$predictions$rank_cutoff`        |
+| _netChop processing cutoff_  |    `r runParameters$predictions$processing_cutoff`   |
+| _RNA expression cutoff_      |     `r runParameters$predictions$expression_cutoff`  |  
+| _Selfsim filter_             |    `r runParameters$predictions$selfsim_filter`      |
+| _Selfsim mode_             |    `r runParameters$predictions$selfsim_filter_mode`      |
+
+<br>
+
+#### Sample information
+
+```{r variant_calling_info}
+snpeff_output = list.files(path = '4_snpEff',
+													 pattern = 'genes.txt',
+													 full.names = T)
+
+sample_info = fread('sample_info.tsv')
+
+effects_table = rbindlist(lapply(snpeff_output,
+																 function(x) {
+																 	data = fread(x, skip = 1)
+																 	data.table(syn_coding_variants = sum(data$variants_effect_synonymous_variant),
+																 						 non_syn_coding_variants = sum(data$variants_effect_missense_variant),
+																 						 stop_gained_variants = sum(data$variants_effect_stop_gained),
+																 						 inframe_insertion_variants = sum(data$variant_effect_inframe_insertion),
+																 						 frameshift_variants = sum(data$variants_effect_frameshift_variant))
+																 }))
+
+effects_table = cbind(sample_prefix = gsub(pattern = '_L[0-9]{3}.+', replacement = '', basename(snpeff_output)), effects_table)
+effects_table = effects_table[naturalorder(effects_table$sample_prefix)]
+
+effects_table = cbind(patient_id = sample_info$patient_id, effects_table)
+
+pander(effects_table, split.table = Inf)
+```
+
+```{r epitope_selection}
+# parse data
+project_predictions = parseEpitopePredictions(path = '3_neolution/filtered_predictions')
+
+# take subsets based on epitopes per non-syn mutations + indels
+project_predictions_subset = applyCutoffs(predictions = project_predictions)
+
+# exclude C alleles
+project_predictions_subset = project_predictions_subset[!grepl(pattern = "C[0-9]{4}", x = names(project_predictions_subset))]
+
+# split by xmer
+project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
+
+```
+
+#### Predicted epitopes - __All patients__ - master order list (unique peptides)
+- __epitopes are sorted by xmer and subsequently by resin__
+```{r prepare_order_list}
+# peptide synth facility list: list all unique epitopes, sorted by xmer and last residue
+all_predictions = rbindlist(list(do.call(rbind, project_predictions_by_xmer)))
+all_predictions = merge(y = all_predictions,
+												x = effects_table[, .(patient_id, sample_prefix)],
+												by = 'sample_prefix')
+setkey(x = all_predictions, xmer, tumor_peptide_resin)
+
+pander(x = unique(x = subset(x = all_predictions,
+                             select = names(all_predictions) %nin% c( 'sample_prefix', 'patient_id', 'hla_allele')),
+                  by = 'tumor_peptide'),
+       split.table = 200)
+```
+
+#### Predicted epitopes - __Individual patients__ - list for combi-coding setups
+- __epitopes predicted to bind to multiple alleles are shown in bold__
+- __epitopes are sorted by xmer first, then by hla\_allele__
+```{r prepare_setup_list, results = 'asis'}
+panderOptions('knitr.auto.asis', FALSE)
+
+# multimer combi-coding setup list: all epitopes and alleles, sorted by xmer and hla_allele
+# take subsets for individual patients
+
+predictions_by_patient = lapply(effects_table$sample_prefix[c(1, 3, 5)],
+																function(prefix) {
+																	data_subset = all_predictions[sample_prefix == prefix]
+																	
+																	data_unique = unique(x = subset(x = data_subset,
+																																	select = !names(data_subset) %in% c('tumor_peptide_trunc', 'tumor_peptide_resin')),
+																											 by = c('hla_allele', 'tumor_peptide'))
+																	
+																	setkey(x = data_unique, xmer, hla_allele)
+																	return(data_unique)
+																})
+
+for (i in 1:length(predictions_by_patient)) {
+	cat('\n#####', effects_table[sample_prefix == predictions_by_patient[[i]]$sample_prefix[1]]$patient_id, '\n')
+	
+	# highlight duplicates (epitopes binding to multiple alleles)
+	if (anyDuplicated(predictions_by_patient[[i]]$tumor_peptide)) {
+		emphasize.strong.rows(unique(c(which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = FALSE)),
+																	 which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = TRUE)))))	
+	}
+	pander(predictions_by_patient[[i]][, -'sample_prefix', with = F], split.table = 200)
+}
+```
+
+<br>
