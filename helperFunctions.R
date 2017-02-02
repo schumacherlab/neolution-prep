@@ -759,7 +759,7 @@ parseEpitopePredictions = function(path, pattern = '_epitopes\\.csv') {
 	predictions = lapply(seq(1, length(files)),
 											 function(i) {
 											 	data = fread(files[i])
-											 	data[, patient_id := sub(pattern = '_mg.+|_L[0-9]{3}.+', replacement = '', x = short_names[i])]
+											 	data[, sample_prefix := sub(pattern = '_mg.+|_L[0-9]{3}.+', replacement = '', x = short_names[i])]
 
 											 	return(data)
 											 })
@@ -802,7 +802,7 @@ prepareEpitopeLists = function(list_of_predictions, split_by= c('9mer', '10mer',
 												 	join_by_xmer = rbindlist(list_of_predictions[grepl(pattern = x,
 												 																										 x = names(list_of_predictions))])
 												 	subset_by_xmer = subset(x = join_by_xmer,
-												 													select = c('patient_id', 'hla_allele', 'tumor_peptide'))
+												 													select = c('sample_prefix', 'hla_allele', 'tumor_peptide'))
 												 	subset_by_xmer[, hla_allele := gsub(pattern = "*",
 												 																			replacement = "\\*",
 												 																			x = subset_by_xmer$hla_allele,
