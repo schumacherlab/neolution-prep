@@ -160,6 +160,11 @@ parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
 }
 
 extractDataFromVcfField = function(vcf_table, sample_tag, format_tag) {
+	# if sample_tag not found in columns, return NA
+	if (!any(grepl(pattern = sample_tag, x = names(vcf_table)))) {
+		return(NA)
+	}
+
 	tag_positions = unlist(sapply(str_split(vcf_table$format, pattern = ':'),
 																function(x) {
 																	match(x = format_tag, table = x, nomatch = NA)
@@ -185,6 +190,11 @@ extractDataFromVcfField = function(vcf_table, sample_tag, format_tag) {
 }
 
 extractVariantReadCountsFromVcf = function(vcf_table, sample_tag, count_tag) {
+	# if sample_tag not found in columns, return NA
+	if (!any(grepl(pattern = sample_tag, x = names(vcf_table)))) {
+		return(NA)
+	}
+
 	count_data = extractDataFromVcfField(vcf_table = vcf_table,
 																			 sample_tag = sample_tag,
 																			 format_tag = count_tag)
@@ -221,6 +231,11 @@ extractVariantSupportingReadCountsFromVcf = function(vcf_table, sample_tag) {
 	# 													 function(counts) {
 	# 													 	as.numeric(counts[c(3, 4, 1, 2)])
 	# 													 })
+
+	# if sample_tag not found in columns, return NA
+	if (!any(grepl(pattern = sample_tag, x = names(vcf_table)))) {
+		return(list(NA, NA))
+	}
 
 	# DP4 field: "# high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases"
 	count_data_snvs = extractDataFromVcfField(vcf_table = vcf_table,
