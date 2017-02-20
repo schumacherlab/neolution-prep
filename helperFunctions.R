@@ -497,7 +497,10 @@ mergeByEnsemblId = function(variant_table, expression_table, expression_unit = '
 
 findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'bam'),
+																							 fasta_genome_ref = NULL,
 																							 sample_info_path = file.path(rootDirectory, 'sample_info.tsv')) {
+
+	registerDoMC(runOptions$samtools$numberOfWorkers)
 
 	if (!dir.exists(rna_path)) {
 		message('RNAseq data directory does not exist at ', rna_path)
@@ -606,22 +609,33 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 	# 																																					 full.names = FALSE))
 
 	# perform pileups on variant locations
-	invisible(sapply(seq(1, nrow(sample_combinations)),
-									 function(x) {
-									 	if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('[.][^.]*$', '', basename(sample_combinations$rna_bam_file[x])), '_mpil_loc.tsv')))) {
-									 		performSamtoolsPileup(locations_file = sample_combinations$variants[x], bam_file = sample_combinations$rna_bam_file[x])
-									 	}})
-						)
+	# invisible(sapply(seq(1, nrow(sample_combinations)),
+	# 								 function(x) {
+	# 								 	if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('[.][^.]*$', '', basename(sample_combinations$rna_bam_file[x])), '_mpil_loc.tsv')))) {
+	# 								 		performSamtoolsPileup(locations_file = sample_combinations$variants[x], bam_file = sample_combinations$rna_bam_file[x])
+	# 								 	}})
+	# 					)
+
+	x = foreach(i = 1:nrow(sample_combinations)) %dopar% {
+		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('\\.[^.]*$', '', basename(sample_combinations$rna_bam_file[i])),
+																																									ifelse(test = is.null(sample_combinations$locations_file[i]),
+																																												 yes = '_mpil.tsv',
+																																												 no = '_mpil_loc.tsv'))))) {
+			performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[i],
+														locations_file = sample_combinations$locations_file[i],
+														fasta_reference = fasta_genome_ref)
+		}
+	}
 
 	pileup_loc_data = lapply(list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-																			pattern = '_mpil_loc.tsv',
+																			pattern = '_mpil(_loc){0,1}\\.tsv',
 																			full.names = TRUE),
 													 fread,
 													 colClasses = c(V1 = 'character'),
 													 col.names = c('chromosome', 'start_position', 'ref_base', 'number_of_reads', 'rna_read_bases', 'base_quality'))
 
 	pileup_loc_data = setNames(object = pileup_loc_data, nm = list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-																																			 pattern = '_mpil_loc.tsv',
+																																			 pattern = '_mpil(_loc){0,1}\\.tsv',
 																																			 full.names = FALSE))
 
 	input_pileup_merge = lapply(1:length(input_data),
@@ -632,79 +646,94 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 																}
 																if (index_pileup_data > 0) {
 																	merged_data = merge(x = input_data[[index_input_data]],
-																											y = pileup_loc_data[[index_pileup_data]][, .(chromosome, start_position, rna_read_bases)],
+																											y = pileup_loc_data[[index_pileup_data]][, .(chromosome, start_position, ref_base, rna_read_bases)],
 																											by = c('chromosome', 'start_position'),
 																											all.x = TRUE)
 																	setorder(merged_data, variant_id, chromosome, start_position)
 																}})
 
 	input_pileup_merge = lapply(input_pileup_merge,
-															function(x) {
-																x$rna_read_bases = gsub(pattern = '[^atgcATGC]',
-																												replacement = '',
-																												x = x$rna_read_bases)
-																x$rna_read_bases = ifelse(test = is.na(x$rna_read_bases) | x$rna_read_bases == '',
-																													yes = NA,
-																													no = x$rna_read_bases)
+															function(dt) {
+																dt$rna_read_bases = gsub(pattern = '[^atgcATGC,\\.]',
+																												 replacement = '',
+																												 x = toupper(dt$rna_read_bases))
+																dt$rna_read_bases = ifelse(test = is.na(dt$rna_read_bases) | dt$rna_read_bases == '',
+																													 yes = NA,
+																													 no = dt$rna_read_bases)
 
-																x$rna_ref_read_count = str_count(string = toupper(x$rna_read_bases),
-																																 pattern = toupper(x$ref_allele))
+																dt$rna_ref_read_count = str_count(string = dt$rna_read_bases,
+																																	pattern = '[\\.,]')
 
-																x$rna_alt_read_count = str_count(string = toupper(x$rna_read_bases),
-																																 pattern = toupper(x$alt_allele))
+																dt$rna_alt_read_count = mapply(FUN = function(ref_allele, alt_allele, ref_base, read_bases)
+																{
+																	if (identical(ref_allele, ref_base)) str_count(string = read_bases,
+																																								 pattern = alt_allele)
+																	else if (identical(chartr(old = 'ATGC',
+																														new = 'TACG',
+																														x = ref_allele), ref_base)) str_count(string = read_bases,
+																																																	pattern = chartr(old = 'ATGC',
+																																																									 new = 'TACG',
+																																																									 x = alt_allele))
+																	else NA
+																},
+																dt$ref_allele,
+																dt$alt_allele,
+																dt$ref_base,
+																dt$rna_read_bases,
+																SIMPLIFY = T)
 
-																x$rna_total_read_count = ifelse(test = is.na(x$rna_read_bases),
-																																yes = NA,
-																																no = nchar(x$rna_read_bases))
+																dt$rna_total_read_count = ifelse(test = is.na(dt$rna_read_bases),
+																																 yes = NA,
+																																 no = nchar(dt$rna_read_bases))
 
-																x$rna_read_bases = NULL
+																dt$rna_read_bases = NULL
 
-																return(x)
+																return(dt)
 															})
 
 	input_pileup_merge = lapply(input_pileup_merge,
-															function(x) {
-																x$rna_alt_expression = sapply(seq(1, nrow(x)),
-																															function(y){
-																																if (is.na(x$rna_ref_read_count[y]) | is.na(x$rna_alt_read_count[y]) | is.na(x$rna_total_read_count[y])) return(NA)
-																																if (x$rna_ref_read_count[y] >= 5
-																																		| x$rna_alt_read_count[y] >= 5
-																																) {
-																																	if (x$rna_alt_read_count[y] > 0) {
-																																		return(TRUE)
-																																	} else if (x$rna_alt_read_count[y] < 1) {
-																																		return(FALSE)
-																																	} else {
-																																		return(NA)
-																																	}
-																																} else {
-																																	return(NA)
-																																}
-																															},
-																															USE.NAMES = F)
+															function(dt) {
+																dt$rna_alt_expression = sapply(1:nrow(dt),
+																															 function(row_index){
+																															 	if (is.na(dt$rna_ref_read_count[row_index]) | is.na(dt$rna_alt_read_count[row_index]) | is.na(dt$rna_total_read_count[row_index])) return(NA)
+																															 	if (dt$rna_ref_read_count[row_index] >= 5
+																															 			| dt$rna_alt_read_count[row_index] >= 5
+																															 	) {
+																															 		if (dt$rna_alt_read_count[row_index] > 0) {
+																															 			return(TRUE)
+																															 		} else if (dt$rna_alt_read_count[row_index] < 1) {
+																															 			return(FALSE)
+																															 		} else {
+																															 			return(NA)
+																															 		}
+																															 	} else {
+																															 		return(NA)
+																															 	}
+																															 },
+																															 USE.NAMES = F)
 
-																x$rna_vaf = sapply(seq(1, nrow(x)),
-																									 function(y){
-																									 	if (is.na(x$rna_alt_read_count[y]) | is.na(x$rna_total_read_count[y])) return(NA)
-																									 	if (x$rna_ref_read_count[y] >= 5
-																									 			| x$rna_alt_read_count[y] >= 5
-																									 	) {
-																									 		return(x$rna_alt_read_count[y] / x$rna_total_read_count[y])
-																									 	} else {
-																									 		return(NA)
-																									 	}
-																									 },
-																									 USE.NAMES = F)
-																return(x)
+																dt$rna_vaf = sapply(1:nrow(dt),
+																										function(row_index){
+																											if (is.na(dt$rna_alt_read_count[row_index]) | is.na(dt$rna_total_read_count[row_index])) return(NA)
+																											if (dt$rna_ref_read_count[row_index] >= 5
+																													| dt$rna_alt_read_count[row_index] >= 5
+																											) {
+																												return(dt$rna_alt_read_count[row_index] / dt$rna_total_read_count[row_index])
+																											} else {
+																												return(NA)
+																											}
+																										},
+																										USE.NAMES = F)
+																return(dt)
 															})
 
 	input_pileup_merge = lapply(input_pileup_merge,
-															function(x) {
+															function(dt) {
 																order = c('variant_id', 'chromosome', 'start_position', 'ref_allele' , 'alt_allele',
 																					'dna_ref_read_count', 'dna_alt_read_count', 'dna_total_read_count', 'dna_vaf', 'rna_ref_read_count', 'rna_alt_read_count', 'rna_total_read_count', 'rna_vaf', 'rna_alt_expression')
-																setcolorder(x = x,
+																setcolorder(x = dt,
 																						neworder = order)
-																return(x)
+																return(dt)
 															})
 
 	invisible(mapply(FUN =
