@@ -119,7 +119,8 @@ parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
 																		})]
 
 	# extract ref and alt read counts
-	dna_read_counts = extractVariantSupportingReadCountsFromVcf(vcf_table = vcf_dt, sample_tag = sample_tag)
+	dna_read_counts = extractVariantSupportingReadCountsFromVcf(vcf_table = vcf_dt,
+																															sample_tag = sample_tag)
 
 	vcf_parsed[, dna_ref_read_count := dna_read_counts[[1]]]
 	vcf_parsed[, dna_alt_read_count := dna_read_counts[[2]]]
@@ -545,7 +546,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 	# generate position list files to feed to samtools mpileup
 	dir.create(path = file.path(rootDirectory, '1a_variants', 'poslist'), showWarnings = F)
 
-	invisible(sapply(seq(1, length(snv_positions)),
+	invisible(sapply(1:length(snv_positions),
 									 function(x) write.table(x = snv_positions[[x]],
 									 												file = file.path(rootDirectory, '1a_variants', 'poslist', paste0(sub("\\.[^.]*$", "", names(snv_positions)[x]), '_poslist.tsv')),
 									 												quote = FALSE,
@@ -553,7 +554,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 									 												row.names = FALSE)))
 
 	# make overview of sample input files
-	sample_combinations = data.table(variants = sapply(sample_info$dna_data_prefix, function(x) grep(pattern = x,
+	sample_combinations = data.table(locations_file = sapply(sample_info$dna_data_prefix, function(x) grep(pattern = x,
 																																																x = list.files(path = file.path(rootDirectory, '1a_variants', 'poslist'),
 																																																							 pattern = '_poslist\\.tsv',
 																																																							 full.names = TRUE),
@@ -623,7 +624,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 																																			 pattern = '_mpil_loc.tsv',
 																																			 full.names = FALSE))
 
-	input_pileup_merge = lapply(seq(1, length(input_data)),
+	input_pileup_merge = lapply(1:length(input_data),
 															function(index_input_data) {
 																index_prefix_dna = which(sapply(sample_info$dna_data_prefix, function(y) grepl(pattern = y, x = names(input_data)[index_input_data], fixed = T), USE.NAMES = F))
 																if (index_prefix_dna > 0) {
