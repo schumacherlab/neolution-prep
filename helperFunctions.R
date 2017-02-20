@@ -6,6 +6,9 @@ required_packages = c('data.table', 'gtools', 'utils', 'optparse', 'RMySQL', 'co
 library(pacman)
 pacman::p_load(char = required_packages)
 
+# drop NA from vector
+dropNa = function(vector) { vector[!is.na(vector)] }
+
 # helper functions for input file generation
 parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf')) {
   # extract relevant info from VCF
