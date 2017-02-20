@@ -528,6 +528,8 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 	# load sample info
 	if (file.exists(sample_info_path)) {
 		sample_info = fread(sample_info_path, sep = '\t', header = T, na.strings = c('','NA', 'N.A.'))
+	} else if (sample_info$patient_id[1] == 'place_holder') {
+		stop('Please fill in sample_info.tsv')
 	} else {
 		stop('Sample info file missing at "', sample_info_path, '", please provide correct path in argument to findRnaReadLevelEvidenceForVariants')
 	}
@@ -570,6 +572,10 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 																	 																																				 value = T),
 																	 												USE.NAMES = FALSE)
 	)
+
+	if (nrow(sample_combinations) < 1) {
+		stop('No valid sample combinations found, please check dna/rna_prefixes and rna bamfile filenames')
+	}
 
 	# # perform pileups on whole bams
 	# invisible(sapply(seq(1, nrow(sample_combinations)),
