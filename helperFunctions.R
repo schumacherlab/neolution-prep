@@ -699,6 +699,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 																																 no = nchar(dt$rna_read_bases))
 
 																dt$rna_read_bases = NULL
+																dt$ref_base = NULL
 
 																return(dt)
 															})
