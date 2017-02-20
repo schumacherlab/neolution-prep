@@ -1,7 +1,7 @@
 # load required packages
 if (!require("pacman")) install.packages("pacman")
 
-required_packages = c('data.table', 'gtools', 'utils', 'optparse', 'RMySQL', 'compiler', 'naturalsort', 'parallel', 'doMC', 'stringr', 'tidyr', 'foreach', 'pander')
+required_packages = c('data.table', 'gtools', 'utils', 'optparse', 'RMySQL', 'compiler', 'pbapply', 'naturalsort', 'parallel', 'doMC', 'stringr', 'tidyr', 'foreach', 'pander')
 
 library(pacman)
 pacman::p_load(char = required_packages)
@@ -29,9 +29,9 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
 
   if (length(vcf_files) < 1) stop('No VCF files found in ', vcf_path)
 
-  vcf_data = lapply(vcf_files,
-                    function(file_path) parseVcf(vcf_path = file_path,
-                                                 sample_tag = 'TUMOR'))
+  vcf_data = pblapply(vcf_files,
+  										function(file_path) parseVcf(vcf_path = file_path,
+  																								 sample_tag = 'TUMOR'))
 
   vcf_data = lapply(vcf_data,
                     function(vcf) {
