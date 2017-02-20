@@ -301,6 +301,8 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
 
 	# generate variant contexts
 	message('Step 2: Generating context for variants')
+	message('Using gene build: ', runOptions$varcontext$ensemblApi)
+
 	generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
 																						 pattern = '\\.tsv',
 																						 full.names = TRUE))
@@ -716,6 +718,12 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 }
 
 performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_reference = NULL) {
+	if (is.null(fasta_reference) | !file.exists(runOptions$samtools$fastaGenomeRef)) {
+		stop('Please provide valid fasta DNA reference (set location in runConfig.R)')
+	} else {
+		message('Performing pileup with genomic reference: ', runOptions$samtools$fastaGenomeRef, '\n')
+	}
+
 	dir.create(file.path(rootDirectory, '1b_rnaseq_data', 'pileups'), showWarnings = FALSE)
 
 	system(command = paste('samtools',
@@ -742,6 +750,7 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf')) 
 	#registerDoMC(2)
 
 	message('Step 4: Running snpEff')
+	message('Using genome & gene builds: ', runOptions$snpeff$build)
 	dir.create(path = file.path(rootDirectory, '4_snpEff'),
 						 showWarnings = FALSE)
 
