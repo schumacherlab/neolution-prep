@@ -497,7 +497,7 @@ mergeByEnsemblId = function(variant_table, expression_table, expression_unit = '
 
 findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'bam'),
-																							 fasta_genome_ref = NULL,
+																							 fasta_genome_ref = runOptions$samtools$fastaGenomeRef,
 																							 sample_info_path = file.path(rootDirectory, 'sample_info.tsv')) {
 
 	registerDoMC(runOptions$samtools$numberOfWorkers)
