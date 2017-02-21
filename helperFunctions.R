@@ -36,7 +36,7 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
                     function(vcf) {
                       data = vcf[grepl('^[gr]s\\d+$', variant_id) # always include SNPs
                       					 | sapply(1:nrow(vcf), function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index])) # include all indels, since sample order is inconsistent (can't be sure we're looking at NORMAL or TUMOR sample)
-                      					 | genotype != '0/0', # exclude tumor-specific variants which are ref
+                      					 | genotype != '0/0' | is.na(genotype), # exclude tumor-specific variants which are ref
                                  .(variant_id, chromosome, start_position, ref_allele, alt_allele, dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
                       return(data)
                     })
