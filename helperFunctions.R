@@ -804,20 +804,22 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 														full.names = TRUE)
 
 	invisible(foreach(i = 1:length(variantLists)) %do% {
-		command = paste('java -Xmx4g -jar', file.path(runOptions$snpeff$path, 'SnpSift.jar'),
-										ifelse(test = filter_snps,
-													 yes = 'filter " (ID "\'!\'"~ \'[gr]s*\') "',
-													 no = ''),
-										variantLists[i],
-										'| java -Xmx4g -jar', file.path(runOptions$snpeff$path, 'snpEff.jar'), '-nodownload -canon -stats',
-										file.path(rootDirectory,'4_snpEff', paste0(sub('\\.[^.]*$','',basename(variantLists[i])), '-snpEff_summary.html')),
-										runOptions$snpeff$build, '>', file.path(rootDirectory,'4_snpEff', paste0(sub(pattern = '\\.[^.]*$',
-																																																 replacement = '',
-																																																 x =  basename(variantLists[i])),
-																																														 ifelse(test = filter_snps,
-																																														 			 yes = '',
-																																														 			 no = '-with_snps'),
-																																														 '-snpEff.vcf')))
+		command_snpsift = paste('java -Xmx4g -jar', file.path(runOptions$snpeff$path, 'SnpSift.jar'),
+														'filter " (ID "\'!\'"~ \'[gr]s*\') "',
+														variantLists[i])
+		command_snpeff = paste('java -Xmx4g -jar', file.path(runOptions$snpeff$path, 'snpEff.jar'), '-nodownload -canon -stats',
+													 file.path(rootDirectory,'4_snpEff', paste0(sub('\\.[^.]*$','',basename(variantLists[i])), '-snpEff_summary.html')),
+													 runOptions$snpeff$build, '>', file.path(rootDirectory,'4_snpEff', paste0(sub(pattern = '\\.[^.]*$',
+													 																																						 replacement = '',
+													 																																						 x =  basename(variantLists[i])),
+													 																																				 ifelse(test = filter_snps,
+													 																																				 			 yes = '',
+													 																																				 			 no = '-with_snps'),
+													 																																				 '-snpEff.vcf')))
+		command = ifelse(test = filter_snps,
+										 yes = paste(command_snpsift, command_snpeff, sep = '|'),
+										 no = paste(paste('cat', variantLists[i]), command_snpeff, sep = '|'))
+
 		system(command = command,
 					 wait = TRUE)
 	})
