@@ -585,61 +585,17 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 		stop('No valid sample combinations found, please check dna/rna_prefixes and rna bamfile filenames')
 	}
 
-	# # perform pileups on whole bams
-	# invisible(sapply(seq(1, nrow(sample_combinations)),
-	# 								 function(x) {
-	# 								 	if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('[.][^.]*$', '', basename(sample_combinations$rna_bam_file[x])), '_mpil.tsv')))) {
-	# 								 		performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[x])
-	# 								 	}})
-	# )
-	#
-	# # determine bam read depth summary
-	# pileup_data = lapply(list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-	# 																pattern = '_mpil.tsv',
-	# 																full.names = TRUE),
-	# 										 fread,
-	# 										 colClasses = c(V1 = 'character'),
-	# 										 col.names = c('chromosome', 'start_position', 'ref_base', 'number_of_reads', 'rna_read_bases', 'base_quality'))
-	#
-	# pileup_data = lapply(pileup_data,
-	# 										 function(x) {
-	# 										 	x$rna_read_bases = gsub(pattern = '[^atgcATGC]',
-	# 										 													replacement = '',
-	# 										 													x = x$rna_read_bases)
-	# 										 	x$rna_read_bases = ifelse(test = is.na(x$rna_read_bases) | x$rna_read_bases == '',
-	# 										 														yes = NA,
-	# 										 														no = x$rna_read_bases)
-	#
-	# 										 	x$rna_total_read_count = ifelse(test = is.na(x$rna_read_bases),
-	# 										 																	yes = NA,
-	# 										 																	no = nchar(x$rna_read_bases))
-	# 										 })
-	#
-	# read_depth_summary = lapply(pileup_data,
-	# 														function(x) summary(x$rna_total_read_count))
-	#
-	# read_depth_summary = setNames(object = read_depth_summary, nm = list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-	# 																																					 pattern = '_mpil.tsv',
-	# 																																					 full.names = FALSE))
-
-	# perform pileups on variant locations
-	# invisible(sapply(seq(1, nrow(sample_combinations)),
-	# 								 function(x) {
-	# 								 	if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('[.][^.]*$', '', basename(sample_combinations$rna_bam_file[x])), '_mpil_loc.tsv')))) {
-	# 								 		performSamtoolsPileup(locations_file = sample_combinations$variants[x], bam_file = sample_combinations$rna_bam_file[x])
-	# 								 	}})
-	# 					)
+	if (is.null(fasta_genome_ref) | !file.exists(fasta_genome_ref)) {
+		stop('Please provide valid fasta DNA reference (set location in runConfig.R)')
+	} else {
+		message('Performing pileup with genomic reference: ', fasta_genome_ref, '\n')
+	}
 
 	x = foreach(i = 1:nrow(sample_combinations)) %dopar% {
 		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('\\.[^.]*$', '', basename(sample_combinations$rna_bam_file[i])),
 																																									ifelse(test = is.null(sample_combinations$locations_file[i]),
 																																												 yes = '_mpil.tsv',
 																																												 no = '_mpil_loc.tsv'))))) {
-			if (is.null(fasta_genome_ref) | !file.exists(fasta_genome_ref)) {
-				stop('Please provide valid fasta DNA reference (set location in runConfig.R)')
-			} else {
-				message('Performing pileup with genomic reference: ', fasta_genome_ref, '\n')
-			}
 
 			performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[i],
 														locations_file = sample_combinations$locations_file[i],
