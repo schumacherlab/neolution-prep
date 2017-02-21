@@ -534,10 +534,12 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 	# load sample info
 	if (file.exists(sample_info_path)) {
 		sample_info = fread(sample_info_path, sep = '\t', header = T, na.strings = c('','NA', 'N.A.'))
-	} else if (sample_info$patient_id[1] == 'place_holder') {
-		stop('Please fill in sample_info.tsv')
 	} else {
 		stop('Sample info file missing at "', sample_info_path, '", please provide correct path in argument to findRnaReadLevelEvidenceForVariants')
+	}
+
+	if (sample_info$patient_id[1] == 'place_holder') {
+		stop('Please fill in sample_info.tsv')
 	}
 
 	# make list of all unique variants found in parsed VCF
