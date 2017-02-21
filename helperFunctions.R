@@ -199,7 +199,7 @@ extractDataFromVcfField = function(vcf_table, sample_tag, format_tag) {
 extractVariantReadCountsFromVcf = function(vcf_table, sample_tag, count_tag) {
 	# if sample_tag not found in columns, return NA
 	if (!any(grepl(pattern = sample_tag, x = names(vcf_table)))) {
-		return(NA)
+		return(data.table(A = NA, T = NA, G = NA, C = NA))
 	}
 
 	count_data = extractDataFromVcfField(vcf_table = vcf_table,
