@@ -789,7 +789,7 @@ performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_referenc
 }
 
 
-runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf')) {
+runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), filter_snps = TRUE) {
 	#registerDoMC(2)
 
 	message('Step 4: Running snpEff')
@@ -804,10 +804,20 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf')) 
 														full.names = TRUE)
 
 	invisible(foreach(i = 1:length(variantLists)) %do% {
-		command = paste('java -Xmx4g -jar', file.path(runOptions$snpeff$path, 'SnpSift.jar'), 'filter " (ID "\'!\'"~ \'[gr]s*\') "', variantLists[i],
+		command = paste('java -Xmx4g -jar', file.path(runOptions$snpeff$path, 'SnpSift.jar'),
+										ifelse(test = filter_snps,
+													 yes = 'filter " (ID "\'!\'"~ \'[gr]s*\') "',
+													 no = ''),
+										variantLists[i],
 										'| java -Xmx4g -jar', file.path(runOptions$snpeff$path, 'snpEff.jar'), '-nodownload -canon -stats',
 										file.path(rootDirectory,'4_snpEff', paste0(sub('\\.[^.]*$','',basename(variantLists[i])), '-snpEff_summary.html')),
-										runOptions$snpeff$build, '>', file.path(rootDirectory,'4_snpEff', paste0(sub('\\.[^.]*$','',basename(variantLists[i])), '-snpEff.vcf')))
+										runOptions$snpeff$build, '>', file.path(rootDirectory,'4_snpEff', paste0(sub(pattern = '\\.[^.]*$',
+																																																 replacement = '',
+																																																 x =  basename(variantLists[i])),
+																																														 ifelse(test = filter_snps,
+																																														 			 yes = '',
+																																														 			 no = '-with_snps'),
+																																														 '-snpEff.vcf')))
 		system(command = command,
 					 wait = TRUE)
 	})
