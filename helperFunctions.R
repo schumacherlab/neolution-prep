@@ -10,11 +10,9 @@ pacman::p_load(char = required_packages)
 dropNa = function(vector) { vector[!is.na(vector)] }
 
 # helper functions for input file generation
-parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf')) {
+parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), extract_fields = NULL, write = TRUE) {
   # extract relevant info from VCF
   message('Step 1: Parsing & extracting fields from VCF')
-
-  dir.create(file.path(rootDirectory, '1a_variants', 'parsed'), showWarnings = F)
 
   # make list of VCF files
   vcf_files = list.files(path = vcf_path,
@@ -31,7 +29,8 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
 
   vcf_data = pblapply(vcf_files,
   										function(file_path) parseVcf(vcf_path = file_path,
-  																								 sample_tag = 'TUMOR'))
+  																								 sample_tag = 'TUMOR',
+  																								 extract_fields = extract_fields))
 
   vcf_data = lapply(vcf_data,
                     function(vcf) {
@@ -42,16 +41,23 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
                       return(data)
                     })
 
-  invisible(mapply(function(vcf, index) {
-  	write.table(x = vcf,
-  							file = file.path(rootDirectory, '1a_variants', 'parsed', paste0(names(vcf_data)[index], '.tsv')),
-  							sep = '\t',
-  							append = FALSE,
-  							quote = FALSE,
-  							row.names = FALSE)
-  },
-  vcf_data,
-  seq(1, length(vcf_data))))
+  if (write) {
+  	dir.create(file.path(rootDirectory, '1a_variants', 'parsed'), showWarnings = F)
+
+  	invisible(mapply(function(vcf, index) {
+  		write.table(x = vcf,
+  								file = file.path(rootDirectory, '1a_variants', 'parsed', paste0(names(vcf_data)[index], '.tsv')),
+  								sep = '\t',
+  								append = FALSE,
+  								quote = FALSE,
+  								row.names = FALSE)
+  	},
+  	vcf_data,
+  	seq(1, length(vcf_data))))
+  } else {
+  	return(vcf_data)
+  }
+
 }
 
 parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
