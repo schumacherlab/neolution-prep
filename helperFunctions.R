@@ -70,7 +70,7 @@ parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
 	vcf_lines = readLines(vcf_path)
 	# find table header line & read table
 	vcf_dt = fread(input = vcf_path,
-								 skip = max(grep(pattern = '^#CHROM', x = vcf_lines)) - 1,
+								 skip = max(grep(pattern = '#CHROM', x = vcf_lines)) - 1,
 								 sep = '\t',
 								 colClasses = list(character = c('#CHROM')))
 	setnames(x = vcf_dt,
