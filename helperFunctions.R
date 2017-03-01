@@ -381,9 +381,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 
 	x = foreach(i = 1:nrow(sample_combinations)) %dopar% {
 		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('\\.[^.]*$', '', basename(sample_combinations$rna_bam_file[i])),
-																																									ifelse(test = is.null(sample_combinations$locations_file[i]),
-																																												 yes = '_mpil.tsv',
-																																												 no = '_mpil_loc.tsv'))))) {
+																																									if (is.null(sample_combinations$locations_file[i])) {'_mpil.tsv'} else {'_mpil_loc.tsv'})))) {
 
 			performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[i],
 														locations_file = sample_combinations$locations_file[i],
@@ -392,14 +390,14 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 	}
 
 	pileup_loc_data = lapply(list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-																			pattern = '_mpil(_loc){0,1}\\.tsv',
+																			pattern = if (is.null(sample_combinations$locations_file[i])) {'_mpil\\.tsv'} else {'_mpil_loc\\.tsv'},
 																			full.names = TRUE),
 													 fread,
 													 colClasses = c(V1 = 'character'),
 													 col.names = c('chromosome', 'start_position', 'ref_base', 'number_of_reads', 'rna_read_bases', 'base_quality'))
 
 	pileup_loc_data = setNames(object = pileup_loc_data, nm = list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-																																			 pattern = '_mpil(_loc){0,1}\\.tsv',
+																																			 pattern = if (is.null(sample_combinations$locations_file[i])) {'_mpil\\.tsv'} else {'_mpil_loc\\.tsv'},
 																																			 full.names = FALSE))
 
 	input_pileup_merge = lapply(1:length(input_data),
@@ -517,17 +515,11 @@ performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_referenc
 
 	system(command = paste('samtools',
 												 'mpileup',
-												 ifelse(test = is.null(locations_file),
-												 			 yes = '',
-												 			 no = paste('-l', locations_file)),
-												 ifelse(test = is.null(fasta_reference),
-												 			 yes = '',
-												 			 no = paste('-f', fasta_reference)),
+												 if (!is.null(locations_file)) {paste('-l', locations_file)},
+												 if (!is.null(fasta_reference)) {paste('-f', fasta_reference)},
 												 bam_file, '>',
 												 file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('\\.[^.]*$', '', basename(bam_file)),
-												 																														 ifelse(test = is.null(locations_file),
-												 																														 			 yes = '_mpil.tsv',
-												 																														 			 no = '_mpil_loc.tsv')))),
+												 																														 if (is.null(locations_file)) {'_mpil.tsv'} else {'_mpil_loc.tsv'}))),
 				 intern = FALSE,
 				 wait = TRUE)
 
