@@ -27,7 +27,7 @@ runOptions = list(general = list(),
 
 									# set snpEff locations
 									snpeff = list(path = '/home/NFS/users/l.fanchi/libs/snpEff',
-																build = 'GRCh38.81'))
+																build = 'GRCh38.86'))
 
 
 
