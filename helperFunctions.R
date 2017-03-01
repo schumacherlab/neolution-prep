@@ -287,6 +287,7 @@ extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', '
 # Variant allele expression -----------------------------------------------
 findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'bam'),
+																							 quant_mode = 'cufflinks',
 																							 fasta_genome_ref = runOptions$samtools$fastaGenomeRef,
 																							 sample_info_path = file.path(rootDirectory, 'sample_info.tsv')) {
 
@@ -351,18 +352,21 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 									 												row.names = FALSE)))
 
 	# make overview of sample input files
+	regex_pattern = if (quant_mode == 'cufflinks') {'accepted_hits\\.bam$'} else if (quant_mode == 'salmon') {'Aligned\\.sortedByCoord\\.out\\.bam$'} else {stop('Please define valid quant_mode (cufflinks/salmon)')}
+
 	sample_combinations = data.table(locations_file = sapply(sample_info$dna_data_prefix, function(x) grep(pattern = x,
-																																																x = list.files(path = file.path(rootDirectory, '1a_variants', 'poslist'),
-																																																							 pattern = '_poslist\\.tsv',
-																																																							 full.names = TRUE),
-																																																value = T),
-																										 USE.NAMES = FALSE),
+																																																				 x = list.files(path = file.path(rootDirectory, '1a_variants', 'poslist'),
+																																																				 							 pattern = '_poslist\\.tsv',
+																																																				 							 full.names = TRUE),
+																																																				 value = T),
+																													 USE.NAMES = FALSE),
 																	 rna_bam_file = sapply(sample_info$rna_data_prefix, function(x) grep(pattern = x,
-																	 																																				 x = list.files(path = rna_path,
-																	 																																				 							 pattern = '\\.bam$',
-																	 																																				 							 full.names = TRUE),
-																	 																																				 value = T),
-																	 												USE.NAMES = FALSE)
+																	 																																		x = list.files(path = rna_path,
+																	 																																									 pattern = regex_pattern,
+																	 																																									 recursive = TRUE,
+																	 																																									 full.names = TRUE),
+																	 																																		value = T),
+																	 											USE.NAMES = FALSE)
 	)
 
 	if (nrow(sample_combinations) < 1) {
