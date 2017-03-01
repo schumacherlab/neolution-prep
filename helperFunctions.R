@@ -273,57 +273,6 @@ extractVariantSupportingReadCountsFromVcf = function(vcf_table, sample_tag) {
 	return(list(ref_supporting_read_counts, alt_supporting_read_counts))
 }
 
-performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '1a_variants', 'parsed'), filter_rna_alt_expression = TRUE, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
-	registerDoMC(runOptions$varcontext$numberOfWorkers)
-
-	dir.create(file.path(rootDirectory, '2_varcontext'),
-						 showWarnings = FALSE)
-	dir.create(file.path(rootDirectory, '2_varcontext', 'input_lists'),
-						 showWarnings = FALSE)
-	dir.create(file.path(rootDirectory, '2_varcontext', 'varcontext_logs'),
-						 showWarnings = FALSE)
-
-	# make list of input files
-	variant_lists = list.files(path = variant_path,
-														pattern = '\\.tsv$',
-														recursive = FALSE,
-														full.names = TRUE)
-	variant_data = lapply(variant_lists,
-											 fread,
-											 colClasses = list(character = c('chromosome')))
-	variant_data = setNames(object = variant_data,
-												 nm = list.files(path = variant_path,
-												 								pattern = '\\.tsv$'))
-
-	# remove variants without rna_alt_expression
-	if (filter_rna_alt_expression) {
-		variant_data = lapply(variant_data,
-													function(variants) {
-														return(variants[rna_alt_expression == TRUE | is.na(rna_alt_expression)])
-													})
-	}
-
-	invisible(mapply(function(x, y) {
-		write.table(x = x,
-								file = file.path(rootDirectory, '2_varcontext', 'input_lists', names(variant_data)[y]),
-								sep = '\t',
-								row.names = F)
-	},
-	variant_data,
-	seq(1, length(variant_data))))
-
-	# generate variant contexts
-	message('Step 2: Generating context for variants')
-	message('Using gene build: ', runOptions$varcontext$ensemblApi)
-
-	generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
-																						 pattern = '\\.tsv',
-																						 full.names = TRUE))
-
-	# move files
-	# system(command = paste('cd', variant_path, ';', 'mv -f *.tsv ../extr_fields'))
-}
-
 extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
 	extractFields = paste("export SHELL=/bin/bash;",
 												"find", vcf_path, "-name \'*.vcf\' -print0",
@@ -334,178 +283,6 @@ extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', '
 	system(command = extractFields)
 }
 
-generateVarcontext = function(input_list) {
-	if (length(input_list) < 1) {
-		stop('No input lists found...')
-	}
-
-	setwd(runOptions$varcontext$varcontextDirectory)
-
-	invisible(foreach(i = 1:length(input_list)) %dopar% {
-		filename = sub(pattern = '\\.[^.]+$', replacement = '', x = basename(input_list[i]))
-
-		runStart = format(Sys.time(), '%Y%m%d')
-
-		# write run info to log
-		write(x = paste0(Sys.time(),' - Varcontext run start\n\n',
-										 'Branch:\t\t\t', system('git symbolic-ref --short -q HEAD', intern = TRUE), '\n',
-										 'Commit hash:\t\t', system('git rev-parse HEAD', intern = TRUE), '\n\n',
-										 'Input file:\t\t', input_list[i], '\n',
-										 'Ensembl API:\t\t', runOptions$varcontext$ensemblApi, '\n\n',
-										 'Field separator:\t', runOptions$varcontext$fieldSeparator, '\n',
-										 'Canonical transcripts:\t', runOptions$varcontext$canonicalOnly, '\n',
-										 'Peptide context:\t', runOptions$varcontext$peptideContext,'\n',
-										 'NMD status:\t', runOptions$varcontext$nmdStatus, '\n'),
-					file = file.path(rootDirectory, '2_varcontext', 'varcontext_logs',
-													 paste(filename,
-													 			'runInfo.txt',
-													 			sep = "_")),
-					append = FALSE)
-
-		system(command = paste0('export ENSEMBLAPI="', runOptions$varcontext$ensemblApi, '";',
-														'export PERL5LIB="$PERL5LIB:', runOptions$varcontext$perlLibs,'";',
-														'perl ', file.path(runOptions$varcontext$varcontextDirectory, 'varcontext/create_context.pl'), ' ',
-														'--separator=', runOptions$varcontext$fieldSeparator, ' ',
-														ifelse(runOptions$varcontext$canonicalOnly, '--canonical ', ''),
-														ifelse(runOptions$varcontext$peptideContext, '--peptide ', ''),
-														ifelse(runOptions$varcontext$nmdStatus, '--nmd ', ''),
-														'"', input_list[i], '"',
-														' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
-														' 2> "', file.path(rootDirectory, '2_varcontext', 'varcontext_logs', paste(filename, 'warnings.log"', sep = '_'))),
-					 intern = FALSE)
-	})
-
-	setwd(rootDirectory)
-}
-
-prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_varcontext'),
-																 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'processed'),
-																 sample_info_path = file.path(rootDirectory, 'sample_info.tsv'),
-																 rna_file_suffix = 'genes\\.fpkm_tracking',
-																 expression_unit = 'FPKM') {
-
-	varcontext_data = lapply(list.files(path = varcontext_path,
-																			pattern = 'varcontext\\.tsv',
-																			full.names = TRUE),
-													 fread,
-													 colClasses = list(character = c('chromosome', 'nmd_remark')))
-	varcontext_data = setNames(object = varcontext_data,
-														 nm = list.files(path = varcontext_path,
-														 								pattern = 'varcontext\\.tsv'))
-
-	dir.create(file.path(rootDirectory, '3_neolution'),
-						 showWarnings = FALSE)
-
-	if (file.exists(sample_info_path) & file.exists(rna_path)) {
-		message('Step 3a: Merging RNA expression data')
-
-		rnaseq_files = list.files(path = rna_path,
-															pattern = rna_file_suffix,
-															full.names = TRUE)
-
-		if (length(rnaseq_files) < 1) {
-			stop('RNAseq directory does not contain files with suffix: ', rna_file_suffix)
-		}
-
-		rnaseq_data = lapply(rnaseq_files,
-												 function(x) {
-												 	data = fread(x,
-												 							 colClasses = list(character = c(expression_unit)))
-												 	data[[expression_unit]] = as.numeric(data[[expression_unit]])
-												 	return(data)
-												 })
-
-		rnaseq_data = setNames(object = rnaseq_data,
-													 nm = list.files(path = rna_path,
-													 								pattern = rna_file_suffix))
-
-		sample_info = fread(sample_info_path,
-												na.strings = c('', 'NA', 'N.A.'))
-
-		sample_combinations = data.table(variants = sapply(sample_info$dna_data_prefix, function(x) grep(pattern = x,
-																																																		 x = names(varcontext_data),
-																																																		 value = T),
-																											 USE.NAMES = FALSE),
-																		 rna_expression_data = sapply(sample_info$rna_data_prefix, function(x) grep(pattern = x,
-																		 																																					 x = names(rnaseq_data),
-																		 																																					 value = T),
-																		 														 USE.NAMES = FALSE)
-		)
-
-		if (nrow(sample_combinations) < 1) stop('Input files not found, check directory structure and/or sample_info.tsv')
-
-		prediction_input = lapply(seq(1, nrow(sample_combinations)),
-															function(x) {
-																if (length(sample_combinations[x, variants]) > 0 & length(sample_combinations[x, rna_expression_data]) > 0) {
-																	message('Merging RNA expression data for: ', sample_combinations[x, variants], ' & ', sample_combinations[x, rna_expression_data])
-																	mergeByEnsemblId(variant_table = varcontext_data[[sample_combinations[x, variants]]],
-																									 expression_table = rnaseq_data[[sample_combinations[x, rna_expression_data]]])
-																} else if (length(sample_combinations[x, variants]) > 0) {
-																	message('Adding empty rna_expression column for ', sample_combinations[x, variants])
-																	mergeByEnsemblId(variant_table = varcontext_data[[sample_combinations[x, variants]]],
-																									 expression_table = NULL)
-																} else {
-																	warning('No input data present for ', sample_combinations[x, variants], ' & ', sample_combinations[x, rna_expression_data])
-																}
-															})
-		prediction_input = setNames(object = prediction_input, nm = sub("[.][^.]*$", "", sample_combinations$variants))
-
-		rna_coverage_summary = data.table(sample = names(prediction_input),
-																			percent_ensg_coverage = sapply(prediction_input, function(x) round(x = length(which(!is.na(x[[expression_unit]]))) / nrow(x) * 100,
-																																																				 digits = 1))
-		)
-
-		rna_expression_summary = data.table(sample = names(prediction_input),
-																				percent_no_expression = sapply(rnaseq_data, function(x) round(x = length(which(x[[expression_unit]] == 0)) / nrow(x) * 100,
-																																																			digits = 1))
-		)
-
-		write.table(x = rna_expression_summary,
-								file = file.path(rootDirectory, '1b_rnaseq_data', 'rna_expression_info.tsv'),
-								sep = '\t',
-								row.names = FALSE,
-								quote = FALSE,
-								append = FALSE)
-
-		write.table(x = rna_coverage_summary,
-								file = file.path(rootDirectory, '3_neolution', 'rna_coverage_info.tsv'),
-								sep = '\t',
-								row.names = FALSE,
-								quote = FALSE,
-								append = FALSE)
-
-		message('Step 3b: Generating Neolution pipeline input')
-	} else {
-		message('Step 3: Generating Neolution pipeline input (no RNAseq data)')
-
-		prediction_input = varcontext_data
-	}
-
-	invisible(mapply(FUN =
-									 	function(x, y) {
-									 		write.table(x = x,
-									 								file = file.path(rootDirectory, '3_neolution', paste0(names(prediction_input)[y], '.tsv')),
-									 								sep = '\t',
-									 								row.names = F)
-									 	},
-									 prediction_input,
-									 seq(1, length(prediction_input))))
-}
-
-mergeByEnsemblId = function(variant_table, expression_table, expression_unit = 'FPKM') {
-	if (is.null(expression_table)) {
-		variant_table[[expression_unit]] = NA
-		return(variant_table)
-	} else if ('gene_id' %in% names(variant_table) && 'gene_id' %in% names(expression_table)) {
-		table_merged = merge(x = variant_table,
-												 y = expression_table[!duplicated(gene_id), c('gene_id', expression_unit), with = FALSE],
-												 by = 'gene_id',
-												 all.x = TRUE)
-		return(table_merged)
-	} else {
-		warning('gene_id column missing in either variant table or expression table')
-	}
-}
 
 # Variant allele expression -----------------------------------------------
 findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
@@ -755,6 +532,233 @@ performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_referenc
 
 
 # Varcontext generation ---------------------------------------------------
+performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '1a_variants', 'parsed'), filter_rna_alt_expression = TRUE, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
+	registerDoMC(runOptions$varcontext$numberOfWorkers)
+
+	dir.create(file.path(rootDirectory, '2_varcontext'),
+						 showWarnings = FALSE)
+	dir.create(file.path(rootDirectory, '2_varcontext', 'input_lists'),
+						 showWarnings = FALSE)
+	dir.create(file.path(rootDirectory, '2_varcontext', 'varcontext_logs'),
+						 showWarnings = FALSE)
+
+	# make list of input files
+	variant_lists = list.files(path = variant_path,
+														pattern = '\\.tsv$',
+														recursive = FALSE,
+														full.names = TRUE)
+	variant_data = lapply(variant_lists,
+											 fread,
+											 colClasses = list(character = c('chromosome')))
+	variant_data = setNames(object = variant_data,
+												 nm = list.files(path = variant_path,
+												 								pattern = '\\.tsv$'))
+
+	# remove variants without rna_alt_expression
+	if (filter_rna_alt_expression) {
+		variant_data = lapply(variant_data,
+													function(variants) {
+														return(variants[rna_alt_expression == TRUE | is.na(rna_alt_expression)])
+													})
+	}
+
+	invisible(mapply(function(x, y) {
+		write.table(x = x,
+								file = file.path(rootDirectory, '2_varcontext', 'input_lists', names(variant_data)[y]),
+								sep = '\t',
+								row.names = F)
+	},
+	variant_data,
+	seq(1, length(variant_data))))
+
+	# generate variant contexts
+	message('Step 2: Generating context for variants')
+	message('Using gene build: ', runOptions$varcontext$ensemblApi)
+
+	generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
+																						 pattern = '\\.tsv',
+																						 full.names = TRUE))
+
+	# move files
+	# system(command = paste('cd', variant_path, ';', 'mv -f *.tsv ../extr_fields'))
+}
+
+generateVarcontext = function(input_list) {
+	if (length(input_list) < 1) {
+		stop('No input lists found...')
+	}
+
+	setwd(runOptions$varcontext$varcontextDirectory)
+
+	invisible(foreach(i = 1:length(input_list)) %dopar% {
+		filename = sub(pattern = '\\.[^.]+$', replacement = '', x = basename(input_list[i]))
+
+		runStart = format(Sys.time(), '%Y%m%d')
+
+		# write run info to log
+		write(x = paste0(Sys.time(),' - Varcontext run start\n\n',
+										 'Branch:\t\t\t', system('git symbolic-ref --short -q HEAD', intern = TRUE), '\n',
+										 'Commit hash:\t\t', system('git rev-parse HEAD', intern = TRUE), '\n\n',
+										 'Input file:\t\t', input_list[i], '\n',
+										 'Ensembl API:\t\t', runOptions$varcontext$ensemblApi, '\n\n',
+										 'Field separator:\t', runOptions$varcontext$fieldSeparator, '\n',
+										 'Canonical transcripts:\t', runOptions$varcontext$canonicalOnly, '\n',
+										 'Peptide context:\t', runOptions$varcontext$peptideContext,'\n',
+										 'NMD status:\t', runOptions$varcontext$nmdStatus, '\n'),
+					file = file.path(rootDirectory, '2_varcontext', 'varcontext_logs',
+													 paste(filename,
+													 			'runInfo.txt',
+													 			sep = "_")),
+					append = FALSE)
+
+		system(command = paste0('export ENSEMBLAPI="', runOptions$varcontext$ensemblApi, '";',
+														'export PERL5LIB="$PERL5LIB:', runOptions$varcontext$perlLibs,'";',
+														'perl ', file.path(runOptions$varcontext$varcontextDirectory, 'varcontext/create_context.pl'), ' ',
+														'--separator=', runOptions$varcontext$fieldSeparator, ' ',
+														ifelse(runOptions$varcontext$canonicalOnly, '--canonical ', ''),
+														ifelse(runOptions$varcontext$peptideContext, '--peptide ', ''),
+														ifelse(runOptions$varcontext$nmdStatus, '--nmd ', ''),
+														'"', input_list[i], '"',
+														' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
+														' 2> "', file.path(rootDirectory, '2_varcontext', 'varcontext_logs', paste(filename, 'warnings.log"', sep = '_'))),
+					 intern = FALSE)
+	})
+
+	setwd(rootDirectory)
+}
+
+
+# Neolution input generation ----------------------------------------------
+prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_varcontext'),
+																 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'processed'),
+																 sample_info_path = file.path(rootDirectory, 'sample_info.tsv'),
+																 rna_file_suffix = 'genes\\.fpkm_tracking',
+																 expression_unit = 'FPKM') {
+
+	varcontext_data = lapply(list.files(path = varcontext_path,
+																			pattern = 'varcontext\\.tsv',
+																			full.names = TRUE),
+													 fread,
+													 colClasses = list(character = c('chromosome', 'nmd_remark')))
+	varcontext_data = setNames(object = varcontext_data,
+														 nm = list.files(path = varcontext_path,
+														 								pattern = 'varcontext\\.tsv'))
+
+	dir.create(file.path(rootDirectory, '3_neolution'),
+						 showWarnings = FALSE)
+
+	if (file.exists(sample_info_path) & file.exists(rna_path)) {
+		message('Step 3a: Merging RNA expression data')
+
+		rnaseq_files = list.files(path = rna_path,
+															pattern = rna_file_suffix,
+															full.names = TRUE)
+
+		if (length(rnaseq_files) < 1) {
+			stop('RNAseq directory does not contain files with suffix: ', rna_file_suffix)
+		}
+
+		rnaseq_data = lapply(rnaseq_files,
+												 function(x) {
+												 	data = fread(x,
+												 							 colClasses = list(character = c(expression_unit)))
+												 	data[[expression_unit]] = as.numeric(data[[expression_unit]])
+												 	return(data)
+												 })
+
+		rnaseq_data = setNames(object = rnaseq_data,
+													 nm = list.files(path = rna_path,
+													 								pattern = rna_file_suffix))
+
+		sample_info = fread(sample_info_path,
+												na.strings = c('', 'NA', 'N.A.'))
+
+		sample_combinations = data.table(variants = sapply(sample_info$dna_data_prefix, function(x) grep(pattern = x,
+																																																		 x = names(varcontext_data),
+																																																		 value = T),
+																											 USE.NAMES = FALSE),
+																		 rna_expression_data = sapply(sample_info$rna_data_prefix, function(x) grep(pattern = x,
+																		 																																					 x = names(rnaseq_data),
+																		 																																					 value = T),
+																		 														 USE.NAMES = FALSE)
+		)
+
+		if (nrow(sample_combinations) < 1) stop('Input files not found, check directory structure and/or sample_info.tsv')
+
+		prediction_input = lapply(seq(1, nrow(sample_combinations)),
+															function(x) {
+																if (length(sample_combinations[x, variants]) > 0 & length(sample_combinations[x, rna_expression_data]) > 0) {
+																	message('Merging RNA expression data for: ', sample_combinations[x, variants], ' & ', sample_combinations[x, rna_expression_data])
+																	mergeByEnsemblId(variant_table = varcontext_data[[sample_combinations[x, variants]]],
+																									 expression_table = rnaseq_data[[sample_combinations[x, rna_expression_data]]])
+																} else if (length(sample_combinations[x, variants]) > 0) {
+																	message('Adding empty rna_expression column for ', sample_combinations[x, variants])
+																	mergeByEnsemblId(variant_table = varcontext_data[[sample_combinations[x, variants]]],
+																									 expression_table = NULL)
+																} else {
+																	warning('No input data present for ', sample_combinations[x, variants], ' & ', sample_combinations[x, rna_expression_data])
+																}
+															})
+		prediction_input = setNames(object = prediction_input, nm = sub("[.][^.]*$", "", sample_combinations$variants))
+
+		rna_coverage_summary = data.table(sample = names(prediction_input),
+																			percent_ensg_coverage = sapply(prediction_input, function(x) round(x = length(which(!is.na(x[[expression_unit]]))) / nrow(x) * 100,
+																																																				 digits = 1))
+		)
+
+		rna_expression_summary = data.table(sample = names(prediction_input),
+																				percent_no_expression = sapply(rnaseq_data, function(x) round(x = length(which(x[[expression_unit]] == 0)) / nrow(x) * 100,
+																																																			digits = 1))
+		)
+
+		write.table(x = rna_expression_summary,
+								file = file.path(rootDirectory, '1b_rnaseq_data', 'rna_expression_info.tsv'),
+								sep = '\t',
+								row.names = FALSE,
+								quote = FALSE,
+								append = FALSE)
+
+		write.table(x = rna_coverage_summary,
+								file = file.path(rootDirectory, '3_neolution', 'rna_coverage_info.tsv'),
+								sep = '\t',
+								row.names = FALSE,
+								quote = FALSE,
+								append = FALSE)
+
+		message('Step 3b: Generating Neolution pipeline input')
+	} else {
+		message('Step 3: Generating Neolution pipeline input (no RNAseq data)')
+
+		prediction_input = varcontext_data
+	}
+
+	invisible(mapply(FUN =
+									 	function(x, y) {
+									 		write.table(x = x,
+									 								file = file.path(rootDirectory, '3_neolution', paste0(names(prediction_input)[y], '.tsv')),
+									 								sep = '\t',
+									 								row.names = F)
+									 	},
+									 prediction_input,
+									 seq(1, length(prediction_input))))
+}
+
+mergeByEnsemblId = function(variant_table, expression_table, expression_unit = 'FPKM') {
+	if (is.null(expression_table)) {
+		variant_table[[expression_unit]] = NA
+		return(variant_table)
+	} else if ('gene_id' %in% names(variant_table) && 'gene_id' %in% names(expression_table)) {
+		table_merged = merge(x = variant_table,
+												 y = expression_table[!duplicated(gene_id), c('gene_id', expression_unit), with = FALSE],
+												 by = 'gene_id',
+												 all.x = TRUE)
+		return(table_merged)
+	} else {
+		warning('gene_id column missing in either variant table or expression table')
+	}
+}
+
+
 # SnpEff report generation ------------------------------------------------
 runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), filter_snps = TRUE, canon_only = TRUE) {
 	#registerDoMC(2)
@@ -797,8 +801,6 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 	})
 }
 
-# helper functions for analysis document
-"%nin%" = Negate("%in%")
 
 # Peptide order -----------------------------------------------------------
 parseEpitopePredictions = function(path, pattern = '_epitopes\\.csv') {
