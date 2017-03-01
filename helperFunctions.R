@@ -1,14 +1,20 @@
 # load required packages
 if (!require("pacman")) install.packages("pacman")
 
-required_packages = c('data.table', 'gtools', 'utils', 'optparse', 'RMySQL', 'compiler', 'pbapply', 'naturalsort', 'parallel', 'doMC', 'stringr', 'tidyr', 'foreach', 'pander')
+required_packages = c('compiler', 'data.table','doMC', 'foreach', 'gtools', 'naturalsort', 'optparse', 'pander', 'parallel', 'pbapply', 'rtracklayer', 'stringr', 'tidyr', 'utils')
 
 library(pacman)
 pacman::p_load(char = required_packages)
 
+
+## Convenience functions ---------------------------------------------------
+"%nin%" = Negate("%in%")
+
 # drop NA from vector
 dropNa = function(vector) { vector[!is.na(vector)] }
 
+
+## VCF parsing ---------------------------------------------------
 # helper functions for input file generation
 parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), extract_fields = NULL, write = TRUE) {
   # extract relevant info from VCF
@@ -501,6 +507,7 @@ mergeByEnsemblId = function(variant_table, expression_table, expression_unit = '
 	}
 }
 
+# Variant allele expression -----------------------------------------------
 findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'bam'),
 																							 fasta_genome_ref = runOptions$samtools$fastaGenomeRef,
@@ -747,6 +754,8 @@ performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_referenc
 }
 
 
+# Varcontext generation ---------------------------------------------------
+# SnpEff report generation ------------------------------------------------
 runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), filter_snps = TRUE, canon_only = TRUE) {
 	#registerDoMC(2)
 
@@ -791,6 +800,7 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 # helper functions for analysis document
 "%nin%" = Negate("%in%")
 
+# Peptide order -----------------------------------------------------------
 parseEpitopePredictions = function(path, pattern = '_epitopes\\.csv') {
 	require(stringr)
 	require(data.table)
