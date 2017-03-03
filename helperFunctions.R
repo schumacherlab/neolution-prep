@@ -812,7 +812,7 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
 
 	# extract filenames
 	short_names = sub(pattern = '.+[/]', replacement = '', x = files)
-	short_names = sub(pattern = '_epitopes\\.csv', replacement = '', x = short_names)
+	short_names = sub(pattern = pattern, replacement = '', x = short_names)
 
 	# get data in & sort by tumor peptide affinity
 	predictions = lapply(seq(1, length(files)),
