@@ -884,6 +884,10 @@ prepareEpitopeLists = function(list_of_predictions, split_by= c('9mer', '10mer',
 																setkey(x = table, tumor_peptide_resin, hla_allele)
 																return(table)
 															})
+
+	setNames(object = split_by_xmer_info,
+					 nm = split_by)
+
 	return(split_by_xmer_info)
 }
 
