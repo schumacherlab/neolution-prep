@@ -686,11 +686,13 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 																if (length(sample_combinations[x, variants]) > 0 & length(sample_combinations[x, rna_expression_data]) > 0) {
 																	message('Merging RNA expression data for: ', sample_combinations[x, variants], ' & ', sample_combinations[x, rna_expression_data])
 																	mergeByEnsemblId(variant_table = varcontext_data[[sample_combinations[x, variants]]],
-																									 expression_table = rnaseq_data[[sample_combinations[x, rna_expression_data]]])
+																									 expression_table = rnaseq_data[[sample_combinations[x, rna_expression_data]]],
+																									 expression_unit = expression_unit)
 																} else if (length(sample_combinations[x, variants]) > 0) {
 																	message('Adding empty rna_expression column for ', sample_combinations[x, variants])
 																	mergeByEnsemblId(variant_table = varcontext_data[[sample_combinations[x, variants]]],
-																									 expression_table = NULL)
+																									 expression_table = NULL,
+																									 expression_unit = expression_unit)
 																} else {
 																	warning('No input data present for ', sample_combinations[x, variants], ' & ', sample_combinations[x, rna_expression_data])
 																}
