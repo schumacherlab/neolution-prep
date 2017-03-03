@@ -801,7 +801,7 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 
 
 # Peptide order -----------------------------------------------------------
-parseEpitopePredictions = function(path, pattern = '_epitopes\\.csv') {
+parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '_epitopes\\.csv') {
 	require(stringr)
 	require(data.table)
 
