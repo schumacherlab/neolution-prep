@@ -23,6 +23,8 @@ runOptions = list(general = list(),
 
 																	 rankCutoff = 3,
 																	 processingCutoff = 0.5,
+																	 expressionCutoff = 0,
+																	 modelCutoff = 0.02,
 																	 xmer = c(9:11)),
 
 									# set snpEff locations
