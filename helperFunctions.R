@@ -1,7 +1,7 @@
 # load required packages
 if (!require("pacman")) install.packages("pacman")
 
-required_packages = c('compiler', 'data.table','doMC', 'foreach', 'ggplot2', 'gtools', 'naturalsort', 'optparse', 'pander', 'parallel', 'pbapply', 'rtracklayer', 'stringr', 'tidyr', 'utils')
+required_packages = c('compiler', 'data.table','doMC', 'foreach', 'ggplot2', 'gtools', 'koRpus', 'naturalsort', 'optparse', 'pander', 'parallel', 'pbapply', 'rtracklayer', 'stringr', 'tidyr', 'utils')
 
 library(pacman)
 pacman::p_load(char = required_packages)
