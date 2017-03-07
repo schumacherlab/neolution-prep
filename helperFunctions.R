@@ -758,7 +758,7 @@ mergeByEnsemblId = function(variant_table, expression_table, expression_unit = '
 
 
 # SnpEff report generation ------------------------------------------------
-runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), filter_snps = TRUE, canon_only = TRUE) {
+runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), filter_snps = TRUE, canon_only = TRUE, execute = TRUE) {
 	#registerDoMC(2)
 
 	message('Step 4: Running snpEff')
@@ -794,8 +794,13 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 
 		command = if (filter_snps) {paste(command_snpsift, command_snpeff, sep = '|')} else {paste(paste('cat', variantLists[i]), command_snpeff, sep = '|')}
 
-		system(command = command,
-					 wait = TRUE)
+		if (execute) {
+			system(command = paste("nice -n 19", command),
+						 intern = TRUE,
+						 wait = TRUE)
+		} else {
+			message(paste("nice -n 19", command))
+		}
 	})
 }
 
