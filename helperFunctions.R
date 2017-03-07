@@ -115,20 +115,20 @@ parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
 																																 count_tag = 'BCOUNT'))
 
 	# pick alt allele with highest read count (in case two alt's are given)
-	vcf_parsed[, alt_allele := sapply(seq(1, nrow(vcf_parsed)),
-																		function(row_index) {
-																			if (any(is.na(vcf_parsed[, .(A,C,G,T)][row_index])) | nchar(vcf_parsed$alt_allele[row_index]) == 1) {
-																				return(vcf_parsed$alt_allele[row_index])
-																			} else {
-																				alts = unlist(str_split(vcf_parsed$alt_allele[row_index], ','))
-																				counts = sapply(alts,
-																												function(alt) {
-																													count = vcf_parsed[[alt]][row_index]
-																												})
-																				base = names(which.max(counts))
-																				return(base)
-																			}
-																		})]
+	vcf_parsed[, alt_allele := unlist(mclapply(seq(1, nrow(vcf_parsed)),
+																						 function(row_index) {
+																						 	if (any(is.na(vcf_parsed[, .(A,C,G,T)][row_index])) | nchar(vcf_parsed$alt_allele[row_index]) == 1) {
+																						 		return(vcf_parsed$alt_allele[row_index])
+																						 	} else {
+																						 		alts = unlist(str_split(vcf_parsed$alt_allele[row_index], ','))
+																						 		counts = sapply(alts,
+																						 										function(alt) {
+																						 											count = vcf_parsed[[alt]][row_index]
+																						 										})
+																						 		base = names(which.max(counts))
+																						 		return(base)
+																						 	}
+																						 }, mc.cores = 20))]
 
 	# extract ref and alt read counts
 	dna_read_counts = extractVariantSupportingReadCountsFromVcf(vcf_table = vcf_dt,
@@ -160,14 +160,14 @@ parseVcf = function(vcf_path, sample_tag, extract_fields = NULL) {
 																																					format_tag = 'DP'))]
 
 	# compute dna_vaf
-	vcf_parsed[, dna_vaf := sapply(seq(1, nrow(vcf_parsed)),
-																 function(row_index) {
-																 	if (is.numeric(vcf_parsed$dna_alt_read_count[row_index]) & is.numeric(vcf_parsed$dna_total_read_count[row_index])) {
-																 		return(vcf_parsed$dna_alt_read_count[row_index] / vcf_parsed$dna_total_read_count[row_index])
-																 	} else {
-																 		return(NA)
-																 	}
-																 })]
+	vcf_parsed[, dna_vaf := unlist(mclapply(seq(1, nrow(vcf_parsed)),
+																					function(row_index) {
+																						if (is.numeric(vcf_parsed$dna_alt_read_count[row_index]) & is.numeric(vcf_parsed$dna_total_read_count[row_index])) {
+																							return(vcf_parsed$dna_alt_read_count[row_index] / vcf_parsed$dna_total_read_count[row_index])
+																						} else {
+																							return(NA)
+																						}
+																					}, mc.cores = 20))]
 
 	return(vcf_parsed)
 }
@@ -178,26 +178,26 @@ extractDataFromVcfField = function(vcf_table, sample_tag, format_tag) {
 		return(NA)
 	}
 
-	tag_positions = unlist(sapply(str_split(vcf_table$format, pattern = ':'),
-																function(x) {
-																	match(x = format_tag, table = x, nomatch = NA)
-																}))
+	tag_positions = unlist(mclapply(str_split(vcf_table$format, pattern = ':'),
+																	function(x) {
+																		match(x = format_tag, table = x, nomatch = NA)
+																	}, mc.cores = 20))
 
 	vcf_tumor_split = str_split(vcf_table[[sample_tag]], pattern = ':')
 
-	tag_data = sapply(seq(1, length(tag_positions)),
-										function(x) {
-											if (grepl(pattern = '^[gr]s\\d+$', x = vcf_table$variant_id[x]) & is.na(tag_positions[[x]])) {
-												snp_split = unlist(str_split(string = vcf_table$info[x], pattern = ';'))
-												tag_data = grep(pattern = paste0('^', format_tag, '='), x = snp_split, value = TRUE)
+	tag_data = unlist(mclapply(seq(1, length(tag_positions)),
+														 function(x) {
+														 	if (grepl(pattern = '^[gr]s\\d+$', x = vcf_table$variant_id[x]) & is.na(tag_positions[[x]])) {
+														 		snp_split = unlist(str_split(string = vcf_table$info[x], pattern = ';'))
+														 		tag_data = grep(pattern = paste0('^', format_tag, '='), x = snp_split, value = TRUE)
 
-												if (length(tag_data) < 1) return(NA)
+														 		if (length(tag_data) < 1) return(NA)
 
-												return(sub(pattern = paste0('^', format_tag, '='), replacement = '', x = tag_data))
-											}
+														 		return(sub(pattern = paste0('^', format_tag, '='), replacement = '', x = tag_data))
+														 	}
 
-											vcf_tumor_split[[x]][tag_positions[x]]
-										})
+														 	vcf_tumor_split[[x]][tag_positions[x]]
+														 }, mc.cores = 20))
 
 	return(tag_data)
 }
@@ -212,19 +212,19 @@ extractVariantReadCountsFromVcf = function(vcf_table, sample_tag, count_tag) {
 																			 sample_tag = sample_tag,
 																			 format_tag = count_tag)
 
-	count_data = lapply(str_split(string = count_data, pattern = ','), as.numeric)
+	count_data = mclapply(str_split(string = count_data, pattern = ','), as.numeric, mc.cores = 20)
 
-	count_data = lapply(count_data,
-											function(counts) {
-												if (any(!is.na(counts))) {
-													data = setNames(object = counts, nm = c('A', 'C', 'G', 'T'))
-													data = as.data.table(as.list(data))
-												} else {
-													data = as.data.table(as.list(rep(x = NA, 4)))
-													data = setNames(object = data, nm = c('A', 'C', 'G', 'T'))
-												}
-												return(data)
-											})
+	count_data = mclapply(count_data,
+												function(counts) {
+													if (any(!is.na(counts))) {
+														data = setNames(object = counts, nm = c('A', 'C', 'G', 'T'))
+														data = as.data.table(as.list(data))
+													} else {
+														data = as.data.table(as.list(rep(x = NA, 4)))
+														data = setNames(object = data, nm = c('A', 'C', 'G', 'T'))
+													}
+													return(data)
+												}, mc.cores = 20)
 
 	count_data = rbindlist(count_data, use.names = TRUE)
 }
@@ -256,8 +256,8 @@ extractVariantSupportingReadCountsFromVcf = function(vcf_table, sample_tag) {
 																						format_tag = 'DP4')
 
 	# pre-process 'count_data_snvs' for merge
-	count_data_snvs = lapply(str_split(string = count_data_snvs, pattern = ','),
-													 as.numeric)
+	count_data_snvs = mclapply(str_split(string = count_data_snvs, pattern = ','),
+													 as.numeric, mc.cores = 20)
 
 	# # merge count data from indels and snvs
 	# count_data = lapply(seq(1, length(count_data_snvs)),
@@ -267,8 +267,8 @@ extractVariantSupportingReadCountsFromVcf = function(vcf_table, sample_tag) {
 
 	count_data = count_data_snvs
 
-	ref_supporting_read_counts = sapply(count_data, function(counts) sum(counts[c(1,2)]))
-	alt_supporting_read_counts = sapply(count_data, function(counts) sum(counts[c(3,4)]))
+	ref_supporting_read_counts = unlist(mclapply(count_data, function(counts) sum(counts[c(1,2)]), mc.cores = 20))
+	alt_supporting_read_counts = unlist(mclapply(count_data, function(counts) sum(counts[c(3,4)]), mc.cores = 20))
 
 	return(list(ref_supporting_read_counts, alt_supporting_read_counts))
 }
