@@ -41,13 +41,14 @@ setwd("/home/NFS/users/l.fanchi/dev_environments/neolution-live/")
 x = foreach(i = 1:nrow(sampleHlaTypes)) %dopar% {
 	invisible(sapply(seq(1, length(runOptions$neolution$xmer)),
 									 function(y) {
-									 	system(command = paste("Rscript performPredictions.R",
-									 												 "-f", sampleHlaTypes$filepath[i],
-									 												 "-m", sampleHlaTypes$hla_type[i],
-									 												 # "-a", sampleHlaTypes$affinity_cutoff[i],
-									 												 "-r", runOptions$neolution$rankCutoff,
-									 												 "-p", runOptions$neolution$processingCutoff,
-									 												 "-l", runOptions$neolution$xmer[y],
-									 												 "--selfsim"))
+									 	system(command = paste('Rscript performPredictions.R',
+									 												 '-f', sampleHlaTypes$filepath[i],
+									 												 '-m', sampleHlaTypes$hla_type[i],
+									 												 # '-a', sampleHlaTypes$affinity_cutoff[i],
+									 												 # '-r', runOptions$neolution$rankCutoff,
+									 												 # '-p', runOptions$neolution$processingCutoff,
+									 												 '-d', runOptions$neolution$modelCutoff,
+									 												 '-l', runOptions$neolution$xmer[y],
+									 												 '--selfsim'))
 									 }))
 }
