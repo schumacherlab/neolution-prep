@@ -390,14 +390,14 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 	}
 
 	pileup_loc_data = lapply(list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-																			pattern = if (is.null(sample_combinations$locations_file[i])) {'_mpil\\.tsv'} else {'_mpil_loc\\.tsv'},
+																			pattern = '_mpil_loc\\.tsv',
 																			full.names = TRUE),
 													 fread,
 													 colClasses = c(V1 = 'character'),
 													 col.names = c('chromosome', 'start_position', 'ref_base', 'number_of_reads', 'rna_read_bases', 'base_quality'))
 
 	pileup_loc_data = setNames(object = pileup_loc_data, nm = list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
-																																			 pattern = if (is.null(sample_combinations$locations_file[i])) {'_mpil\\.tsv'} else {'_mpil_loc\\.tsv'},
+																																			 pattern = '_mpil_loc\\.tsv',
 																																			 full.names = FALSE))
 
 	input_pileup_merge = lapply(1:length(input_data),
