@@ -26,7 +26,7 @@ runParameters = list('predictions' =
 										 			 'model_cutoff' = 0.02,
 										 			 'expression_cutoff' = 0,
 										 			 'random_forest_model' = TRUE,
-										 			 'selfsim_filter' = TRUE | FALSE,
+										 			 'selfsim_filter' = FALSE,
 										 			 'selfsim_filter_mode' = 'simple'))
 ```
 <link href="style.css" rel="stylesheet" type="text/css" />
