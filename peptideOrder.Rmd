@@ -39,7 +39,11 @@ This document contains the order and set-up lists of the epitopes for ## PROJECT
 
 #### Methods summary
 
-Samples were sequenced by GCF at the Netherlands Cancer Institute, data can be found at the [GCF repository link](### INSERT LINK HERE ###). The GCF performed the following:  
+Samples were sequenced by GCF at the Netherlands Cancer Institute, data can be found at:  
+* [GCF DNA repository link](### INSERT LINK HERE ###)  
+* [GCF RNA repository link](### INSERT LINK HERE ###)  
+
+The GCF performed the following:  
 
 1. DNA (exome) and RNA sequencing  
 2. variant calling using the somaticSniper/somaticIndelCaller (GATK) pipeline (alignment with bwa)  
@@ -48,13 +52,13 @@ Samples were sequenced by GCF at the Netherlands Cancer Institute, data can be f
 I further processed the resulting VCF files and RNAseq data by:  
 
 1. annotating identified variants with 'expression of mutant allele' data  
-2. generating variant contexts for all expressed variants (or variants without expression data) using the varcontext tool (branch: develop, commit: baef330e1154e59827cd5d2d231395746c1fc724)  
+2. generating variant contexts for all expressed variants (or variants without expression data) using the varcontext tool (branch: #####, commit: #####)  
 3. aligning RNAseq data using STAR & salmon, generating TPM values  
 4. annotating varcontext output with gene-level expression data  
 
 Point 1 was done by performing pileups at the SNV genomic loci in the aligned RNAseq BAM files. For a given SNV locus, a minimum of 5 or more reads for either the germline or the mutant base were required for further analysis. In case this requirement was met, expression of the mutant allele was deemed present if > 1 read containing the mutant base was found. In case minimum read requirement was not met, the SNV was annotated with NA.  
 
-Epitopes were predicted using in-house epitope prediction pipeline, using random forest prediction for probability of presentation.
+Epitopes were predicted using in-house epitope prediction pipeline, using random forest prediction for probability of presentation (branch: #####, commit: #####)  
 
 <br>
 
@@ -74,8 +78,8 @@ Epitopes were predicted using in-house epitope prediction pipeline, using random
 |-------------------------------|-------------------------------------------------------|
 | _netMHCpan rank cutoff_      	|     `r runParameters$predictions$rank_cutoff`       	|
 | _netChop processing cutoff_  	|	    `r runParameters$predictions$processing_cutoff`   |
-| _Model cutoff_								|			>=`r runParameters$predictions$model_cutoff`				|
-| _RNA expression cutoff_      	|     >`r runParameters$predictions$expression_cutoff`  	|
+| _Model cutoff_								|			>= `r runParameters$predictions$model_cutoff`				|
+| _RNA expression cutoff_      	|     > `r runParameters$predictions$expression_cutoff`  	|
 |	_Random forest model_					|			`r runParameters$predictions$random_forest_model`	|
 | _Selfsim filter_             	|    `r runParameters$predictions$selfsim_filter`      	|
 | _Selfsim mode_            		|    `r runParameters$predictions$selfsim_filter_mode`  |
@@ -243,7 +247,7 @@ pander(x = unique(x = subset(x = all_predictions,
 # multimer combi-coding setup list: all epitopes and alleles, sorted by xmer and hla_allele
 panderOptions('knitr.auto.asis', FALSE)
 
-for(i in 1:length(predictions_by_patient)) {
+for (i in 1:length(predictions_by_patient)) {
 	cat('\n#####', names(predictions_by_patient)[i], '\n')
 	
 	# highlight duplicates (epitopes binding to multiple alleles)
