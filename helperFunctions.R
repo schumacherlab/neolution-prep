@@ -839,17 +839,41 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
 	return(predictions)
 }
 
-applyCutoffs = function(predictions, rank = 3, processing = 0.5, expression = 0, selfsim = TRUE) {
+applyCutoffs = function(predictions, model = NULL, rank = NULL, affinity = NULL, processing = NULL, expression = NULL, selfsim = NULL) {
+	# do checks for necessary cutoff values here
+	if (is.numeric(model) & is.numeric(expression) & is.logical(selfsim)) {
+		message('Applying cutoffs -> model: ', model, ' | expression: ', expression, ' | selfsim: ', selfsim)
+	} else if (is.numeric(rank) & is.numeric(processing) & is.numeric(expression) & is.logical(selfsim)) {
+		message('Applying cutoffs -> rank: ', rank, ' | processing: ', processing, ' | expression: ', expression, ' | selfsim: ', selfsim)
+	} else if (is.numeric(affinity) & is.numeric(processing) & is.numeric(expression) & is.logical(selfsim)) {
+		message('Applying cutoffs -> affinity: ', rank, ' | processing: ', processing, ' | expression: ', expression, ' | selfsim: ', selfsim)
+	} else {
+		stop('Please provide required cutoff values as arguments')
+	}
 	# take subsets
 	subsets = lapply(seq(1, length(predictions), 1),
 									 function(x) {
-									 	data_subset = subset(x = predictions[[x]],
-									 											 subset = predictions[[x]][[grep(pattern = 'tumor.+rank',
-									 											 																x = colnames(predictions[[x]]),
-									 											 																value = T)]] <= rank)
-									 	data_subset = data_subset[tumor_processing_score >= processing & (rna_expression > expression | is.na(rna_expression)) & different_from_self == selfsim]
-									 	# data_subset = data_subset[rna_expression > expression]
-									 	# data_subset = data_subset[different_from_self == selfsim]
+									 	if (is.numeric(model)) {
+									 		data_subset = predictions[[x]][model_prediction >= model & (rna_expression > expression | is.na(rna_expression))]
+									 		if (selfsim) {data_subset = predictions[[x]][selfsim == TRUE]}
+									 	} else if (is.numeric(rank)) {
+									 		data_subset = subset(x = predictions[[x]],
+									 												 subset = predictions[[x]][[grep(pattern = 'tumor.+rank',
+									 												 																x = names(predictions[[x]]),
+									 												 																value = T)]] <= rank)
+									 		data_subset = data_subset[tumor_processing_score >= processing & (rna_expression > expression | is.na(rna_expression))]
+									 		if (selfsim) {data_subset = predictions[[x]][different_from_self == selfsim]}
+									 	} else if (is.numeric(affinity)) {
+									 		data_subset = subset(x = predictions[[x]],
+									 												 subset = predictions[[x]][[grep(pattern = 'tumor.+affinity',
+									 												 																x = names(predictions[[x]]),
+									 												 																value = T)]] <= affinity)
+									 		data_subset = data_subset[tumor_processing_score >= processing & (rna_expression > expression | is.na(rna_expression))]
+									 		if (selfsim) {data_subset = predictions[[x]][different_from_self == selfsim]}
+									 	} else {
+									 		stop('No model, rank or affinity cutoff provided')
+									 	}
+
 									 	return(data_subset)
 									 })
 
