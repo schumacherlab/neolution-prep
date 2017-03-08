@@ -138,33 +138,31 @@ all_predictions = rbindlist(list(do.call(rbind, project_predictions_by_xmer)))
 setkey(x = all_predictions, xmer, tumor_peptide_resin)
 
 # take subsets for individual patients for combi-coding setup lists
-predictions_by_patient = lapply(effects_table$sample_prefix,
-																function(prefix) {
-																	data_subset = all_predictions[sample_prefix == prefix]
-																	
-																	data_unique = unique(x = subset(x = data_subset,
-																																	select = names(data_subset) %nin% c('tumor_peptide_trunc', 'tumor_peptide_resin')),
-																											 by = c('hla_allele', 'tumor_peptide'))
-																	
-																	setkey(x = data_unique, xmer, hla_allele)
-																	return(data_unique)
-																})
-
-predictions_by_patient = setNames(object = predictions_by_patient,
-																	nm = sapply(predictions_by_patient, function(dt) dt[, unique(patient_id)]))
+predictions_by_patient = setNames(object = lapply(sample_info$dna_data_prefix,
+																									function(prefix) {
+																										data_subset = all_predictions[sample_prefix == prefix]
+																										
+																										data_unique = unique(x = subset(x = data_subset,
+																																										select = names(data_subset) %nin% c('tumor_peptide_trunc', 'tumor_peptide_resin')),
+																																				 by = c('hla_allele', 'tumor_peptide'))
+																										
+																										setkey(x = data_unique, xmer, hla_allele)
+																										return(data_unique)
+																									}),
+																	nm = sample_info$patient_id)
 
 # prepare unfiltered predictions to generate some stats
 all_predictions_unfiltered = rbindlist(project_predictions_unfiltered)
 setnames(x = all_predictions_unfiltered,
 				 old = grep('affinity|percentile_rank', names(all_predictions_unfiltered), value = T),
 				 new = c('tumor_affinity_nM', 'tumor_affinity_rank', 'normal_affinity_nM', 'normal_affinity_rank'))
-all_predictions_unfiltered_by_patient = setNames(object = lapply(effects_table$patient_id,
+all_predictions_unfiltered_by_patient = setNames(object = lapply(sample_info$patient_id,
 																																 function(id) {
 																																 	data_subset = all_predictions_unfiltered[patient_id == id]
 																																 	
 																																 	return(data_subset)
 																																 }),
-																								 nm = effects_table$patient_id)
+																								 nm = sample_info$patient_id)
 ```
 
 <br>
@@ -174,7 +172,7 @@ all_predictions_unfiltered_by_patient = setNames(object = lapply(effects_table$p
 ```{r generate_prediction_summary, results = 'hide'}
 prediction_table = merge(x = data.table(patient_id = names(sapply(predictions_by_patient, nrow)),
 																				hla_alleles = sapply(names(predictions_by_patient), function(id) {
-																					length(unique(dropNa(unlist(sample_info[patient_id == id, grep('hla',names(sample_info), value=T), with = F]))))
+																					length(unique(dropNa(unlist(sample_info[patient_id == id, grep('hla',names(sample_info), value = TRUE), with = F]))))
 																					}),
 																				total_epitopes_predicted = sapply(all_predictions_unfiltered_by_patient, nrow),
 																				binding_epitopes_predicted = sapply(predictions_by_patient, nrow)),
