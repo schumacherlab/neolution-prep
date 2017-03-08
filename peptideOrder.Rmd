@@ -175,20 +175,22 @@ prediction_table = merge(x = data.table(patient_id = names(sapply(predictions_by
 																					length(unique(dropNa(unlist(sample_info[patient_id == id, grep('hla',names(sample_info), value = TRUE), with = F]))))
 																					}),
 																				total_epitopes_predicted = sapply(all_predictions_unfiltered_by_patient, nrow),
-																				binding_epitopes_predicted = sapply(predictions_by_patient, nrow)),
+																				selected_epitopes_predicted = sapply(predictions_by_patient, nrow)),
 												 y = effects_table[, -c('sample_prefix', 'syn_coding_variants'), with = F],
 												 by = 'patient_id')
 prediction_table = prediction_table[naturalorder(patient_id)]
 prediction_table[, total_epitope_yield_rate_per_allele := round(x = total_epitopes_predicted / non_syn_coding_variants / hla_alleles, digits = 0)]
-prediction_table[, binding_epitope_yield_rate_per_allele := round(x = binding_epitopes_predicted / non_syn_coding_variants / hla_alleles, digits = 2)]
+prediction_table[, selected_epitope_yield_rate_per_allele := round(x = selected_epitopes_predicted / non_syn_coding_variants / hla_alleles, digits = 2)]
 setcolorder(x = prediction_table,
-						neworder = c('patient_id', 'hla_alleles', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'binding_epitopes_predicted', 'binding_epitope_yield_rate_per_allele', 
-												 setdiff(x = names(prediction_table), y = c('patient_id', 'hla_alleles', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'binding_epitopes_predicted', 'binding_epitope_yield_rate_per_allele'))))
+						neworder = c('patient_id', 'hla_alleles', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele', 
+												 setdiff(x = names(prediction_table), y = c('patient_id', 'hla_alleles', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele'))))
 ```
 
 ```{r pander_prediction_summary}
 pander(prediction_table, split.table = 200, split.cells = 20, use.hyphening = TRUE)
 ```
+
+Total number of selected epitopes: `r sum(prediction_table$selected_epitopes_predicted)`  
 
 <br>
 
