@@ -88,7 +88,7 @@ Epitopes were predicted using in-house epitope prediction pipeline, using random
 snpeff_output = list.files(path = '4_snpEff',
 													 pattern = 'genes\\.txt',
 													 full.names = T)
-snpeff_output[!grepl(pattern = 'snps', x = snpeff_output, fixed = TRUE)]
+snpeff_output = snpeff_output[!grepl(pattern = 'snps', x = snpeff_output, fixed = TRUE)]
 
 sample_info = fread('sample_info.tsv')
 sample_info = sample_info[naturalorder(sample_info$patient_id)]
