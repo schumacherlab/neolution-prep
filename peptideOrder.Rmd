@@ -23,10 +23,10 @@ setwd('~/projects/## PROJECT DIR ##')
 runParameters = list('predictions' = 
 										 	list('rank_cutoff' = NA,
 										 			 'processing_cutoff' = NA,
-										 			 'model_cutoff' = '>= 0.02',
-										 			 'expression_cutoff' = '>0',
+										 			 'model_cutoff' = 0.02,
+										 			 'expression_cutoff' = 0,
 										 			 'random_forest_model' = TRUE,
-										 			 'selfsim_filter' = 'TRUE or FALSE',
+										 			 'selfsim_filter' = TRUE | FALSE,
 										 			 'selfsim_filter_mode' = 'simple'))
 ```
 <link href="style.css" rel="stylesheet" type="text/css" />
@@ -74,8 +74,8 @@ Epitopes were predicted using in-house epitope prediction pipeline, using random
 |-------------------------------|-------------------------------------------------------|
 | _netMHCpan rank cutoff_      	|     `r runParameters$predictions$rank_cutoff`       	|
 | _netChop processing cutoff_  	|	    `r runParameters$predictions$processing_cutoff`   |
-| _Model cutoff_								|			`r runParameters$predictions$model_cutoff`				|
-| _RNA expression cutoff_      	|     `r runParameters$predictions$expression_cutoff`  	|
+| _Model cutoff_								|			>=`r runParameters$predictions$model_cutoff`				|
+| _RNA expression cutoff_      	|     >`r runParameters$predictions$expression_cutoff`  	|
 |	_Random forest model_					|			`r runParameters$predictions$random_forest_model`	|
 | _Selfsim filter_             	|    `r runParameters$predictions$selfsim_filter`      	|
 | _Selfsim mode_            		|    `r runParameters$predictions$selfsim_filter_mode`  |
@@ -190,7 +190,9 @@ setcolorder(x = prediction_table,
 pander(prediction_table, split.table = 200, split.cells = 20, use.hyphening = TRUE)
 ```
 
-Total number of selected epitopes: `r sum(prediction_table$selected_epitopes_predicted)`  
+<br>
+
+__Total number of selected epitopes: `r sum(prediction_table$selected_epitopes_predicted)`__  
 
 <br>
 
@@ -200,11 +202,11 @@ Following table shows percentages of predicted epitopes passing various filterin
 # annotate consequences of various filtering steps per variant per patient
 all_predictions_unfiltered_by_patient = lapply(all_predictions_unfiltered_by_patient,
 																							 function(dt) {
-																							 	dt[model_prediction >= 0.02, passes_model_cutoff := TRUE]
-																							 	dt[model_prediction < 0.02 , passes_model_cutoff := FALSE]
+																							 	dt[model_prediction >= runParameters$predictions$model_cutoff, passes_model_cutoff := TRUE]
+																							 	dt[model_prediction < runParameters$predictions$model_cutoff, passes_model_cutoff := FALSE]
 																							 	
-																							 	dt[rna_expression > 0 | is.na(rna_expression), passes_expression_cutoff := TRUE]
-																							 	dt[rna_expression == 0 , passes_expression_cutoff := FALSE]
+																							 	dt[rna_expression > runParameters$predictions$expression_cutoff | is.na(rna_expression), passes_expression_cutoff := TRUE]
+																							 	dt[rna_expression <= runParameters$predictions$expression_cutoff , passes_expression_cutoff := FALSE]
 																							 })
 
 filter_consequences = rbindlist(lapply(all_predictions_unfiltered_by_patient,
