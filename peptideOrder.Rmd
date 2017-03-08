@@ -20,11 +20,14 @@ setwd('~/projects/## PROJECT DIR ##')
 ```
 
 ```{r define_cutoffs}
-runParameters = list('predictions' = list('rank_cutoff' = 3,
-																					'processing_cutoff' = 0.5,
-																					'expression_cutoff' = 0,
-																					'selfsim_filter' = TRUE,
-																					'selfsim_filter_mode' = 'simple'))
+runParameters = list('predictions' = 
+										 	list('rank_cutoff' = NA,
+										 			 'processing_cutoff' = NA,
+										 			 'model_cutoff' = '>= 0.02',
+										 			 'expression_cutoff' = '>0',
+										 			 'random_forest_model' = TRUE,
+										 			 'selfsim_filter' = 'TRUE or FALSE',
+										 			 'selfsim_filter_mode' = 'simple'))
 ```
 <link href="style.css" rel="stylesheet" type="text/css" />
 
@@ -32,121 +35,220 @@ runParameters = list('predictions' = list('rank_cutoff' = 3,
 
 This document contains the order and set-up lists of the epitopes for ## PROJECT TITLE ## project.
 
-Variants were called by SomaticSniper and SomaticIndelCaller (GATK). 
+<br>
+
+#### Methods summary
+
+Samples were sequenced by GCF at the Netherlands Cancer Institute, data can be found at the [GCF repository link](### INSERT LINK HERE ###). The GCF performed the following:  
+
+1. DNA (exome) and RNA sequencing  
+2. variant calling using the somaticSniper/somaticIndelCaller (GATK) pipeline (alignment with bwa)  
+3. generation of VCF files containing SNVs and indels  
+
+I further processed the resulting VCF files and RNAseq data by:  
+
+1. annotating identified variants with 'expression of mutant allele' data  
+2. generating variant contexts for all expressed variants (or variants without expression data) using the varcontext tool (branch: develop, commit: baef330e1154e59827cd5d2d231395746c1fc724)  
+3. aligning RNAseq data using STAR & salmon, generating TPM values  
+4. annotating varcontext output with gene-level expression data  
+
+Point 1 was done by performing pileups at the SNV genomic loci in the aligned RNAseq BAM files. For a given SNV locus, a minimum of 5 or more reads for either the germline or the mutant base were required for further analysis. In case this requirement was met, expression of the mutant allele was deemed present if > 1 read containing the mutant base was found. In case minimum read requirement was not met, the SNV was annotated with NA.  
+
+Epitopes were predicted using in-house epitope prediction pipeline, using random forest prediction for probability of presentation.
 
 <br>
 
-
 * Transcript effects of called variants were determined by our in-house 'varcontext' tool with the following parameters:  
 
-| parameter                    | value              |
-|------------------------------|--------------------|
-| _Ensembl version_            |    81 (GRCh38)     |
-| _Canonical transcripts only_ |      FALSE         |
+| parameter                 						 	| value             |
+|-----------------------------------------|-------------------|
+| _Ensembl version_            						|    81 (GRCh38)    |
+| _Mutant allele expression filter_				|			TRUE					|
+| _Canonical transcripts only_ 						|      FALSE        |
 
 <br>
 
 * The following default filtering parameters were used for epitope selection:  
 
-| parameter                    | value                      |
-|------------------------------|----------------------------|
-| _netMHCpan rank cutoff_      |     `r runParameters$predictions$rank_cutoff`        |
-| _netChop processing cutoff_  |    `r runParameters$predictions$processing_cutoff`   |
-| _RNA expression cutoff_      |     `r runParameters$predictions$expression_cutoff`  |  
-| _Selfsim filter_             |    `r runParameters$predictions$selfsim_filter`      |
-| _Selfsim mode_             |    `r runParameters$predictions$selfsim_filter_mode`      |
+| parameter                    	| value                      														|
+|-------------------------------|-------------------------------------------------------|
+| _netMHCpan rank cutoff_      	|     `r runParameters$predictions$rank_cutoff`       	|
+| _netChop processing cutoff_  	|	    `r runParameters$predictions$processing_cutoff`   |
+| _Model cutoff_								|			`r runParameters$predictions$model_cutoff`				|
+| _RNA expression cutoff_      	|     `r runParameters$predictions$expression_cutoff`  	|
+|	_Random forest model_					|			`r runParameters$predictions$random_forest_model`	|
+| _Selfsim filter_             	|    `r runParameters$predictions$selfsim_filter`      	|
+| _Selfsim mode_            		|    `r runParameters$predictions$selfsim_filter_mode`  |
 
 <br>
 
 #### Sample information
 
-```{r variant_calling_info}
+```{r variant_snpEff_info}
 snpeff_output = list.files(path = '4_snpEff',
 													 pattern = 'genes.txt',
 													 full.names = T)
 
 sample_info = fread('sample_info.tsv')
+sample_info = sample_info[naturalorder(sample_info$patient_id)]
 
 effects_table = rbindlist(lapply(snpeff_output,
-																 function(x) {
-																 	data = fread(x, skip = 1)
-																 	data.table(syn_coding_variants = sum(data$variants_effect_synonymous_variant),
+																 function(path) {
+																 	data = fread(path, skip = 1)
+																 	
+																 	data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = '_mg.+', replacement = '', basename(path)), patient_id],
+																 						 syn_coding_variants = sum(data$variants_effect_synonymous_variant),
 																 						 non_syn_coding_variants = sum(data$variants_effect_missense_variant),
 																 						 stop_gained_variants = sum(data$variants_effect_stop_gained),
 																 						 inframe_insertion_variants = sum(data$variant_effect_inframe_insertion),
 																 						 frameshift_variants = sum(data$variants_effect_frameshift_variant))
 																 }))
 
-effects_table = cbind(sample_prefix = gsub(pattern = '_L[0-9]{3}.+', replacement = '', basename(snpeff_output)), effects_table)
-effects_table = effects_table[naturalorder(effects_table$sample_prefix)]
+effects_table = effects_table[naturalorder(effects_table$patient_id)]
 
-effects_table = cbind(patient_id = sample_info$patient_id, effects_table)
+pander(sample_info, split.table = Inf, missing = '')
 
 pander(effects_table, split.table = Inf)
 ```
 
-```{r epitope_selection}
+```{r load_prediction_data}
 # parse data
-project_predictions = parseEpitopePredictions(path = '3_neolution/filtered_predictions')
+project_predictions = parseEpitopePredictions(path = '3_neolution/predictions_output',
+																							pattern = '_epitopes_no_selfsim\\.csv')
+
+# parse unfiltered data to calculate some stats
+project_predictions_unfiltered = parseEpitopePredictions(path = '3_neolution/predictions_output', 
+																												 pattern = '_epitopes_unfiltered\\.csv')
 
 # take subsets based on epitopes per non-syn mutations + indels
-project_predictions_subset = applyCutoffs(predictions = project_predictions)
+# project_predictions_subset = applyCutoffs(predictions = project_predictions)
 
 # exclude C alleles
-project_predictions_subset = project_predictions_subset[!grepl(pattern = "C[0-9]{4}", x = names(project_predictions_subset))]
+project_predictions_subset = project_predictions[!grepl(pattern = "C[0-9]{4}", x = names(project_predictions))]
 
 # split by xmer
 project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
 
 ```
 
-#### Predicted epitopes - __All patients__ - master order list (unique peptides)
-- __epitopes are sorted by xmer and subsequently by resin__
-```{r prepare_order_list}
-# peptide synth facility list: list all unique epitopes, sorted by xmer and last residue
+```{r prepare_order_and_setup_lists}
+# bind all together for order list
 all_predictions = rbindlist(list(do.call(rbind, project_predictions_by_xmer)))
-all_predictions = merge(y = all_predictions,
-												x = effects_table[, .(patient_id, sample_prefix)],
-												by = 'sample_prefix')
 setkey(x = all_predictions, xmer, tumor_peptide_resin)
 
-pander(x = unique(x = subset(x = all_predictions,
-                             select = names(all_predictions) %nin% c( 'sample_prefix', 'patient_id', 'hla_allele')),
-                  by = 'tumor_peptide'),
-       split.table = 200)
-```
-
-#### Predicted epitopes - __Individual patients__ - list for combi-coding setups
-- __epitopes predicted to bind to multiple alleles are shown in bold__
-- __epitopes are sorted by xmer first, then by hla\_allele__
-```{r prepare_setup_list, results = 'asis'}
-panderOptions('knitr.auto.asis', FALSE)
-
-# multimer combi-coding setup list: all epitopes and alleles, sorted by xmer and hla_allele
-# take subsets for individual patients
-
-predictions_by_patient = lapply(effects_table$sample_prefix[c(1, 3, 5)],
+# take subsets for individual patients for combi-coding setup lists
+predictions_by_patient = lapply(effects_table$sample_prefix,
 																function(prefix) {
 																	data_subset = all_predictions[sample_prefix == prefix]
 																	
 																	data_unique = unique(x = subset(x = data_subset,
-																																	select = !names(data_subset) %in% c('tumor_peptide_trunc', 'tumor_peptide_resin')),
+																																	select = names(data_subset) %nin% c('tumor_peptide_trunc', 'tumor_peptide_resin')),
 																											 by = c('hla_allele', 'tumor_peptide'))
 																	
 																	setkey(x = data_unique, xmer, hla_allele)
 																	return(data_unique)
 																})
 
-for (i in 1:length(predictions_by_patient)) {
-	cat('\n#####', effects_table[sample_prefix == predictions_by_patient[[i]]$sample_prefix[1]]$patient_id, '\n')
+predictions_by_patient = setNames(object = predictions_by_patient,
+																	nm = sapply(predictions_by_patient, function(dt) dt[, unique(patient_id)]))
+
+# prepare unfiltered predictions to generate some stats
+all_predictions_unfiltered = rbindlist(project_predictions_unfiltered)
+setnames(x = all_predictions_unfiltered,
+				 old = grep('affinity|percentile_rank', names(all_predictions_unfiltered), value = T),
+				 new = c('tumor_affinity_nM', 'tumor_affinity_rank', 'normal_affinity_nM', 'normal_affinity_rank'))
+all_predictions_unfiltered_by_patient = setNames(object = lapply(effects_table$patient_id,
+																																 function(id) {
+																																 	data_subset = all_predictions_unfiltered[patient_id == id]
+																																 	
+																																 	return(data_subset)
+																																 }),
+																								 nm = effects_table$patient_id)
+```
+
+<br>
+
+#### Predicted epitopes summary
+
+```{r generate_prediction_summary, results = 'hide'}
+prediction_table = merge(x = data.table(patient_id = names(sapply(predictions_by_patient, nrow)),
+																				hla_alleles = sapply(names(predictions_by_patient), function(id) {
+																					length(unique(dropNa(unlist(sample_info[patient_id == id, grep('hla',names(sample_info), value=T), with = F]))))
+																					}),
+																				total_epitopes_predicted = sapply(all_predictions_unfiltered_by_patient, nrow),
+																				binding_epitopes_predicted = sapply(predictions_by_patient, nrow)),
+												 y = effects_table[, -c('sample_prefix', 'syn_coding_variants'), with = F],
+												 by = 'patient_id')
+prediction_table = prediction_table[naturalorder(patient_id)]
+prediction_table[, total_epitope_yield_rate_per_allele := round(x = total_epitopes_predicted / non_syn_coding_variants / hla_alleles, digits = 0)]
+prediction_table[, binding_epitope_yield_rate_per_allele := round(x = binding_epitopes_predicted / non_syn_coding_variants / hla_alleles, digits = 2)]
+setcolorder(x = prediction_table,
+						neworder = c('patient_id', 'hla_alleles', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'binding_epitopes_predicted', 'binding_epitope_yield_rate_per_allele', 
+												 setdiff(x = names(prediction_table), y = c('patient_id', 'hla_alleles', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'binding_epitopes_predicted', 'binding_epitope_yield_rate_per_allele'))))
+```
+
+```{r pander_prediction_summary}
+pander(prediction_table, split.table = 200, split.cells = 20, use.hyphening = TRUE)
+```
+
+<br>
+
+Following table shows percentages of predicted epitopes passing various filtering steps and medians for tumor_affinity_rank and tumor_processing_score
+
+```{r calculate_filter_consequences}
+# annotate consequences of various filtering steps per variant per patient
+all_predictions_unfiltered_by_patient = lapply(all_predictions_unfiltered_by_patient,
+																							 function(dt) {
+																							 	dt[model_prediction >= 0.02, passes_model_cutoff := TRUE]
+																							 	dt[model_prediction < 0.02 , passes_model_cutoff := FALSE]
+																							 	
+																							 	dt[rna_expression > 0 | is.na(rna_expression), passes_expression_cutoff := TRUE]
+																							 	dt[rna_expression == 0 , passes_expression_cutoff := FALSE]
+																							 })
+
+filter_consequences = rbindlist(lapply(all_predictions_unfiltered_by_patient,
+																			 function(dt) {
+																			 	data.table(patient_id = dt[, unique(patient_id)],
+																			 						 passes_model_cutoff = round(nrow(dt[passes_model_cutoff == TRUE]) / nrow(dt) * 100, 2),
+																			 						 passes_expression_cutoff = round(nrow(dt[passes_expression_cutoff == TRUE]) / nrow(dt) * 100, 1),
+																			 						 passes_both_cutoffs = round(nrow(dt[passes_model_cutoff == TRUE & passes_expression_cutoff == TRUE]) / nrow(dt) * 100, 2),
+																			 						 median_tumor_affinity_rank = median(dt$tumor_affinity_rank),
+																			 						 median_tumor_processing_score = round(median(dt$tumor_processing_score), 2))
+																			 }))
+
+pander(filter_consequences, split.table = 200)
+```
+
+<br>
+
+#### Predicted epitopes - __All patients__ - master order list (unique peptides)
+- __epitopes are sorted by xmer and subsequently by resin__
+```{r pander_order_list}
+# peptide synth facility list: list all unique epitopes, sorted by xmer and last residue
+pander(x = unique(x = subset(x = all_predictions,
+                             select = names(all_predictions) %nin% c('patient_id', 'hla_allele')),
+                  by = 'tumor_peptide'),
+       split.table = 200)
+```
+
+<br>
+
+#### Predicted epitopes - __Individual patients__ - list for combi-coding setups
+- __epitopes predicted to bind to multiple alleles are shown in bold__
+- __epitopes are sorted by xmer first, then by hla\_allele__
+```{r pander_setup_lists, results = 'asis'}
+# multimer combi-coding setup list: all epitopes and alleles, sorted by xmer and hla_allele
+panderOptions('knitr.auto.asis', FALSE)
+
+for(i in 1:length(predictions_by_patient)) {
+	cat('\n#####', names(predictions_by_patient)[i], '\n')
 	
 	# highlight duplicates (epitopes binding to multiple alleles)
 	if (anyDuplicated(predictions_by_patient[[i]]$tumor_peptide)) {
 		emphasize.strong.rows(unique(c(which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = FALSE)),
 																	 which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = TRUE)))))	
 	}
-	pander(predictions_by_patient[[i]][, -'sample_prefix', with = F], split.table = 200)
+	pander(predictions_by_patient[[i]], split.table = 200)	
 }
 ```
 
-<br>
