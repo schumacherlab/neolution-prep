@@ -855,21 +855,24 @@ applyCutoffs = function(predictions, model = NULL, rank = NULL, affinity = NULL,
 									 function(x) {
 									 	if (is.numeric(model)) {
 									 		data_subset = predictions[[x]][model_prediction >= model & (rna_expression > expression | is.na(rna_expression))]
-									 		if (selfsim) {data_subset = predictions[[x]][selfsim == TRUE]}
+									 		if (selfsim) {data_subset = data_subset[different_from_self == TRUE]}
+
 									 	} else if (is.numeric(rank)) {
 									 		data_subset = subset(x = predictions[[x]],
 									 												 subset = predictions[[x]][[grep(pattern = 'tumor.+rank',
 									 												 																x = names(predictions[[x]]),
 									 												 																value = T)]] <= rank)
 									 		data_subset = data_subset[tumor_processing_score >= processing & (rna_expression > expression | is.na(rna_expression))]
-									 		if (selfsim) {data_subset = predictions[[x]][different_from_self == selfsim]}
+									 		if (selfsim) {data_subset = data_subset[different_from_self == TRUE]}
+
 									 	} else if (is.numeric(affinity)) {
 									 		data_subset = subset(x = predictions[[x]],
 									 												 subset = predictions[[x]][[grep(pattern = 'tumor.+affinity',
 									 												 																x = names(predictions[[x]]),
 									 												 																value = T)]] <= affinity)
 									 		data_subset = data_subset[tumor_processing_score >= processing & (rna_expression > expression | is.na(rna_expression))]
-									 		if (selfsim) {data_subset = predictions[[x]][different_from_self == selfsim]}
+									 		if (selfsim) {data_subset = data_subset[different_from_self == TRUE]}
+
 									 	} else {
 									 		stop('No model, rank or affinity cutoff provided')
 									 	}
