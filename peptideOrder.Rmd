@@ -139,6 +139,7 @@ project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_
 ```{r prepare_order_and_setup_lists}
 # bind all together for order list
 all_predictions = rbindlist(list(do.call(rbind, project_predictions_by_xmer)))
+all_predictions = all_predictions[naturalorder(patient_id)]
 setkey(x = all_predictions, xmer, tumor_peptide_resin)
 
 # take subsets for individual patients for combi-coding setup lists
@@ -146,8 +147,7 @@ predictions_by_patient = setNames(object = lapply(sample_info$dna_data_prefix,
 																									function(prefix) {
 																										data_subset = all_predictions[sample_prefix == prefix]
 																										
-																										data_unique = unique(x = subset(x = data_subset,
-																																										select = names(data_subset) %nin% c('tumor_peptide_trunc', 'tumor_peptide_resin')),
+																										data_unique = unique(x = data_subset,
 																																				 by = c('hla_allele', 'tumor_peptide'))
 																										
 																										setkey(x = data_unique, xmer, hla_allele)
@@ -196,7 +196,7 @@ pander(prediction_table, split.table = 200, split.cells = 20, use.hyphening = TR
 
 <br>
 
-__Total number of selected epitopes: `r sum(prediction_table$selected_epitopes_predicted)`__  
+__Total number of unique selected epitopes: `r nrow(unique(all_predictions,by = 'tumor_peptide'))`__  
 
 <br>
 
@@ -233,7 +233,7 @@ pander(filter_consequences, split.table = 200)
 ```{r pander_order_list}
 # peptide synth facility list: list all unique epitopes, sorted by xmer and last residue
 pander(x = unique(x = subset(x = all_predictions,
-                             select = names(all_predictions) %nin% c('patient_id', 'hla_allele')),
+                             select = names(all_predictions) %nin% c('sample_prefix', 'hla_allele')),
                   by = 'tumor_peptide'),
        split.table = 200)
 ```
@@ -255,7 +255,7 @@ for (i in 1:length(predictions_by_patient)) {
 		emphasize.strong.rows(unique(c(which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = FALSE)),
 																	 which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = TRUE)))))	
 	}
-	pander(predictions_by_patient[[i]], split.table = 200)	
+	pander(predictions_by_patient[[i]][, -c('sample_prefix', 'tumor_peptide_trunc', 'tumor_peptide_resin'), with = FALSE], split.table = 200)	
 }
 ```
 
