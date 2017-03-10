@@ -856,7 +856,7 @@ mutationalSignatureAnalysis = function(table, genome_build = 'GRCh38') {
 }
 
 printMutationalSignatureInfo = function(signatures = 'alexandrov') {
-	if (signatures = 'alexandrov') {
+	if (signatures == 'alexandrov') {
 		signature_info = fread(input = 'alexandrov_nature_2013_mutsigs.tsv', na.strings = 'N/A')
 	}
 
