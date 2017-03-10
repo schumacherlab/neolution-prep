@@ -178,19 +178,21 @@ all_predictions_unfiltered_by_patient = setNames(object = lapply(sample_info$pat
 
 ```{r generate_prediction_summary, results = 'hide'}
 prediction_table = merge(x = data.table(patient_id = names(sapply(predictions_by_patient, nrow)),
-																				hla_alleles = sapply(names(predictions_by_patient), function(id) {
-																					length(unique(dropNa(unlist(sample_info[patient_id == id, grep('hla',names(sample_info), value = TRUE), with = F]))))
-																					}),
+																				alleles_included = sapply(names(all_predictions_unfiltered_by_patient),
+																																	 function(id) {
+																																	 	length(all_predictions_unfiltered_by_patient[[id]][, unique(hla_allele)])
+																																	 }),
 																				total_epitopes_predicted = sapply(all_predictions_unfiltered_by_patient, nrow),
 																				selected_epitopes_predicted = sapply(predictions_by_patient, nrow)),
 												 y = effects_table[, -c('syn_coding_variants'), with = F],
 												 by = 'patient_id')
 prediction_table = prediction_table[naturalorder(patient_id)]
-prediction_table[, total_epitope_yield_rate_per_allele := round(x = total_epitopes_predicted / non_syn_coding_variants / hla_alleles, digits = 0)]
-prediction_table[, selected_epitope_yield_rate_per_allele := round(x = selected_epitopes_predicted / non_syn_coding_variants / hla_alleles, digits = 2)]
+prediction_table[, total_epitope_yield_rate_per_allele := round(x = total_epitopes_predicted / non_syn_coding_variants / alleles_included, digits = 0)]
+prediction_table[, selected_epitope_yield_rate_per_allele := round(x = selected_epitopes_predicted / non_syn_coding_variants / alleles_included, digits = 2)]
 setcolorder(x = prediction_table,
-						neworder = c('patient_id', 'hla_alleles', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele', 
-												 setdiff(x = names(prediction_table), y = c('patient_id', 'hla_alleles', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele'))))
+						neworder = c('patient_id', 'alleles_included', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele', 
+												 setdiff(x = names(prediction_table),
+												 				y = c('patient_id', 'alleles_included', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele'))))
 ```
 
 ```{r pander_prediction_summary}
