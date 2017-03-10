@@ -225,7 +225,8 @@ filter_consequences = rbindlist(lapply(all_predictions_unfiltered_by_patient,
 																			 						 passes_expression_cutoff = round(nrow(dt[passes_expression_cutoff == TRUE]) / nrow(dt) * 100, 1),
 																			 						 passes_both_cutoffs = round(nrow(dt[passes_model_cutoff == TRUE & passes_expression_cutoff == TRUE]) / nrow(dt) * 100, 2),
 																			 						 median_tumor_affinity_rank = median(dt$tumor_affinity_rank),
-																			 						 median_tumor_processing_score = round(median(dt$tumor_processing_score), 2))
+																			 						 median_tumor_processing_score = round(median(dt$tumor_processing_score), 2),
+																			 						 median_rna_expression = round(median(dt$rna_expression), 2))
 																			 }))
 
 pander(filter_consequences, split.table = 200)
