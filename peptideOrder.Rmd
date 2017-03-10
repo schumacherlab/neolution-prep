@@ -128,8 +128,11 @@ project_predictions_unfiltered = parseEpitopePredictions(path = '3_neolution/pre
 # take subsets based on epitopes per non-syn mutations + indels
 # project_predictions_subset = applyCutoffs(predictions = project_predictions)
 
-# exclude C alleles
-project_predictions_subset = project_predictions[!grepl(pattern = "C[0-9]{4}", x = names(project_predictions))]
+# exclude alleles
+exclusion_pattern = 'C[0-9]{4}'
+
+project_predictions_subset = project_predictions[!grepl(pattern = exclusion_pattern, x = names(project_predictions))]
+project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = exclusion_pattern, x = names(project_predictions_unfiltered))]
 
 # split by xmer
 project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
