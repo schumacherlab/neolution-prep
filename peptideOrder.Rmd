@@ -138,7 +138,7 @@ project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_
 
 ```{r prepare_order_and_setup_lists}
 # bind all together for order list
-all_predictions = rbindlist(list(do.call(rbind, project_predictions_by_xmer)))
+all_predictions = rbindlist(project_predictions_by_xmer)
 all_predictions = all_predictions[naturalorder(patient_id)]
 setkey(x = all_predictions, xmer, tumor_peptide_resin)
 
