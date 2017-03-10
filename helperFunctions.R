@@ -1,9 +1,14 @@
-# load required packages
+# install/load required packages
 if (!require("pacman")) install.packages("pacman")
-
-required_packages = c('compiler', 'data.table', 'deconstructSigs', 'doMC', 'foreach', 'ggplot2', 'gtools', 'koRpus', 'naturalsort', 'optparse', 'pander', 'parallel', 'pbapply', 'rtracklayer', 'stringr', 'tidyr', 'utils')
-
 library(pacman)
+
+required_packages = c('BSgenome', 'compiler', 'data.table', 'deconstructSigs', 'doMC', 'foreach', 'ggplot2', 'gtools', 'koRpus', 'naturalsort', 'optparse', 'pander', 'parallel', 'pbapply', 'rtracklayer', 'stringr', 'tidyr', 'utils')
+
+if (!p_isinstalled('BSgenome')) {
+	source("https://bioconductor.org/biocLite.R")
+	biocLite('BSgenome', suppressUpdates = T)
+}
+
 pacman::p_load(char = required_packages)
 
 
