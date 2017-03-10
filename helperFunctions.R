@@ -810,6 +810,52 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 }
 
 
+# Mutation analysis -------------------------------------------------------
+
+mutationalSignatureAnalysis = function(table, genome_build = 'GRCh38') {
+	required_colnames = c('patient_id', 'chromosome', 'start_position', 'end_position', 'ref_allele', 'alt_allele')
+	if (any(required_colnames %nin% names(table))) {
+		stop('Please make sure all required cols are present in input table. \n', paste(required_colnames, collapse = ', '))
+	}
+
+	if (genome_build == 'GRCh38') {
+		if (!require('BSgenome.Hsapiens.NCBI.GRCh38')) {
+			library(BiocInstaller)
+			biocLite('BSgenome.Hsapiens.NCBI.GRCh38', suppressUpdates = T)
+		}
+
+		genome = getBSgenome('BSgenome.Hsapiens.NCBI.GRCh38')
+	} else if (genome_build == 'hg19' | genome_build == 'GRCh37') {
+		if (!require('BSgenome.Hsapiens.UCSC.hg19')) {
+			library(BiocInstaller)
+			biocLite('BSgenome.Hsapiens.UCSC.hg19', suppressUpdates = T)
+		}
+
+		genome = getBSgenome('BSgenome.Hsapiens.UCSC.hg19')
+	}
+
+	# exclude germline SNPs from analysis
+	table_subset = table[!grepl('[gr]s\\d+', variant_id) & nchar(ref_allele) == 1 & nchar(alt_allele) == 1]
+
+	sigs_input = mut.to.sigs.input(mut.ref = table_subset,
+																 sample.id = 'patient_id',
+																 chr = 'chromosome',
+																 pos = 'start_position',
+																 ref = 'ref_allele',
+																 alt = 'alt_allele',
+																 bsg = genome)
+
+	output_sigs = setNames(object = lapply(row.names(sigs_input),
+																				 function(name) whichSignatures(tumor.ref = sigs_input,
+																				 															 signatures.ref = signatures.nature2013,
+																				 															 sample.id = name,
+																				 															 contexts.needed = TRUE)),
+												 nm = row.names(sigs_input))
+
+	return(output_sigs)
+}
+
+
 # Peptide order -----------------------------------------------------------
 parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '_epitopes\\.csv') {
 	require(stringr)
