@@ -47,8 +47,17 @@ x = foreach(i = 1:nrow(sampleHlaTypes)) %dopar% {
 									 												 # '-a', sampleHlaTypes$affinity_cutoff[i],
 									 												 # '-r', runOptions$neolution$rankCutoff,
 									 												 # '-p', runOptions$neolution$processingCutoff,
-									 												 '-d', runOptions$neolution$modelCutoff,
+									 												 '-d', runOptions$neolution$model_cutoff,
 									 												 '-l', runOptions$neolution$xmer[y],
-									 												 '--selfsim'))
-									 }))
+									 												 if (runOptions$neolution$selfsim_filter_mode == 'simple') {
+									 												 	'--selfsim'
+									 												 } else if (runOptions$neolution$selfsim_filter_mode == 'extended') {
+									 												 	'--extselfsim'
+									 												 },
+									 												 if (runOptions$neolution$selflist) {
+									 												 	'--selflist'
+									 												 })
+									 				 )
+									 })
+						)
 }
