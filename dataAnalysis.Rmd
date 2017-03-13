@@ -58,7 +58,7 @@ effects_table = effects_table[naturalorder(effects_table$patient_id)]
 pander(effects_table, split.table = Inf)
 ```
 
-```{r load_prediction_data}
+```{r load_prediction_data, message = FALSE}
 # parse data
 project_predictions = parseEpitopePredictions(path = '3_neolution/predictions_output',
 																							pattern = '_epitopes_no_selfsim\\.csv')
