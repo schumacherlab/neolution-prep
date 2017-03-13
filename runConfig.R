@@ -32,11 +32,15 @@ runOptions = list(general = list(),
 									# set neolution options
 									neolution = list(numberOfWorkers = 3, # number of threads for predictions (each thread spawns 16 children during self-sim checking)
 
-																	 rankCutoff = 3,
-																	 processingCutoff = 0.5,
-																	 expressionCutoff = 0,
-																	 modelCutoff = 0.02,
-																	 xmer = c(9:11)),
+																	 rank_cutoff = NA,
+																	 processing_cutoff = NA,
+																	 model_cutoff = 0.02,
+																	 expression_cutoff = 0,
+																	 random_forest_model = TRUE,
+																	 xmer = c(9:11),
+																	 selfsim_filter = FALSE,
+																	 selfsim_filter_mode = 'simple',
+																	 selflist = FALSE),
 
 									# set snpEff locations
 									snpeff = list(path = '/home/NFS/users/l.fanchi/libs/snpEff',
