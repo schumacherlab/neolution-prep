@@ -6,30 +6,20 @@ output:
   html_document: 
     theme: cerulean
     toc: yes
-    toc_depth: 4
+    toc_depth: 5
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
+source('runConfig.R')
 source('helperFunctions.R')
-```
-
-```{r interactive_only, eval = F}
 setwd('~/projects/## PROJECT DIR ##')
 ```
 
-```{r define_cutoffs}
-runParameters = list('predictions' = 
-										 	list('rank_cutoff' = NA,
-										 			 'processing_cutoff' = NA,
-										 			 'model_cutoff' = 0.02,
-										 			 'expression_cutoff' = 0,
-										 			 'random_forest_model' = TRUE,
-										 			 'selfsim_filter' = FALSE,
-										 			 'selfsim_filter_mode' = 'simple'))
-```
 <link href="style.css" rel="stylesheet" type="text/css" />
+
+<br>
 
 #### Introduction
 
@@ -40,6 +30,7 @@ This document contains the order and set-up lists of the epitopes for ## PROJECT
 #### Methods summary
 
 Samples were sequenced by GCF at the Netherlands Cancer Institute, data can be found at:  
+
 * [GCF DNA repository link](### INSERT LINK HERE ###)  
 * [GCF RNA repository link](### INSERT LINK HERE ###)  
 
@@ -76,13 +67,14 @@ Epitopes were predicted using in-house epitope prediction pipeline, using random
 
 | parameter                    	| value                      														|
 |-------------------------------|-------------------------------------------------------|
-| _netMHCpan rank cutoff_      	|     `r runParameters$predictions$rank_cutoff`       	|
-| _netChop processing cutoff_  	|	    `r runParameters$predictions$processing_cutoff`   |
-| _Model cutoff_								|			>= `r runParameters$predictions$model_cutoff`				|
-| _RNA expression cutoff_      	|     > `r runParameters$predictions$expression_cutoff`  	|
-|	_Random forest model_					|			`r runParameters$predictions$random_forest_model`	|
-| _Selfsim filter_             	|    `r runParameters$predictions$selfsim_filter`      	|
-| _Selfsim mode_            		|    `r runParameters$predictions$selfsim_filter_mode`  |
+| _netMHCpan rank cutoff_      	|     `r runOptions$neolution$rank_cutoff`  			    	|
+| _netChop processing cutoff_  	|	    `r runOptions$neolution$processing_cutoff`  			|
+| _Model cutoff_								|			>= `r runOptions$neolution$model_cutoff`					|
+| _RNA expression cutoff_      	|     > `r runOptions$neolution$expression_cutoff`  		|
+|	_Random forest model_					|			`r runOptions$neolution$random_forest_model`			|
+| _Selfsim filter_             	|    `r runOptions$neolution$selfsim_filter`      			|
+| _Selfsim mode_            		|    `r runOptions$neolution$selfsim_filter_mode`  			|
+| _Selflist_		            		|    `r runOptions$neolution$selflist`						 			|
 
 <br>
 
