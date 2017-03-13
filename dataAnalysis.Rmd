@@ -1,0 +1,271 @@
+---
+title: "## INSERT PROJECT TITLE ## - data analysis"
+author: "Lorenzo Fanchi"
+date: "## INSERT DATE ##"
+output: 
+  html_document: 
+    theme: cerulean
+    toc: yes
+    toc_depth: 5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+source('runConfig.R')
+source('helperFunctions.R')
+setwd('~/projects/## PROJECT DIR ##')
+```
+
+<link href="style.css" rel="stylesheet" type="text/css" />
+
+<br>
+
+#### Introduction
+
+This document contains in-depth analysis of variants & predictions for ## PROJECT TITLE ## project.
+
+<br>
+
+#### Sample information
+
+```{r variant_snpEff_info}
+snpeff_output = list.files(path = '4_snpEff',
+													 pattern = 'genes\\.txt',
+													 full.names = T)
+snpeff_output = snpeff_output[!grepl(pattern = 'snps', x = snpeff_output, fixed = TRUE)]
+
+sample_info = fread('sample_info.tsv')
+sample_info = sample_info[naturalorder(sample_info$patient_id)]
+
+effects_table = rbindlist(lapply(snpeff_output,
+																 function(path) {
+																 	data = fread(path, skip = 1)
+																 	
+																 	data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regex_prefix, replacement = '', basename(path)), patient_id],
+																 						 syn_coding_variants = sum(data$variants_effect_synonymous_variant),
+																 						 non_syn_coding_variants = sum(data$variants_effect_missense_variant),
+																 						 stop_gained_variants = sum(data$variants_effect_stop_gained),
+																 						 inframe_insertion_variants = sum(data$variant_effect_inframe_insertion),
+																 						 frameshift_variants = sum(data$variants_effect_frameshift_variant))
+																 }))
+
+effects_table = effects_table[naturalorder(effects_table$patient_id)]
+
+# pander(sample_info, split.table = Inf, missing = '')
+
+pander(effects_table, split.table = Inf)
+```
+
+```{r load_prediction_data}
+# parse data
+project_predictions = parseEpitopePredictions(path = '3_neolution/predictions_output',
+																							pattern = '_epitopes_no_selfsim\\.csv')
+
+# parse unfiltered data to calculate some stats
+project_predictions_unfiltered = parseEpitopePredictions(path = '3_neolution/predictions_output', 
+																												 pattern = '_epitopes_unfiltered\\.csv')
+
+# take subsets based on epitopes per non-syn mutations + indels
+project_predictions_subset = applyCutoffs(predictions = project_predictions,
+																					model = runOptions$neolution$model_cutoff,
+																					expression = runOptions$neolution$expression_cutoff,
+																					selfsim = runOptions$neolution$selfsim_filter)
+
+# exclude alleles
+project_predictions_subset = project_predictions_subset[!grepl(pattern = exclusion_pattern, x = names(project_predictions_subset))]
+project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = exclusion_pattern, x = names(project_predictions_unfiltered))]
+
+# split by xmer
+project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
+
+```
+
+```{r prepare_order_and_setup_lists}
+# bind all together for order list
+all_predictions = rbindlist(project_predictions_by_xmer)
+all_predictions = all_predictions[naturalorder(patient_id)]
+setkey(x = all_predictions, xmer, tumor_peptide_resin)
+
+# take subsets for individual patients for combi-coding setup lists
+predictions_by_patient = setNames(object = lapply(sample_info$dna_data_prefix,
+																									function(prefix) {
+																										data_subset = all_predictions[sample_prefix == prefix]
+																										
+																										data_unique = unique(x = data_subset,
+																																				 by = c('hla_allele', 'tumor_peptide'))
+																										
+																										setkey(x = data_unique, xmer, hla_allele)
+																										return(data_unique)
+																									}),
+																	nm = sample_info$patient_id)
+
+# prepare unfiltered predictions to generate some stats
+all_predictions_unfiltered = rbindlist(project_predictions_unfiltered)
+setnames(x = all_predictions_unfiltered,
+				 old = grep('affinity|percentile_rank', names(all_predictions_unfiltered), value = T),
+				 new = c('tumor_affinity_nM', 'tumor_affinity_rank', 'normal_affinity_nM', 'normal_affinity_rank'))
+all_predictions_unfiltered_by_patient = setNames(object = lapply(sample_info$patient_id,
+																																 function(id) {
+																																 	data_subset = all_predictions_unfiltered[patient_id == id]
+																																 	
+																																 	return(data_subset)
+																																 }),
+																								 nm = sample_info$patient_id)
+```
+
+<br>
+
+#### Predicted epitopes summary
+
+```{r generate_prediction_summary, results = 'hide'}
+prediction_table = merge(x = data.table(patient_id = names(sapply(predictions_by_patient, nrow)),
+																				alleles_included = sapply(names(all_predictions_unfiltered_by_patient),
+																																	 function(id) {
+																																	 	length(all_predictions_unfiltered_by_patient[[id]][, unique(hla_allele)])
+																																	 }),
+																				total_epitopes_predicted = sapply(all_predictions_unfiltered_by_patient, nrow),
+																				selected_epitopes_predicted = sapply(predictions_by_patient, nrow)),
+												 y = effects_table[, -c('syn_coding_variants'), with = F],
+												 by = 'patient_id')
+prediction_table = prediction_table[naturalorder(patient_id)]
+prediction_table[, total_epitope_yield_rate_per_allele := round(x = total_epitopes_predicted / non_syn_coding_variants / alleles_included, digits = 0)]
+prediction_table[, selected_epitope_yield_rate_per_allele := round(x = selected_epitopes_predicted / non_syn_coding_variants / alleles_included, digits = 2)]
+setcolorder(x = prediction_table,
+						neworder = c('patient_id', 'alleles_included', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele', 
+												 setdiff(x = names(prediction_table),
+												 				y = c('patient_id', 'alleles_included', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele'))))
+```
+
+```{r pander_prediction_summary}
+pander(prediction_table, split.table = 200, split.cells = 20, use.hyphening = TRUE)
+```
+
+<br>
+
+__Total number of unique selected epitopes: `r nrow(unique(all_predictions,by = 'tumor_peptide'))`__  
+
+<br>
+
+##### Filter effect analysis
+
+Following table shows percentages of predicted epitopes passing various filtering steps and medians for tumor_affinity_rank, tumor_processing_score & rna_expression  
+
+```{r calculate_filter_consequences}
+# annotate consequences of various filtering steps per variant per patient
+all_predictions_unfiltered_by_patient = lapply(all_predictions_unfiltered_by_patient,
+																							 function(dt) {
+																							 	dt[model_prediction >= runOptions$neolution$model_cutoff, passes_model_cutoff := TRUE]
+																							 	dt[model_prediction < runOptions$neolution$model_cutoff, passes_model_cutoff := FALSE]
+																							 	
+																							 	dt[rna_expression > runOptions$neolution$expression_cutoff | is.na(rna_expression), passes_expression_cutoff := TRUE]
+																							 	dt[rna_expression <= runOptions$neolution$expression_cutoff , passes_expression_cutoff := FALSE]
+																							 })
+
+filter_consequences = rbindlist(lapply(all_predictions_unfiltered_by_patient,
+																			 function(dt) {
+																			 	data.table(patient_id = dt[, unique(patient_id)],
+																			 						 passes_model_cutoff = round(nrow(dt[passes_model_cutoff == TRUE]) / nrow(dt) * 100, 2),
+																			 						 passes_expression_cutoff = round(nrow(dt[passes_expression_cutoff == TRUE]) / nrow(dt) * 100, 1),
+																			 						 passes_both_cutoffs = round(nrow(dt[passes_model_cutoff == TRUE & passes_expression_cutoff == TRUE]) / nrow(dt) * 100, 2),
+																			 						 median_tumor_affinity_rank = median(dt$tumor_affinity_rank),
+																			 						 median_tumor_processing_score = round(median(dt$tumor_processing_score), 2),
+																			 						 median_rna_expression = round(median(dt$rna_expression, na.rm = TRUE), 2))
+																			 }))
+
+pander(filter_consequences, split.table = 200)
+```
+
+<br>
+
+##### DNA VAF analysis
+
+To determine whether differences in epitope yield rate (# of epitopes / coding snv / allele) are due to differences in tumor purity or sequencing depth, the VAFs of coding variants are compared between patients. Lower than average VAF could indicate lower sample purity and/or lower sequencing depth.
+
+```{r dna_vaf_check}
+# get all unique coding variants from varcontext output
+varcontext_output = setNames(object = lapply(list.files(path = '2_varcontext', pattern = 'varcontext.tsv', full.names = TRUE),
+																						 function(path) {
+																						 	data = fread(path, colClasses = c(chromosome = 'character'),
+																						 							 select = c('variant_id','chromosome','start_position', 'end_position', 'ref_allele', 'alt_allele', 'dna_vaf', 'variant_classification'))
+																						 	data = unique(x = data, by = names(data))
+																						 	data[, patient_id := sample_info[dna_data_prefix == gsub(regex_prefix, '', basename(path)), patient_id]]
+																						 }),
+														 nm = list.files(path = '2_varcontext', pattern = 'varcontext.tsv'))
+
+all_variants = rbindlist(varcontext_output)
+all_variants$patient_id = factor(x = all_variants$patient_id, levels = unique(naturalsort(all_variants$patient_id)))
+
+dna_vaf_summary = data.table(patient_id = sapply(varcontext_output, function(dt) dt[, unique(patient_id)]),
+														 selected_epitope_yield_rate_per_allele = prediction_table[sapply(sapply(varcontext_output, function(dt) dt[, unique(patient_id)]),
+														 																												function(id) grep(id, prediction_table$patient_id)), selected_epitope_yield_rate_per_allele],
+														 median_dna_vaf = sapply(varcontext_output, function(dt) round(x = median(dt[!grepl(regex_snps, variant_id), dna_vaf], na.rm = TRUE), digits = 2)))
+dna_vaf_summary = dna_vaf_summary[naturalorder(patient_id)]
+
+pander(dna_vaf_summary, split.table = 200)
+```
+
+```{r plot_dna_vaf_check, fig.width = 14, fig.height = 7, warning = F, message = F}
+ggplot(data = all_variants[!grepl(regex_snps, variant_id)], 
+			 mapping = aes(x = dna_vaf, fill = patient_id)) +
+	geom_histogram() +
+	facet_wrap(~ patient_id, ncol = 3)
+```
+
+<br>
+
+##### Driver gene analysis
+
+List of driver genes was obtained from [COSMIC: Cancer Gene census](http://cancer.sanger.ac.uk/census) and cross-checked with hugo_symbols observed in varcontext output
+
+```{r check_oncogenes_selected_patients}
+# load oncogene db list, obtained from http://cancer.sanger.ac.uk/census
+if (!file.exists('oncogene_census.tsv')) {
+	stop('Please download recent oncogene census file from COSMIC and save as "oncogene_census.tsv" in working directory')
+} 
+
+oncogene_db = fread(list.files(path = '.', pattern = 'oncogene_census\\.tsv'))
+oncogene_db = separate_rows(oncogene_db, Synonyms, sep = ',')	
+
+# load varcontext data
+varcontext_full_data = setNames(object = lapply(list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = TRUE),
+																								fread, colClasses = c(chromosome = 'character')),
+																nm = sapply(gsub(regex_prefix, '', list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = FALSE)), function(prefix) sample_info[dna_data_prefix == prefix, patient_id]))
+varcontext_full_data = varcontext_full_data[naturalorder(names(varcontext_full_data))]
+
+driver_table = data.table(patient_id = names(varcontext_full_data),
+													non_syn_coding_variants = sapply(names(varcontext_full_data), function(id) effects_table[patient_id == id, non_syn_coding_variants]),
+													driver_genes = sapply(varcontext_full_data,
+																								function(dt) {
+																									drivers_symbol = sort(unique(dt, by = 'hugo_symbol')$hugo_symbol)[which(sort(unique(dt, by = 'hugo_symbol')$hugo_symbol) %in% oncogene_db[`Role in Cancer` != '', `Gene Symbol`])]
+																									drivers_synonym = sort(unique(dt, by = 'hugo_symbol')$hugo_symbol)[which(sort(unique(dt, by = 'hugo_symbol')$hugo_symbol) %in% oncogene_db[`Role in Cancer` != '', Synonyms])]
+																									
+																									return(paste0(unique(c(drivers_symbol, drivers_synonym)), collapse = ', '))
+																								}))
+
+pander(driver_table, split.table = 250)
+```
+
+<br>
+
+##### Mutational signature analysis
+
+Following analysis shows distribution of mutational signatures of all SNVs (excluding germline SNPs) for all patients. Signatures from Alexandov et al. Nature 2013 have been used in the analysis.  
+
+The top panel is the tumor mutational profile displaying the fraction of mutations found in each trinucleotide context, the middle panel is the reconstructed mutational profile created by multiplying the calculated weights by the signatures, and the bottom panel is the error between the tumor mutational profile and reconstructed mutational profile, with SSE (sum-squared error) annotated.  
+
+For mutational signature information, click <a href="http://cancer.sanger.ac.uk/cosmic/signatures" target="_blank">here</a>  
+
+```{r mutational_signature_analysis, warning = FALSE, message = FALSE}
+mutational_signatures = mutationalSignatureAnalysis(table = rbindlist(varcontext_output))
+mutational_signatures = mutational_signatures[naturalorder(names(mutational_signatures))]
+
+analysed_mutation_counts = sapply(names(mutational_signatures), function(id) nrow(rbindlist(varcontext_output)[patient_id == id
+																																																							 & !grepl(regex_snps, variant_id)
+																																																							 & nchar(ref_allele) == 1 & nchar(alt_allele) == 1]))
+
+for (i in 1:length(mutational_signatures)) {
+	plotSignatures(mutational_signatures[[i]], sub = paste('Analysed mutations:', analysed_mutation_counts[names(mutational_signatures)[i]]))
+}
+```
+
