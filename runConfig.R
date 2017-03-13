@@ -1,4 +1,15 @@
 ## set runtime configuration
+
+# regex for matching SNPs
+regex_snps = '[gr]s\\d+'
+
+# regex for isolating GCF prefix
+regex_prefix = '_mg.+|_S\\d_L.+'
+
+# regex for excluding particular alleles from analysis
+exclusion_pattern = 'C[0-9]{4}'
+
+# run options
 runOptions = list(general = list(),
 
 									# set samtools mpileup options
