@@ -79,7 +79,6 @@ project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern =
 
 # split by xmer
 project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
-
 ```
 
 ```{r prepare_order_and_setup_lists}
@@ -221,7 +220,7 @@ List of driver genes was obtained from [COSMIC: Cancer Gene census](http://cance
 
 ```{r check_oncogenes_selected_patients}
 # load oncogene db list, obtained from http://cancer.sanger.ac.uk/census
-if (!file.exists('oncogene_census.tsv')) {
+if (length(list.files(path = '.', pattern = 'oncogene_census\\.tsv')) < 1) {
 	stop('Please download recent oncogene census file from COSMIC and save as "oncogene_census.tsv" in working directory')
 } 
 

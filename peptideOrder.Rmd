@@ -130,7 +130,6 @@ project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern =
 
 # split by xmer
 project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
-
 ```
 
 ```{r prepare_order_and_setup_lists}
