@@ -12,9 +12,10 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
+setwd('~/projects/## PROJECT DIR ##')
+
 source('runConfig.R')
 source('helperFunctions.R')
-setwd('~/projects/## PROJECT DIR ##')
 ```
 
 <link href="style.css" rel="stylesheet" type="text/css" />
