@@ -855,14 +855,6 @@ mutationalSignatureAnalysis = function(table, genome_build = 'GRCh38') {
 	return(output_sigs)
 }
 
-printMutationalSignatureInfo = function(signatures = 'alexandrov') {
-	if (signatures == 'alexandrov') {
-		signature_info = fread(input = 'alexandrov_nature_2013_mutsigs.tsv', na.strings = 'N/A')
-	}
-
-	return(signature_info)
-}
-
 
 # Peptide order -----------------------------------------------------------
 parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '_epitopes\\.csv') {
