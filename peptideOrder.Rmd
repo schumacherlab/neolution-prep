@@ -1,7 +1,7 @@
 ---
 title: "## INSERT PROJECT TITLE ## - neo-antigen screen"
 author: "Lorenzo Fanchi"
-date: "## INSERT DATE ##"
+date: "`r format(Sys.Date(), '%d-%b-%Y')`"
 output: 
   html_document: 
     theme: cerulean
@@ -24,7 +24,7 @@ source('helperFunctions.R')
 
 #### Introduction
 
-This document contains the order and set-up lists of the epitopes for ## PROJECT TITLE ## project.
+This document contains the order and set-up lists of the epitopes for the ## PROJECT TITLE ## project.
 
 <br>
 
