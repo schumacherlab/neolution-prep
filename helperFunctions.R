@@ -835,7 +835,7 @@ mutationalSignatureAnalysis = function(table, genome_build = 'GRCh38') {
 	}
 
 	# exclude germline SNPs from analysis
-	table_subset = table[!grepl('[gr]s\\d+', variant_id) & nchar(ref_allele) == 1 & nchar(alt_allele) == 1]
+	table_subset = table[!grepl(regex_snps, variant_id) & nchar(ref_allele) == 1 & nchar(alt_allele) == 1]
 
 	sigs_input = mut.to.sigs.input(mut.ref = table_subset,
 																 sample.id = 'patient_id',
@@ -874,7 +874,7 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
 	predictions = lapply(seq(1, length(files)),
 											 function(i) {
 											 	data = fread(files[i])
-											 	data[, sample_prefix := sub(pattern = '_mg.+|_S\\d_L.+', replacement = '', x = short_names[i])]
+											 	data[, sample_prefix := sub(pattern = regex_prefix, replacement = '', x = short_names[i])]
 											 	data[, patient_id := sample_table[dna_data_prefix == data[, unique(sample_prefix)], patient_id]]
 
 											 	return(data)
