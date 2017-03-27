@@ -255,11 +255,11 @@ pander(driver_table, split.table = 250)
 
 Following analysis shows distribution of mutational signatures of all SNVs (excluding germline SNPs) for all patients. Signatures from Alexandov et al. Nature 2013 have been used in the analysis.  
 
-The top panel is the tumor mutational profile displaying the fraction of mutations found in each trinucleotide context, the middle panel is the reconstructed mutational profile created by multiplying the calculated weights by the signatures, and the bottom panel is the error between the tumor mutational profile and reconstructed mutational profile, with SSE (sum-squared error) annotated.  
+The top panel is the tumor mutational profile displaying the fraction of mutations found in each trinucleotide context, the middle panel is the reconstructed mutational profile created by multiplying the calculated weights by the signatures, and the bottom panel is the error between the tumor mutational profile and reconstructed mutational profile, with SSE (sum-squared error) shown.  
 
 For mutational signature information, click <a href="http://cancer.sanger.ac.uk/cosmic/signatures" target="_blank">here</a>  
 
-```{r mutational_signature_analysis, warning = FALSE, message = FALSE}
+```{r mutational_signature_analysis, warning = FALSE, message = FALSE, cache = TRUE, fig.width = 10, fig.heigth = 7}
 mutational_signatures = mutationalSignatureAnalysis(table = rbindlist(varcontext_output))
 mutational_signatures = mutational_signatures[naturalorder(names(mutational_signatures))]
 
