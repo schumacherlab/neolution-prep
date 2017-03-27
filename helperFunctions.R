@@ -393,7 +393,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 				performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[i],
 															locations_file = sample_combinations$locations_file[i],
 															fasta_reference = fasta_genome_ref)
-			} else if (pileup_mode = 'sambamba') {
+			} else if (pileup_mode == 'sambamba') {
 				performSambambaPileup(bam_file = sample_combinations$rna_bam_file[i],
 															locations_file = sample_combinations$locations_file[i],
 															fasta_reference = fasta_genome_ref)
