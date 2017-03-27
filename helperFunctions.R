@@ -293,6 +293,7 @@ extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', '
 findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'bam'),
 																							 quant_mode = 'cufflinks',
+																							 pileup_mode = 'samtools',
 																							 fasta_genome_ref = runOptions$samtools$fastaGenomeRef,
 																							 sample_info_path = file.path(rootDirectory, 'sample_info.tsv')) {
 
@@ -388,9 +389,18 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub(regexPatterns$file_extension, '', basename(sample_combinations$rna_bam_file[i])),
 																																									if (is.null(sample_combinations$locations_file[i])) {'_mpil.tsv'} else {'_mpil_loc.tsv'})))) {
 
-			performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[i],
-														locations_file = sample_combinations$locations_file[i],
-														fasta_reference = fasta_genome_ref)
+			if (pileup_mode == 'samtools') {
+				performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[i],
+															locations_file = sample_combinations$locations_file[i],
+															fasta_reference = fasta_genome_ref)
+			} else if (pileup_mode = 'sambamba') {
+				performSambambaPileup(bam_file = sample_combinations$rna_bam_file[i],
+															locations_file = sample_combinations$locations_file[i],
+															fasta_reference = fasta_genome_ref)
+			} else {
+				stop('Please specify valid argument for "pileup_mode" (either "samtools" or "sambamba")')
+			}
+
 		}
 	}
 
