@@ -297,21 +297,6 @@ extractVariantReadCountsFromVcf = function(vcf_table, sample_tag, count_tag) {
 }
 
 extractSplitDataFromVcf = function(vcf_table, sample_tag, format_tag, split_by = ',') {
-
-	##### sample order is not consistent for somaticIndelCaller (seems alphabetically ordered by filename, instead of NORMAL-TUMOR)
-	##### end result is we don't know which column is TUMOR, therefore don't process indels at this moment in time
-
-	# # SC field: "counts of forward-/reverse-aligned indel-supporting reads / forward-/reverse-aligned reference supporting reads"
-	# count_data_indels = extractDataFromVcfField(vcf_table = vcf_table,
-	# 																						sample_tag = sample_tag,
-	# 																						format_tag = 'SC')
-	#
-	# # reverse 'counts_data_indels' so that order is identical to 'counts_data_snvs'
-	# count_data_indels = lapply(str_split(string = count_data_indels, pattern = ','),
-	# 													 function(counts) {
-	# 													 	as.numeric(counts[c(3, 4, 1, 2)])
-	# 													 })
-
 	# if sample_tag not found in columns, return NA
 	if (!any(grepl(pattern = sample_tag, x = names(vcf_table)))) {
 		return(list(NA))
