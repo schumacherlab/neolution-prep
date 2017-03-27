@@ -268,7 +268,7 @@ analysed_mutation_counts = sapply(names(mutational_signatures), function(id) nro
 																																																							 & nchar(ref_allele) == 1 & nchar(alt_allele) == 1]))
 
 for (i in 1:length(mutational_signatures)) {
-	plotSignatures(mutational_signatures[[i]], sub = paste('Analysed mutations:', analysed_mutation_counts[names(mutational_signatures)[i]]))
+	plotSignaturesSmallLabels(mutational_signatures[[i]], sub = paste('Analysed mutations:', analysed_mutation_counts[names(mutational_signatures)[i]]))
 }
 ```
 
