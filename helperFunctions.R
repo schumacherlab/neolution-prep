@@ -32,7 +32,7 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
                          full.names = TRUE)
 
   vcf_files = setNames(object = vcf_files,
-                       nm = sub("[.][^.]*$", "",
+                       nm = sub(regexPatterns$file_extension, '',
                                 list.files(path = vcf_path,
                                            pattern = '\\.vcf$')))
 
@@ -45,7 +45,7 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
 
   vcf_data = lapply(vcf_data,
                     function(vcf) {
-                      data = vcf[grepl('^[gr]s\\d+$', variant_id) # always include SNPs
+                      data = vcf[grepl(regexPatterns$snp_identifier, variant_id) # always include SNPs
                       					 | sapply(1:nrow(vcf), function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index])) # include all indels, since sample order is inconsistent (can't be sure we're looking at NORMAL or TUMOR sample)
                       					 | genotype != '0/0' | is.na(genotype), # exclude tumor-specific variants which are ref
                                  .(variant_id, chromosome, start_position, ref_allele, alt_allele, dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
@@ -192,7 +192,7 @@ extractDataFromVcfField = function(vcf_table, sample_tag, format_tag) {
 
 	tag_data = unlist(mclapply(seq(1, length(tag_positions)),
 														 function(x) {
-														 	if (grepl(pattern = '^[gr]s\\d+$', x = vcf_table$variant_id[x]) & is.na(tag_positions[[x]])) {
+														 	if (grepl(pattern = regexPatterns$snp_identifier, x = vcf_table$variant_id[x]) & is.na(tag_positions[[x]])) {
 														 		snp_split = unlist(str_split(string = vcf_table$info[x], pattern = ';'))
 														 		tag_data = grep(pattern = paste0('^', format_tag, '='), x = snp_split, value = TRUE)
 
@@ -337,7 +337,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 												 function(x) {
 												 	setorder(x = unique(x[grepl(pattern = '^[0-9]{1,2}$|^[XY]$',
 												 															x = x$chromosome) &
-												 													!grepl(pattern = '^[rg]s\\d+$',
+												 													!grepl(pattern = regexPatterns$snp_identifier,
 												 																 x = x$variant_id) &
 												 													nchar(x$ref_allele) == 1 &
 												 													nchar(x$alt_allele) == 1,
@@ -351,7 +351,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 
 	invisible(sapply(1:length(snv_positions),
 									 function(x) write.table(x = snv_positions[[x]],
-									 												file = file.path(rootDirectory, '1a_variants', 'poslist', paste0(sub("\\.[^.]*$", "", names(snv_positions)[x]), '_poslist.tsv')),
+									 												file = file.path(rootDirectory, '1a_variants', 'poslist', paste0(sub(regexPatterns$file_extension, '', names(snv_positions)[x]), '_poslist.tsv')),
 									 												quote = FALSE,
 									 												col.names = FALSE,
 									 												row.names = FALSE)))
@@ -385,7 +385,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 	}
 
 	x = foreach(i = 1:nrow(sample_combinations)) %dopar% {
-		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('\\.[^.]*$', '', basename(sample_combinations$rna_bam_file[i])),
+		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub(regexPatterns$file_extension, '', basename(sample_combinations$rna_bam_file[i])),
 																																									if (is.null(sample_combinations$locations_file[i])) {'_mpil.tsv'} else {'_mpil_loc.tsv'})))) {
 
 			performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[i],
@@ -523,7 +523,7 @@ performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_referenc
 												 if (!is.null(locations_file)) {paste('-l', locations_file)},
 												 if (!is.null(fasta_reference)) {paste('-f', fasta_reference)},
 												 bam_file, '>',
-												 file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub('\\.[^.]*$', '', basename(bam_file)),
+												 file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub(regexPatterns$file_extension, '', basename(bam_file)),
 												 																														 if (is.null(locations_file)) {'_mpil.tsv'} else {'_mpil_loc.tsv'}))),
 				 intern = FALSE,
 				 wait = TRUE)
@@ -592,7 +592,7 @@ generateVarcontext = function(input_list) {
 	setwd(runOptions$varcontext$varcontextDirectory)
 
 	invisible(foreach(i = 1:length(input_list)) %dopar% {
-		filename = sub(pattern = '\\.[^.]+$', replacement = '', x = basename(input_list[i]))
+		filename = sub(pattern = regexPatterns$file_extension, replacement = '', x = basename(input_list[i]))
 
 		runStart = format(Sys.time(), '%Y%m%d')
 
@@ -702,7 +702,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
 																	warning('No input data present for ', sample_combinations[x, variants], ' & ', sample_combinations[x, rna_expression_data])
 																}
 															})
-		prediction_input = setNames(object = prediction_input, nm = sub("[.][^.]*$", "", sample_combinations$variants))
+		prediction_input = setNames(object = prediction_input, nm = sub(regexPatterns$file_extension, '', sample_combinations$variants))
 
 		rna_coverage_summary = data.table(sample = names(prediction_input),
 																			percent_ensg_coverage = sapply(prediction_input, function(x) round(x = length(which(!is.na(x[[expression_unit]]))) / nrow(x) * 100,
@@ -786,12 +786,12 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 													 '-nodownload',
 													 if (canon_only) {'-canon'},
 													 '-stats',
-													 file.path(rootDirectory,'4_snpEff', paste0(sub(pattern = '\\.[^.]*$',
+													 file.path(rootDirectory,'4_snpEff', paste0(sub(pattern = regexPatterns$file_extension,
 													 																							 replacement = '',
 													 																							 x = basename(variantLists[i])),
 													 																					 if (!filter_snps) {'-with_snps'},
 													 																					 '-snpEff_summary.html')),
-													 runOptions$snpeff$build, '>', file.path(rootDirectory,'4_snpEff', paste0(sub(pattern = '\\.[^.]*$',
+													 runOptions$snpeff$build, '>', file.path(rootDirectory,'4_snpEff', paste0(sub(pattern = regexPatterns$file_extension,
 													 																																						 replacement = '',
 													 																																						 x =  basename(variantLists[i])),
 													 																																				 if (!filter_snps) {'-with_snps'},

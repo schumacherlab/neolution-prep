@@ -94,7 +94,7 @@ effects_table = rbindlist(lapply(snpeff_output,
 																 function(path) {
 																 	data = fread(path, skip = 1)
 																 	
-																 	data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regex_prefix, replacement = '', basename(path)), patient_id],
+																 	data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix, replacement = '', basename(path)), patient_id],
 																 						 syn_coding_variants = sum(data$variants_effect_synonymous_variant),
 																 						 non_syn_coding_variants = sum(data$variants_effect_missense_variant),
 																 						 stop_gained_variants = sum(data$variants_effect_stop_gained),
@@ -125,8 +125,8 @@ project_predictions_subset = applyCutoffs(predictions = project_predictions,
 																					selfsim = runOptions$neolution$selfsim_filter)
 
 # exclude alleles
-project_predictions_subset = project_predictions_subset[!grepl(pattern = exclusion_pattern, x = names(project_predictions_subset))]
-project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = exclusion_pattern, x = names(project_predictions_unfiltered))]
+project_predictions_subset = project_predictions_subset[!grepl(pattern = regexPatterns$allele_exclusion, x = names(project_predictions_subset))]
+project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = regexPatterns$allele_exclusion, x = names(project_predictions_unfiltered))]
 
 # split by xmer
 project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)

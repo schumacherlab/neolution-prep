@@ -43,7 +43,7 @@ effects_table = rbindlist(lapply(snpeff_output,
 																 function(path) {
 																 	data = fread(path, skip = 1)
 																 	
-																 	data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regex_prefix, replacement = '', basename(path)), patient_id],
+																 	data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix, replacement = '', basename(path)), patient_id],
 																 						 syn_coding_variants = sum(data$variants_effect_synonymous_variant),
 																 						 non_syn_coding_variants = sum(data$variants_effect_missense_variant),
 																 						 stop_gained_variants = sum(data$variants_effect_stop_gained),
@@ -74,8 +74,8 @@ project_predictions_subset = applyCutoffs(predictions = project_predictions,
 																					selfsim = runOptions$neolution$selfsim_filter)
 
 # exclude alleles
-project_predictions_subset = project_predictions_subset[!grepl(pattern = exclusion_pattern, x = names(project_predictions_subset))]
-project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = exclusion_pattern, x = names(project_predictions_unfiltered))]
+project_predictions_subset = project_predictions_subset[!grepl(pattern = regexPatterns$allele_exclusion, x = names(project_predictions_subset))]
+project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = regexPatterns$allele_exclusion, x = names(project_predictions_unfiltered))]
 
 # split by xmer
 project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
@@ -189,7 +189,7 @@ varcontext_output = setNames(object = lapply(list.files(path = '2_varcontext', p
 																						 	data = fread(path, colClasses = c(chromosome = 'character'),
 																						 							 select = c('variant_id','chromosome','start_position', 'end_position', 'ref_allele', 'alt_allele', 'dna_vaf', 'variant_classification'))
 																						 	data = unique(x = data, by = names(data))
-																						 	data[, patient_id := sample_info[dna_data_prefix == gsub(regex_prefix, '', basename(path)), patient_id]]
+																						 	data[, patient_id := sample_info[dna_data_prefix == gsub(regexPatterns$seqdata_prefix, '', basename(path)), patient_id]]
 																						 }),
 														 nm = list.files(path = '2_varcontext', pattern = 'varcontext.tsv'))
 
@@ -199,14 +199,14 @@ all_variants$patient_id = factor(x = all_variants$patient_id, levels = unique(na
 dna_vaf_summary = data.table(patient_id = sapply(varcontext_output, function(dt) dt[, unique(patient_id)]),
 														 selected_epitope_yield_rate_per_allele = prediction_table[sapply(sapply(varcontext_output, function(dt) dt[, unique(patient_id)]),
 														 																												function(id) grep(id, prediction_table$patient_id)), selected_epitope_yield_rate_per_allele],
-														 median_dna_vaf = sapply(varcontext_output, function(dt) round(x = median(dt[!grepl(regex_snps, variant_id), dna_vaf], na.rm = TRUE), digits = 2)))
+														 median_dna_vaf = sapply(varcontext_output, function(dt) round(x = median(dt[!grepl(regexPatterns$snp_identifier, variant_id), dna_vaf], na.rm = TRUE), digits = 2)))
 dna_vaf_summary = dna_vaf_summary[naturalorder(patient_id)]
 
 pander(dna_vaf_summary, split.table = 200)
 ```
 
 ```{r plot_dna_vaf_check, fig.width = 14, fig.height = 7, warning = F, message = F}
-ggplot(data = all_variants[!grepl(regex_snps, variant_id)], 
+ggplot(data = all_variants[!grepl(regexPatterns$snp_identifier, variant_id)], 
 			 mapping = aes(x = dna_vaf, fill = patient_id)) +
 	geom_histogram() +
 	facet_wrap(~ patient_id, ncol = 3)
@@ -230,7 +230,7 @@ oncogene_db = separate_rows(oncogene_db, Synonyms, sep = ',')
 # load varcontext data
 varcontext_full_data = setNames(object = lapply(list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = TRUE),
 																								fread, colClasses = c(chromosome = 'character')),
-																nm = sapply(gsub(regex_prefix, '', list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = FALSE)), function(prefix) sample_info[dna_data_prefix == prefix, patient_id]))
+																nm = sapply(gsub(regexPatterns$seqdata_prefix, '', list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = FALSE)), function(prefix) sample_info[dna_data_prefix == prefix, patient_id]))
 varcontext_full_data = varcontext_full_data[naturalorder(names(varcontext_full_data))]
 
 driver_table = data.table(patient_id = names(varcontext_full_data),
@@ -264,7 +264,7 @@ mutational_signatures = mutationalSignatureAnalysis(table = rbindlist(varcontext
 mutational_signatures = mutational_signatures[naturalorder(names(mutational_signatures))]
 
 analysed_mutation_counts = sapply(names(mutational_signatures), function(id) nrow(rbindlist(varcontext_output)[patient_id == id
-																																																							 & !grepl(regex_snps, variant_id)
+																																																							 & !grepl(regexPatterns$snp_identifier, variant_id)
 																																																							 & nchar(ref_allele) == 1 & nchar(alt_allele) == 1]))
 
 for (i in 1:length(mutational_signatures)) {
