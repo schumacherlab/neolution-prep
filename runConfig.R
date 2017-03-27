@@ -1,13 +1,10 @@
 ## set runtime configuration
 
-# regex for matching SNPs
-regex_snps = '[gr]s\\d+'
-
-# regex for isolating GCF prefix
-regex_prefix = '_mg.+|_S\\d_L.+'
-
-# regex for excluding particular alleles from analysis
-exclusion_pattern = 'C[0-9]{4}'
+# regexes
+regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (everything after last dot, inclusive)
+										 snp_identifier = '[gr]s\\d+', # for matching SNPs
+										 seqdata_prefix = '_mg.+|_S\\d_L.+', # for isolating GCF prefix
+										 allele_exclusion = 'C[0-9]{4}') # for excluding particular alleles from analysis
 
 # run options
 runOptions = list(general = list(),
