@@ -518,7 +518,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_reference = NULL) {
 	dir.create(file.path(rootDirectory, '1b_rnaseq_data', 'pileups'), showWarnings = FALSE)
 
-	system(command = paste('samtools',
+	system(command = paste(runOptions$samtools$samtoolsPath,
 												 'mpileup',
 												 if (!is.null(locations_file)) {paste('-l', locations_file)},
 												 if (!is.null(fasta_reference)) {paste('-f', fasta_reference)},
