@@ -274,9 +274,9 @@ extractSingleDataFromVcfField = function(vcf_table, sample_tag, format_tag, spli
 }
 
 extractVariantReadCountsFromVcf = function(vcf_table, sample_tag, count_tag) {
-	count_data = extractDataFromVcfField(vcf_table = vcf_table,
-																			 sample_tag = sample_tag,
-																			 format_tag = count_tag)
+	count_data = extractSingleDataFromVcfField(vcf_table = vcf_table,
+																						 sample_tag = sample_tag,
+																						 format_tag = count_tag)
 
 	count_data = mclapply(str_split(string = count_data, pattern = ','), as.numeric, mc.cores = 20)
 
@@ -302,9 +302,9 @@ extractSplitDataFromVcf = function(vcf_table, sample_tag, format_tag, split_by =
 		return(list(NA))
 	}
 
-	tag_data = extractDataFromVcfField(vcf_table = vcf_table,
-																		 sample_tag = sample_tag,
-																		 format_tag = format_tag)
+	tag_data = extractSingleDataFromVcfField(vcf_table = vcf_table,
+																					 sample_tag = sample_tag,
+																					 format_tag = format_tag)
 
 	tag_data = mclapply(str_split(string = tag_data, pattern = split_by),
 											as.numeric, mc.cores = 20)
