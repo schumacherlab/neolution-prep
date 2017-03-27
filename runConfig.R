@@ -3,6 +3,8 @@
 # regexes
 regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (everything after last dot, inclusive)
 										 snp_identifier = '[gr]s\\d+', # for matching SNPs
+										 gs_identifier = 'gs\\d+', # for matching snps not found in dbSNP
+										 rs_identifier = 'rs\\d+', # for matching snps found in dbSNP
 										 seqdata_prefix = '_mg.+|_S\\d_L.+', # for isolating GCF prefix
 										 allele_exclusion = 'C[0-9]{4}') # for excluding particular alleles from analysis
 
