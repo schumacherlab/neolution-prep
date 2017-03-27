@@ -531,6 +531,25 @@ performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_referenc
 	Sys.sleep(time = 1)
 }
 
+performSambambaPileup = function(bam_file, locations_file = NULL, fasta_reference = NULL) {
+	dir.create(file.path(rootDirectory, '1b_rnaseq_data', 'pileups'), showWarnings = FALSE)
+
+	system(command = paste(runOptions$samtools$sambambaPath,
+												 'mpileup',
+												 '-t', 6,
+												 '-o', file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub(regexPatterns$file_extension, '', basename(bam_file)),
+												 																																	 if (is.null(locations_file)) {'_mpil.tsv'} else {'_mpil_loc.tsv'})),
+												 bam_file,
+												 '--samtools',
+												 if (!is.null(locations_file)) {paste('-l', locations_file)},
+												 if (!is.null(fasta_reference)) {paste('-f', fasta_reference)}
+	),
+	intern = FALSE,
+	wait = TRUE)
+
+	Sys.sleep(time = 1)
+}
+
 
 # Varcontext generation ---------------------------------------------------
 performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '1a_variants', 'parsed'), filter_rna_alt_expression = TRUE, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
