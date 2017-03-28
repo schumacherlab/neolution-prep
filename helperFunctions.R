@@ -368,6 +368,7 @@ extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', '
 
 # Variant allele expression -----------------------------------------------
 findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
+                                               vcf_regex = '\\.tsv$',
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'bam'),
 																							 quant_mode = 'salmon',
 																							 pileup_mode = 'samtools',
@@ -391,13 +392,13 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 
 	# parse input data
 	input_data = lapply(list.files(path = vcf_input_path,
-																 pattern = '\\.tsv',
+																 pattern = vcf_regex,
 																 full.names = TRUE),
 											fread,
 											colClasses = list(character = c('chromosome')))
 	input_data = setNames(object = input_data,
 												nm = list.files(path = vcf_input_path,
-																				pattern = '\\.tsv'))
+																				pattern = vcf_regex))
 
 	# load sample info
 	if (file.exists(sample_info_path)) {
@@ -439,7 +440,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 
 	sample_combinations = data.table(locations_file = sapply(sample_info$dna_data_prefix, function(x) grep(pattern = x,
 																																																				 x = list.files(path = file.path(rootDirectory, '1a_variants', 'poslist'),
-																																																				 							 pattern = '_poslist\\.tsv',
+																																																				 							 pattern = paste0(gsub(regexPatterns$file_extension, '', vcf_regex), '_poslist\\.tsv'),
 																																																				 							 full.names = TRUE),
 																																																				 value = T),
 																													 USE.NAMES = FALSE),
