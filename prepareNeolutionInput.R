@@ -12,15 +12,13 @@ source('./runConfig.R')
 parseAndExtractFieldsFromVcf()
 
 # find evidence for variants in RNAseq data (skipped if no RNAseq data is found)
-findRnaReadLevelEvidenceForVariants(quant_mode = 'salmon')
+findRnaReadLevelEvidenceForVariants()
 
 # run variant context generation
 performVarcontextGeneration()
 
 # prepare Neolution input files (also allows optional merging with RNAseq data; skipped if no RNAseq data found)
-prepareNeolutionInput(rna_path = '1b_rnaseq_data/processed_salmon',
-											rna_file_suffix = 'salmon-quant-by-ensg\\.tsv',
-											expression_unit = 'tpm')
+prepareNeolutionInput()
 
 # generate SnpEff output
 runSnpEff()
