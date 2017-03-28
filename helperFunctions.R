@@ -25,20 +25,21 @@ dropNa = function(vector) { vector[!is.na(vector)] }
 
 ## VCF parsing ---------------------------------------------------
 # helper functions for input file generation
-parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), normal_tag = 'NORMAL', tumor_tag = 'TUMOR', extract_fields = NULL, write = TRUE) {
+parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_regex = '\\.vcf$', normal_tag = 'NORMAL', tumor_tag = 'TUMOR', extract_fields = NULL, write = TRUE) {
   # extract relevant info from VCF
   message('Step 1: Parsing & extracting fields from VCF')
 
   # make list of VCF files
   vcf_files = list.files(path = vcf_path,
-                         pattern = '\\.vcf$',
+                         pattern = vcf_regex,
                          recursive = FALSE,
                          full.names = TRUE)
 
   vcf_files = setNames(object = vcf_files,
                        nm = sub(regexPatterns$file_extension, '',
                                 list.files(path = vcf_path,
-                                           pattern = '\\.vcf$')))
+                                           pattern = vcf_regex,
+                                           recursive = FALSE)))
 
   if (length(vcf_files) < 1) stop('No VCF files found in ', vcf_path)
 
