@@ -245,7 +245,7 @@ parseVcf = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
 	vcf_parsed$variant_id = unlist(lapply(str_split(string = vcf_parsed$variant_id, pattern = ';'), # for some reason data.table's [, := ] notation didn't work here..
 	                                         function(vctr) {
 	                                           if (length(vctr) > 1) {
-	                                             return(grep(pattern = 'rs\\d+', x = vctr, value = T)[1]) # in case multiple 'rs' ids are present, return 1
+	                                             return(grep(pattern = regexPatterns$rs_identifier, x = vctr, value = T)[1]) # in case multiple 'rs' ids are present, return 1
 	                                           } else {
 	                                             return(vctr)
 	                                           }
