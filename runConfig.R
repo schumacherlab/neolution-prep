@@ -3,8 +3,8 @@
 # regexes
 regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (everything after last dot, inclusive)
 										 snp_identifier = '[gr]s\\d+', # for matching SNPs
-										 gs_identifier = 'gs\\d+', # for matching snps not found in dbSNP
-										 rs_identifier = 'rs\\d+', # for matching snps found in dbSNP
+										 gs_identifier = 'gs\\d+', # for matching snps not found in dbSNP, keep boundless (no '^' or '$')
+										 rs_identifier = 'rs\\d+', # for matching snps found in dbSNP, keep boundless (no '^' or '$')
 										 seqdata_prefix = '_mg.+|_S\\d_L.+', # for isolating GCF prefix
 										 allele_exclusion = 'C[0-9]{4}') # for excluding particular alleles from analysis
 
@@ -35,7 +35,7 @@ runOptions = list(general = list(),
 
 																	 rank_cutoff = NA,
 																	 processing_cutoff = NA,
-																	 model_cutoff = 0.02,
+																	 model_cutoff = 0.02, # use 0.02 for TIL screens (find largest responses), use 0.01 for PBMC screens (more inclusive)
 																	 expression_cutoff = 0,
 																	 random_forest_model = TRUE,
 																	 xmer = c(9:11),
