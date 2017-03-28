@@ -922,7 +922,7 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 						 intern = TRUE,
 						 wait = TRUE)
 		} else {
-			message(paste("nice -n 19", command))
+		  message(paste("nohup nice -n 19", command, '2> /dev/null &\n'))
 		}
 	})
 }
