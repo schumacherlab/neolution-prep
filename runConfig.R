@@ -12,7 +12,7 @@ regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (every
 runOptions = list(general = list(),
 
 									# set samtools mpileup options
-									samtools = list(samtoolsPath = '/home/NFS/users/l.fanchi/libs/samtools-1.3/bin/samtools',
+									samtools = list(samtoolsPath = '/home/NFS/users/l.fanchi/libs/samtools-1.4/bin/samtools',
 																	sambambaPath = '/home/NFS/users/l.fanchi/libs/sambamba-0.6.6-Linux_x86_64/sambamba',
 																	numberOfWorkers = 8,
 																	fastaGenomeRef = '/home/NFS/users/l.fanchi/resources/ensembl_87/fasta_dna/Homo_sapiens.GRCh38.87.dna.primary_assembly.fa'),
