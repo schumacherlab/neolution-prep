@@ -367,8 +367,8 @@ extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', '
 
 
 # Variant allele expression -----------------------------------------------
-findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
-                                               vcf_regex = '\\.tsv$',
+findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
+                                               variant_regex = '\\.tsv$',
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'bam'),
 																							 quant_mode = 'salmon',
 																							 pileup_mode = 'samtools',
@@ -391,14 +391,14 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 	}
 
 	# parse input data
-	input_data = lapply(list.files(path = vcf_input_path,
-																 pattern = vcf_regex,
+	input_data = lapply(list.files(path = variant_input_path,
+																 pattern = variant_regex,
 																 full.names = TRUE),
 											fread,
 											colClasses = list(character = c('chromosome')))
 	input_data = setNames(object = input_data,
-												nm = list.files(path = vcf_input_path,
-																				pattern = vcf_regex))
+												nm = list.files(path = variant_input_path,
+																				pattern = variant_regex))
 
 	# load sample info
 	if (file.exists(sample_info_path)) {
@@ -440,7 +440,7 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 
 	sample_combinations = data.table(locations_file = sapply(sample_info$dna_data_prefix, function(x) grep(pattern = x,
 																																																				 x = list.files(path = file.path(rootDirectory, '1a_variants', 'poslist'),
-																																																				 							 pattern = paste0(gsub(regexPatterns$file_extension, '', vcf_regex), '_poslist\\.tsv'),
+																																																				 							 pattern = paste0(gsub(regexPatterns$file_extension, '', variant_regex), '_poslist\\.tsv'),
 																																																				 							 full.names = TRUE),
 																																																				 value = T),
 																													 USE.NAMES = FALSE),
@@ -651,7 +651,7 @@ performSambambaPileup = function(bam_file, locations_file = NULL, fasta_referenc
 
 
 # Varcontext generation ---------------------------------------------------
-performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '1a_variants', 'parsed'), filter_rna_alt_expression = TRUE, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
+performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '1a_variants', 'parsed'), variant_regex = '\\.tsv$', filter_rna_alt_expression = TRUE, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
 	registerDoMC(runOptions$varcontext$numberOfWorkers)
 
 	dir.create(file.path(rootDirectory, '2_varcontext'),
@@ -663,7 +663,7 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
 
 	# make list of input files
 	variant_lists = list.files(path = variant_path,
-														pattern = '\\.tsv$',
+														pattern = variant_regex,
 														recursive = FALSE,
 														full.names = TRUE)
 	variant_data = lapply(variant_lists,
@@ -671,7 +671,7 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
 											 colClasses = list(character = c('chromosome')))
 	variant_data = setNames(object = variant_data,
 												 nm = list.files(path = variant_path,
-												 								pattern = '\\.tsv$'))
+												 								pattern = variant_regex))
 
 	# remove variants without rna_alt_expression
 	if (filter_rna_alt_expression) {
