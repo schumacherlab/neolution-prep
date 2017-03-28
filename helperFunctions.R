@@ -106,6 +106,10 @@ parseVcf = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
 					 old = c('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'),
 					 new = c('chromosome', 'start_position', 'variant_id', 'ref_allele', 'alt_allele', 'quality', 'filter', 'info', 'format'))
 
+	if (n_tag %nin% names(vcf_dt) | t_tag %nin% names(vcf_dt)) {
+	  stop('"',n_tag, '" and/or "', t_tag, '" not found in VCF header, please doublecheck normal & tumor sample tags')
+	}
+	
 	if (all(vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), n_tag, with = FALSE] == '')) {
 		vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (n_tag) := vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), t_tag, with = FALSE]]
 		vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (t_tag) := NA]
