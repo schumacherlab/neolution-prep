@@ -43,11 +43,22 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
 
   if (length(vcf_files) < 1) stop('No VCF files found in ', vcf_path)
 
-  vcf_data = pblapply(vcf_files,
-  										function(file_path) parseVcf(vcf_path = file_path,
-  																								 n_tag = normal_tag,
-  																								 t_tag = tumor_tag,
-  																								 extract_fields = extract_fields))
+  progress_bar = startpb(min = 0, max = length(vcf_files))
+  on.exit(closepb(progress_bar))
+  
+  vcf_data = mapply(function(file, n, t, i) {
+    data = parseVcf(vcf_path = file,
+                    n_tag = n,
+                    t_tag = t,
+                    extract_fields = extract_fields)
+    setpb(progress_bar, i)
+    return(data)
+  },
+  vcf_files,
+  normal_tag,
+  tumor_tag,
+  1:length(vcf_files),
+  SIMPLIFY = F)
 
   vcf_data = lapply(vcf_data,
   									function(vcf) {
