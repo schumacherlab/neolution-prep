@@ -369,7 +369,7 @@ extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', '
 # Variant allele expression -----------------------------------------------
 findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDirectory, '1a_variants', 'parsed'),
 																							 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'bam'),
-																							 quant_mode = 'cufflinks',
+																							 quant_mode = 'salmon',
 																							 pileup_mode = 'samtools',
 																							 fasta_genome_ref = runOptions$samtools$fastaGenomeRef,
 																							 sample_info_path = file.path(rootDirectory, 'sample_info.tsv')) {
@@ -477,9 +477,8 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 			} else {
 				stop('Please specify valid argument for "pileup_mode" (either "samtools" or "sambamba")')
 			}
-
 		}
-	}
+	})
 
 	pileup_loc_data = lapply(list.files(path = file.path(rootDirectory, '1b_rnaseq_data', 'pileups'),
 																			pattern = '_mpil_loc\\.tsv',
@@ -737,10 +736,10 @@ generateVarcontext = function(input_list) {
 
 # Neolution input generation ----------------------------------------------
 prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_varcontext'),
-																 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'processed'),
+																 rna_path = file.path(rootDirectory, '1b_rnaseq_data', 'processed_salmon'),
 																 sample_info_path = file.path(rootDirectory, 'sample_info.tsv'),
-																 rna_file_suffix = 'genes\\.fpkm_tracking',
-																 expression_unit = 'FPKM') {
+																 rna_file_suffix = 'salmon-quant-by-ensg\\.tsv',
+																 expression_unit = 'tpm') {
 
 	varcontext_data = lapply(list.files(path = varcontext_path,
 																			pattern = 'varcontext\\.tsv',
