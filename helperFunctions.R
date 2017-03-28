@@ -127,7 +127,7 @@ parseVcf = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
 																																																				 format_tag = 'GT')]
 	}
 
-	if (indel_genotyper) {vcf_parsed[1:nrow(vcf_dt[info == 'SOMATIC']), genotype := NA]}
+	if (indel_genotyper) {vcf_parsed[which(grepl(pattern = 'SOMATIC', x = vcf_dt$info)), genotype := NA]}
 
 	# extract genotype/variant allele/mapping quality info for variants
 	if ('GQ' %in% tags$format_tags) {
