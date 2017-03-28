@@ -463,11 +463,12 @@ findRnaReadLevelEvidenceForVariants = function(vcf_input_path = file.path(rootDi
 		message('Performing pileup with genomic reference: ', fasta_genome_ref, '\n')
 	}
 
-	x = foreach(i = 1:nrow(sample_combinations)) %dopar% {
-		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub(regexPatterns$file_extension, '', basename(sample_combinations$rna_bam_file[i])),
-																																									if (is.null(sample_combinations$locations_file[i])) {'_mpil.tsv'} else {'_mpil_loc.tsv'})))) {
-
-			if (pileup_mode == 'samtools') {
+	invisible(foreach(i = 1:nrow(sample_combinations)) %dopar% {
+		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', 
+		                           paste0(sub(regexPatterns$file_extension, '', basename(sample_combinations$rna_bam_file[i])),
+		                                  if (is.null(sample_combinations$locations_file[i])) {'_mpil.tsv'} else {'_mpil_loc.tsv'})))) {
+		  
+		  if (pileup_mode == 'samtools') {
 				performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[i],
 															locations_file = sample_combinations$locations_file[i],
 															fasta_reference = fasta_genome_ref)
