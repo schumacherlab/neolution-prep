@@ -22,6 +22,21 @@ pacman::p_load(char = required_packages)
 # drop NA from vector
 dropNa = function(vector) { vector[!is.na(vector)] }
 
+# wrapper for executing commands (or not)
+commandWrapper = function(command, nice = 19, wait = TRUE, execute) {
+	if (is.numeric(nice)) {command = paste('nice -n', nice, command)}
+
+	if (!execute) {command = paste('nohup', command, '2> nohup.out &\n')}
+
+	if (execute) {
+		system(command = command,
+					 intern = FALSE,
+					 wait = wait)
+	} else {
+		message(command)
+	}
+}
+
 
 ## VCF parsing ---------------------------------------------------
 # helper functions for input file generation
