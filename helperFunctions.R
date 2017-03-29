@@ -60,7 +60,7 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
 
   progress_bar = startpb(min = 0, max = length(vcf_files))
   on.exit(closepb(progress_bar))
-  
+
   vcf_data = mapply(function(file, n, t, i) {
     data = parseVcf(vcf_path = file,
                     n_tag = n,
@@ -124,12 +124,12 @@ parseVcf = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
 	if (n_tag %nin% names(vcf_dt) | t_tag %nin% names(vcf_dt)) {
 	  stop('"',n_tag, '" and/or "', t_tag, '" not found in VCF header, please doublecheck normal & tumor sample tags')
 	}
-	
+
 	if (all(vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), n_tag, with = FALSE] == '')) {
 		vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (n_tag) := vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), t_tag, with = FALSE]]
 		vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (t_tag) := NA]
 	}
-	
+
 	# check if IndelGenotyper is used: if so, set genotype to NA, as sample_tag order is not consistent and can therefore not be extracted with confidence
 	indel_genotyper = 'IndelGenotyperV2' %in% sort(gsub(pattern = '##source=', '', grep(pattern = '##source', x = vcf_lines, value = TRUE)))
 
@@ -140,13 +140,13 @@ parseVcf = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
 	                                                                         pattern = 'ID=[^,]+'))),
 	            info_tags = sort(gsub(pattern = 'ID=', '', x = str_extract(string = grep(pattern = '##INFO', x = vcf_lines, value = TRUE),
 	                                                                       pattern = 'ID=[^,]+'))))
-	
+
 	# take subset of full vcf and start parsing/adding data
 	vcf_parsed = vcf_dt[, .(chromosome, start_position, variant_id, ref_allele, alt_allele)]
 
 	# replace 'chr' prefix in chromosome, if present
 	vcf_parsed[, chromosome := gsub('^chr', '', chromosome)]
-	
+
 	# extract genotype tag info for variants
 	if ('GT' %in% tags$format_tags) {
 		vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), genotype := extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
@@ -280,7 +280,7 @@ parseVcf = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
 	                                             return(vctr)
 	                                           }
 	                                         }))
-	
+
 	return(vcf_parsed)
 }
 
@@ -479,10 +479,10 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
 	}
 
 	invisible(foreach(i = 1:nrow(sample_combinations)) %dopar% {
-		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups', 
+		if (!file.exists(file.path(rootDirectory, '1b_rnaseq_data', 'pileups',
 		                           paste0(sub(regexPatterns$file_extension, '', basename(sample_combinations$rna_bam_file[i])),
 		                                  if (is.null(sample_combinations$locations_file[i])) {'_mpil.tsv'} else {'_mpil_loc.tsv'})))) {
-		  
+
 		  if (pileup_mode == 'samtools') {
 				performSamtoolsPileup(bam_file = sample_combinations$rna_bam_file[i],
 															locations_file = sample_combinations$locations_file[i],
@@ -628,7 +628,7 @@ performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_referenc
                   bam_file,
                   '-o', file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub(regexPatterns$file_extension, '', basename(bam_file)),
                                                                                      if (is.null(locations_file)) {'_mpil.tsv'} else {'_mpil_loc.tsv'})))
-  
+
 	if (execute) {
 	  system(command = command,
 	         intern = FALSE,
@@ -636,7 +636,7 @@ performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_referenc
 	} else {
 	  message(paste('nohup', command, '&\n'))
 	}
-	
+
 	Sys.sleep(time = 1)
 }
 
@@ -652,7 +652,7 @@ performSambambaPileup = function(bam_file, locations_file = NULL, fasta_referenc
                   '--samtools',
                   if (!is.null(locations_file)) {paste('-l', locations_file)},
                   if (!is.null(fasta_reference)) {paste('-f', fasta_reference)})
-  
+
   if (execute) {
     system(command = command,
            intern = FALSE,
@@ -660,13 +660,17 @@ performSambambaPileup = function(bam_file, locations_file = NULL, fasta_referenc
   } else {
     message(paste('nohup', command, '&\n'))
   }
-  
+
 	Sys.sleep(time = 1)
 }
 
 
 # Varcontext generation ---------------------------------------------------
-performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '1a_variants', 'parsed'), variant_regex = '\\.tsv$', filter_rna_alt_expression = TRUE, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
+performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '1a_variants', 'parsed'),
+																			 variant_regex = '\\.tsv$',
+																			 filter_rna_alt_expression = TRUE,
+																			 vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT'),
+																			 execute = TRUE) {
 	registerDoMC(runOptions$varcontext$numberOfWorkers)
 
 	dir.create(file.path(rootDirectory, '2_varcontext'),
@@ -710,53 +714,54 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
 	message('Using gene build: ', runOptions$varcontext$ensemblApi)
 
 	generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
-																						 pattern = '\\.tsv',
-																						 full.names = TRUE))
-
-	# move files
-	# system(command = paste('cd', variant_path, ';', 'mv -f *.tsv ../extr_fields'))
+																						 pattern = variant_regex,
+																						 full.names = TRUE),
+										 execute = execute)
 }
 
-generateVarcontext = function(input_list) {
+generateVarcontext = function(input_list, execute = TRUE) {
 	if (length(input_list) < 1) {
 		stop('No input lists found...')
 	}
 
 	setwd(runOptions$varcontext$varcontextDirectory)
 
-	invisible(foreach(i = 1:length(input_list)) %dopar% {
-		filename = sub(pattern = regexPatterns$file_extension, replacement = '', x = basename(input_list[i]))
+	if (execute) {
+		invisible(foreach(i = 1:length(input_list)) %dopar% {
+			filename = sub(pattern = regexPatterns$file_extension, replacement = '', x = basename(input_list[i]))
 
-		runStart = format(Sys.time(), '%Y%m%d')
+			runStart = format(Sys.time(), '%Y%m%d')
 
-		# write run info to log
-		write(x = paste0(Sys.time(),' - Varcontext run start\n\n',
-										 'Branch:\t\t\t', system('git symbolic-ref --short -q HEAD', intern = TRUE), '\n',
-										 'Commit hash:\t\t', system('git rev-parse HEAD', intern = TRUE), '\n\n',
-										 'Input file:\t\t', input_list[i], '\n',
-										 'Ensembl API:\t\t', runOptions$varcontext$ensemblApi, '\n\n',
-										 'Field separator:\t', runOptions$varcontext$fieldSeparator, '\n',
-										 'Canonical transcripts:\t', runOptions$varcontext$canonicalOnly, '\n',
-										 'Peptide context:\t', runOptions$varcontext$peptideContext,'\n',
-										 'NMD status:\t', runOptions$varcontext$nmdStatus, '\n'),
-					file = file.path(rootDirectory, '2_varcontext', 'varcontext_logs',
-													 paste(filename,
-													 			'runInfo.txt',
-													 			sep = "_")),
-					append = FALSE)
+			# write run info to log
+			write(x = paste0(Sys.time(),' - Varcontext run start\n\n',
+											 'Branch:\t\t\t', system('git symbolic-ref --short -q HEAD', intern = TRUE), '\n',
+											 'Commit hash:\t\t', system('git rev-parse HEAD', intern = TRUE), '\n\n',
+											 'Input file:\t\t', input_list[i], '\n',
+											 'Ensembl API:\t\t', runOptions$varcontext$ensemblApi, '\n\n',
+											 'Field separator:\t', runOptions$varcontext$fieldSeparator, '\n',
+											 'Canonical transcripts:\t', runOptions$varcontext$canonicalOnly, '\n',
+											 'Peptide context:\t', runOptions$varcontext$peptideContext,'\n',
+											 'NMD status:\t', runOptions$varcontext$nmdStatus, '\n'),
+						file = file.path(rootDirectory, '2_varcontext', 'varcontext_logs',
+														 paste(filename,
+														 			'runInfo.txt',
+														 			sep = "_")),
+						append = FALSE)
 
-		system(command = paste0('export ENSEMBLAPI="', runOptions$varcontext$ensemblApi, '";',
-														'export PERL5LIB="$PERL5LIB:', runOptions$varcontext$perlLibs,'";',
-														'perl ', file.path(runOptions$varcontext$varcontextDirectory, 'varcontext/create_context.pl'), ' ',
-														'--separator=', runOptions$varcontext$fieldSeparator, ' ',
-														ifelse(runOptions$varcontext$canonicalOnly, '--canonical ', ''),
-														ifelse(runOptions$varcontext$peptideContext, '--peptide ', ''),
-														ifelse(runOptions$varcontext$nmdStatus, '--nmd ', ''),
-														'"', input_list[i], '"',
-														' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
-														' 2> "', file.path(rootDirectory, '2_varcontext', 'varcontext_logs', paste(filename, 'warnings.log"', sep = '_'))),
-					 intern = FALSE)
-	})
+			command = paste0('export ENSEMBLAPI="', runOptions$varcontext$ensemblApi, '";',
+											 'export PERL5LIB="$PERL5LIB:', runOptions$varcontext$perlLibs,'";',
+											 'perl ', file.path(runOptions$varcontext$varcontextDirectory, 'varcontext/create_context.pl'), ' ',
+											 '--separator=', runOptions$varcontext$fieldSeparator, ' ',
+											 ifelse(runOptions$varcontext$canonicalOnly, '--canonical ', ''),
+											 ifelse(runOptions$varcontext$peptideContext, '--peptide ', ''),
+											 ifelse(runOptions$varcontext$nmdStatus, '--nmd ', ''),
+											 '"', input_list[i], '"',
+											 ' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
+											 ' 2> "', file.path(rootDirectory, '2_varcontext', 'varcontext_logs', paste(filename, 'warnings.log"', sep = '_')))
+
+			commandWrapper(command = command, nice = NULL, wait = FALSE, execute = execute)
+		})
+	}
 
 	setwd(rootDirectory)
 }
