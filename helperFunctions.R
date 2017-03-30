@@ -271,15 +271,25 @@ parseVcf = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
 																						}, mc.cores = 20))]
 	}
 
-	# if multiple variant_ids are present, take 'rs' ids over 'gs' ids
+	# if multiple variant_ids are present:
+	# (1) if cosmic_id is present, replace variant_id with '.' (i.e. tumor-specific variant)
+	# (2) if no cosmic_id is present, rs_id take preference over gs_id
+	# (3) if no rs_id is present, return first gs_id (should only be one anyway)
 	vcf_parsed$variant_id = unlist(lapply(str_split(string = vcf_parsed$variant_id, pattern = ';'), # for some reason data.table's [, := ] notation didn't work here..
-	                                         function(vctr) {
-	                                           if (length(vctr) > 1) {
-	                                             return(grep(pattern = regexPatterns$rs_identifier, x = vctr, value = T)[1]) # in case multiple 'rs' ids are present, return 1
-	                                           } else {
-	                                             return(vctr)
-	                                           }
-	                                         }))
+																				function(vctr) {
+																					if (length(vctr) >= 1) {
+																						# if COSMIC_id match found, return '.', as variant is tumor variant
+																						if (any(grepl(pattern = regexPatterns$cosmic_identifier, x = vctr))) {match = '.'}
+																						# if no COSMIC_id, match rs_id and return first hit
+																						else if (any(grepl(pattern = regexPatterns$rs_identifier, x = vctr))) {match = grep(pattern = regexPatterns$rs_identifier, x = vctr, value = T)[1]}
+																						# if no rs_id match, return first value
+																						else {match = vctr[1]}
+
+																						return(match)
+																					} else {
+																						return(vctr)
+																					}
+																				}))
 
 	return(vcf_parsed)
 }
