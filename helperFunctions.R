@@ -441,7 +441,7 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
 												 function(x) {
 												 	setorder(x = unique(x[grepl(pattern = '^[0-9]{1,2}$|^[XY]$',
 												 															x = x$chromosome) &
-												 													!grepl(pattern = regexPatterns$snp_identifier,
+												 													!grepl(pattern = regexPatterns$gs_identifier, # rs_id's are now regarded as tumor-specific variants
 												 																 x = x$variant_id) &
 												 													nchar(x$ref_allele) == 1 &
 												 													nchar(x$alt_allele) == 1,
