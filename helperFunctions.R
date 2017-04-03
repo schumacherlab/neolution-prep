@@ -639,13 +639,7 @@ performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_referenc
                   '-o', file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub(regexPatterns$file_extension, '', basename(bam_file)),
                                                                                      if (is.null(locations_file)) {'_mpil.tsv'} else {'_mpil_loc.tsv'})))
 
-	if (execute) {
-	  system(command = command,
-	         intern = FALSE,
-	         wait = TRUE)
-	} else {
-	  message(paste('nohup', command, '&\n'))
-	}
+  commandWrapper(command = command, nice = NULL, execute = execute)
 
 	Sys.sleep(time = 1)
 }
@@ -663,13 +657,7 @@ performSambambaPileup = function(bam_file, locations_file = NULL, fasta_referenc
                   if (!is.null(locations_file)) {paste('-l', locations_file)},
                   if (!is.null(fasta_reference)) {paste('-f', fasta_reference)})
 
-  if (execute) {
-    system(command = command,
-           intern = FALSE,
-           wait = TRUE)
-  } else {
-    message(paste('nohup', command, '&\n'))
-  }
+  commandWrapper(command = command, nice  = NULL, execute = execute)
 
 	Sys.sleep(time = 1)
 }
@@ -947,13 +935,9 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 
 		command = if (filter_snps) {paste(command_snpsift, command_snpeff, sep = '|')} else {paste(paste('cat', variantLists[i]), command_snpeff, sep = '|')}
 
-		if (execute) {
-			system(command = paste("nice -n 19", command),
-						 intern = TRUE,
-						 wait = TRUE)
-		} else {
-		  message(paste("nohup nice -n 19", command, '2> /dev/null &\n'))
-		}
+
+		commandWrapper(command = command, execute = execute)
+
 	})
 }
 
