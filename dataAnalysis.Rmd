@@ -260,12 +260,13 @@ The top panel is the tumor mutational profile displaying the fraction of mutatio
 For mutational signature information, click <a href="http://cancer.sanger.ac.uk/cosmic/signatures" target="_blank">here</a>  
 
 ```{r mutational_signature_analysis, warning = FALSE, message = FALSE, cache = TRUE, fig.width = 10, fig.heigth = 7}
-mutational_signatures = mutationalSignatureAnalysis(table = rbindlist(varcontext_output))
+mutational_signatures = mutationalSignatureAnalysis(table = rbindlist(varcontext_output)[!grepl(regexPatterns$gs_identifier, variant_id)
+																																												 & (nchar(ref_allele) == 1 & nchar(alt_allele) == 1)])
 mutational_signatures = mutational_signatures[naturalorder(names(mutational_signatures))]
 
 analysed_mutation_counts = sapply(names(mutational_signatures), function(id) nrow(rbindlist(varcontext_output)[patient_id == id
-																																																							 & !grepl(regexPatterns$snp_identifier, variant_id)
-																																																							 & nchar(ref_allele) == 1 & nchar(alt_allele) == 1]))
+																																																							 & !grepl(regexPatterns$gs_identifier, variant_id)
+																																																							 & (nchar(ref_allele) == 1 & nchar(alt_allele) == 1)]))
 
 for (i in 1:length(mutational_signatures)) {
 	plotSignaturesSmallLabels(mutational_signatures[[i]], sub = paste('Analysed mutations:', analysed_mutation_counts[names(mutational_signatures)[i]]))

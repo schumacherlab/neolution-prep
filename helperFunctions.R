@@ -967,7 +967,7 @@ mutationalSignatureAnalysis = function(table, genome_build = 'GRCh38') {
 	}
 
 	# exclude germline SNPs from analysis
-	table_subset = table[!grepl(regexPatterns$snp_identifier, variant_id) & nchar(ref_allele) == 1 & nchar(alt_allele) == 1]
+	table_subset = table[(nchar(ref_allele) == 1 & nchar(alt_allele) == 1)] # make sure we take only SNVs
 
 	sigs_input = mut.to.sigs.input(mut.ref = table_subset,
 																 sample.id = 'patient_id',
