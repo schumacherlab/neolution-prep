@@ -5,6 +5,9 @@ setwd(project_directory)
 source('./helperFunctions.R')
 source('./runConfig.R')
 
+user_options = parseCommandlineArguments()
+if ('threads' %in% names(user_options)) {runOptions$neolution$numberOfWorkers = as.numeric(user_options$threads)}
+
 registerDoMC(runOptions$neolution$numberOfWorkers)
 
 # inventorize input files

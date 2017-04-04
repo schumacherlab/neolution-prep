@@ -37,6 +37,23 @@ commandWrapper = function(command, nice = 19, wait = TRUE, execute) {
 	}
 }
 
+# parse commandline arguments, return list of arguments and values
+parseCommandlineArguments = function() {
+	cmdln_args = commandArgs(TRUE)
+	if (length(cmdln_args) < 1) {return()}
+
+	if (any(!grepl('^-{1,2}', cmdln_args))) {message('Commandline arguments must begin with single ("-") or double ("--") dashes\nStopping execution'); q()}
+	if (any(!grepl('[A-Za-z]+=[A-Za-z0-9.,]+', cmdln_args))) {message('Commandline arguments and values must be separated by an equal sign ("=")\nStopping execution'); q()}
+
+	cmdln_args = gsub('^-{1,2}', '', cmdln_args)
+	cmdln_args = strsplit(cmdln_args, '=', TRUE)
+
+	parsed_args = lapply(cmdln_args,"[[",2 )
+	names(parsed_args) = lapply(cmdln_args, "[[", 1)
+
+	return(parsed_args)
+}
+
 
 ## VCF parsing ---------------------------------------------------
 # helper functions for input file generation
