@@ -10,13 +10,13 @@ regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (every
 										 allele_exclusion = 'C[0-9]{4}') # for excluding particular alleles from analysis
 
 # run options
-runOptions = list(general = list(),
+runOptions = list(general = list(gft_annotation = '~/resources/ensembl_88/gtf/Homo_sapiens.GRCh38.88.gtf'),
 
 									# set samtools mpileup options
 									samtools = list(samtoolsPath = '/home/NFS/users/l.fanchi/libs/samtools-1.4/bin/samtools',
 																	sambambaPath = '/home/NFS/users/l.fanchi/libs/sambamba-0.6.6-Linux_x86_64/sambamba',
 																	numberOfWorkers = 10,
-																	fastaGenomeRef = '/home/NFS/users/l.fanchi/resources/ensembl_87/fasta_dna/Homo_sapiens.GRCh38.87.dna.primary_assembly.fa'),
+																	fastaGenomeRef = '/home/NFS/users/l.fanchi/resources/ensembl_88/fasta_dna/Homo_sapiens.GRCh38.88.dna.primary_assembly.fa'),
 
 									# set varcontext options
 									varcontext = list(numberOfWorkers = 10,
@@ -27,7 +27,7 @@ runOptions = list(general = list(),
 																		nmdStatus = TRUE,
 
 																		varcontextDirectory = '/home/NFS/users/l.fanchi/dev_environments/varcontext',
-																		ensemblApi = '/home/NFS/users/l.fanchi/libs/ensembl_81/',
+																		ensemblApi = '/home/NFS/users/l.fanchi/libs/ensembl_88/',
 																		perlLibs = paste('/home/NFS/users/l.fanchi/perl5/lib/perl5','/home/NFS/users/l.fanchi/libs/bioperl-live',
 																										 '/home/NFS/users/l.fanchi/libs/ensembl/modules','/home/NFS/users/l.fanchi/libs/ensembl-variation/modules', sep = ':')),
 
