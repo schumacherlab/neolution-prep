@@ -14,6 +14,9 @@ knitr::opts_chunk$set(echo = FALSE)
 
 setwd('~/projects/## PROJECT DIR ##')
 
+############# KEEP IN MIND: GATK MuTect2 annotates rs identifiers in somatic variants, these should be taken along as tumor-specific variants ##################################
+############# This means that all instances of 'regexPatterns$snp_identifier', should be changed to 'regexPatterns$gs_identifier' ##################################
+
 source('runConfig.R')
 source('helperFunctions.R')
 ```
