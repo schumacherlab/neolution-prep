@@ -226,6 +226,48 @@ ggplot(data = all_variants[!grepl(regexPatterns$snp_identifier, variant_id)],
 
 <br>
 
+##### RNA expression median
+
+To determine whether differences in selected epitope yield rate are due to differences in rna sequencing data quality, the median TPM values of a random draw of protein_coding genes are compared between patients.
+
+```{r rna_median_check, cache = TRUE}
+gtf_data = as.data.table(readGFF(runOptions$general$gtf_annotation))
+
+rna_data = setNames(object = lapply(list.files(path = '1b_rnaseq_data/processed_salmon', pattern = '\\.tsv$', full.names = T), fread),
+										nm = sample_info[sapply(gsub(pattern = regexPatterns$seqdata_prefix, replacement = '', x = basename(list.files('1b_rnaseq_data/processed_salmon', '\\.tsv$'))),
+																						function(prefix) grep(prefix, rna_data_prefix)),
+																		 patient_id])
+
+gene_sample = sample(gtf_data[gene_biotype == 'protein_coding', gene_id], size = 2500)
+
+protein_coding_medians = data.table(patient_id = names(rna_data),
+																		median_rna_expression = sapply(rna_data,
+																																	 function(dt) round(median(x = dt[gene_id %in% 
+																																	 																 	gene_sample, tpm]),
+																																	 									 digits = 1)))
+																		
+protein_coding_medians = merge(x = prediction_table[, .(patient_id, selected_epitope_yield_rate_per_allele)],
+															 y = protein_coding_medians,
+															 by = 'patient_id')
+protein_coding_medians = protein_coding_medians[naturalorder(patient_id)]
+protein_coding_medians$patient_id = factor(x = protein_coding_medians$patient_id,
+																					 levels = naturalsort(protein_coding_medians$patient_id))
+
+# pander(protein_coding_medians, split.table = 200)
+```
+
+```{r plot_rna_median_scatter, warning = F, message = F, fig.align="center"}
+ggplot(data = protein_coding_medians, 
+			 mapping = aes(x = selected_epitope_yield_rate_per_allele,
+			 							y = median_rna_expression,
+			 							color = patient_id)) +
+	geom_point() +
+	scale_x_continuous(limits = c(0, max(protein_coding_medians$selected_epitope_yield_rate_per_allele))) + 
+	scale_y_continuous(limits = c(0, max(protein_coding_medians$median_rna_expression)))
+```
+
+<br>
+
 ##### Driver gene analysis
 
 List of driver genes was obtained from [COSMIC: Cancer Gene census](http://cancer.sanger.ac.uk/census) and cross-checked with hugo_symbols observed in varcontext output
