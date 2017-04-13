@@ -201,11 +201,23 @@ dna_vaf_summary = data.table(patient_id = sapply(varcontext_output, function(dt)
 														 																												function(id) grep(id, prediction_table$patient_id)), selected_epitope_yield_rate_per_allele],
 														 median_dna_vaf = sapply(varcontext_output, function(dt) round(x = median(dt[!grepl(regexPatterns$snp_identifier, variant_id), dna_vaf], na.rm = TRUE), digits = 2)))
 dna_vaf_summary = dna_vaf_summary[naturalorder(patient_id)]
+dna_vaf_summary$patient_id = factor(x = dna_vaf_summary$patient_id,
+																		levels = naturalsort(dna_vaf_summary$patient_id))
 
-pander(dna_vaf_summary, split.table = 200)
+# pander(dna_vaf_summary, split.table = 200)
 ```
 
-```{r plot_dna_vaf_check, fig.width = 14, fig.height = 7, warning = F, message = F}
+```{r plot_dna_vaf_scatter, warning = F, message = F, fig.align="center"}
+ggplot(data = dna_vaf_summary, 
+			 mapping = aes(x = selected_epitope_yield_rate_per_allele,
+			 							y = median_dna_vaf,
+			 							color = patient_id)) +
+	geom_point() +
+	scale_x_continuous(limits = c(0, max(dna_vaf_summary$selected_epitope_yield_rate_per_allele))) +
+	scale_y_continuous(limits = c(0, max(dna_vaf_summary$median_dna_vaf)))
+```
+
+```{r plot_dna_vaf_histograms, fig.width = 14, fig.height = 7, warning = F, message = F, fig.align="center"}
 ggplot(data = all_variants[!grepl(regexPatterns$snp_identifier, variant_id)], 
 			 mapping = aes(x = dna_vaf, fill = patient_id)) +
 	geom_histogram() +
