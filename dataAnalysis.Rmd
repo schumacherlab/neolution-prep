@@ -199,6 +199,8 @@ all_variants$patient_id = factor(x = all_variants$patient_id, levels = unique(na
 dna_vaf_summary = data.table(patient_id = sapply(varcontext_output, function(dt) dt[, unique(patient_id)]),
 														 selected_epitope_yield_rate_per_allele = prediction_table[sapply(sapply(varcontext_output, function(dt) dt[, unique(patient_id)]),
 														 																												function(id) grep(id, prediction_table$patient_id)), selected_epitope_yield_rate_per_allele],
+														 non_syn_coding_variants = prediction_table[sapply(sapply(varcontext_output, function(dt) dt[, unique(patient_id)]),
+														 																												function(id) grep(id, prediction_table$patient_id)), non_syn_coding_variants],
 														 median_dna_vaf = sapply(varcontext_output, function(dt) round(x = median(dt[!grepl(regexPatterns$snp_identifier, variant_id), dna_vaf], na.rm = TRUE), digits = 2)))
 dna_vaf_summary = dna_vaf_summary[naturalorder(patient_id)]
 dna_vaf_summary$patient_id = factor(x = dna_vaf_summary$patient_id,
@@ -212,7 +214,7 @@ ggplot(data = dna_vaf_summary,
 			 mapping = aes(x = selected_epitope_yield_rate_per_allele,
 			 							y = median_dna_vaf,
 			 							color = patient_id)) +
-	geom_point() +
+	geom_point(aes(size = non_syn_coding_variants)) +
 	scale_x_continuous(limits = c(0, max(dna_vaf_summary$selected_epitope_yield_rate_per_allele))) +
 	scale_y_continuous(limits = c(0, max(dna_vaf_summary$median_dna_vaf)))
 ```
@@ -261,7 +263,7 @@ ggplot(data = protein_coding_medians,
 			 mapping = aes(x = selected_epitope_yield_rate_per_allele,
 			 							y = median_rna_expression,
 			 							color = patient_id)) +
-	geom_point() +
+	geom_point(aes(size = non_syn_coding_variants)) +
 	scale_x_continuous(limits = c(0, max(protein_coding_medians$selected_epitope_yield_rate_per_allele))) + 
 	scale_y_continuous(limits = c(0, max(protein_coding_medians$median_rna_expression)))
 ```
