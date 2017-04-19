@@ -95,8 +95,8 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
   vcf_data = lapply(vcf_data,
   									function(vcf) {
   										data = vcf[grepl(regexPatterns$snp_identifier, variant_id) # always include SNPs
-  															 | sapply(1:nrow(vcf), function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index])) # include all indels, since sample order is inconsistent (can't be sure we're looking at NORMAL or TUMOR sample)
-  															 | genotype != '0/0' | is.na(genotype), # exclude tumor-specific variants which are ref
+  															 | sapply(1:nrow(vcf), function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index])) # legacy (somSniper pipeline) support: include all indels, since sample order (NORMAL/TUMOR) is inconsistent for indel calls
+  															 | genotype != '0/0' | is.na(genotype), # safety check, shouldn't happen: exclude tumor-specific variants which are ref
   															 .(variant_id, chromosome, start_position, ref_allele, alt_allele, dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
   										return(data)
   									})
