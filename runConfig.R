@@ -10,7 +10,7 @@ regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (every
 										 allele_exclusion = 'C[0-9]{4}') # for excluding particular alleles from analysis
 
 # run options
-runOptions = list(general = list(gft_annotation = '~/resources/ensembl_88/gtf/Homo_sapiens.GRCh38.88.gtf'),
+runOptions = list(general = list(gtf_annotation = '~/resources/ensembl_88/gtf/Homo_sapiens.GRCh38.88.gtf'),
 
 									# set samtools mpileup options
 									samtools = list(samtoolsPath = '/home/NFS/users/l.fanchi/libs/samtools-1.4/bin/samtools',
