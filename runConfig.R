@@ -16,7 +16,7 @@ runOptions = list(general = list(gtf_annotation = '~/resources/ensembl_88/gtf/Ho
 									samtools = list(samtoolsPath = '/home/NFS/users/l.fanchi/libs/samtools-1.4/bin/samtools',
 																	sambambaPath = '/home/NFS/users/l.fanchi/libs/sambamba-0.6.6-Linux_x86_64/sambamba',
 																	numberOfWorkers = 10,
-																	fastaGenomeRef = '/home/NFS/users/l.fanchi/resources/ensembl_88/fasta_dna/Homo_sapiens.GRCh38.88.dna.primary_assembly.fa'),
+																	fastaGenomeRef = '/home/NFS/users/l.fanchi/resources/ensembl_88/fasta_dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa'),
 
 									# set varcontext options
 									varcontext = list(numberOfWorkers = 10,
