@@ -424,7 +424,7 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
 		user_choice = menu(choices = c('yes', 'no'), title = 'Do you want to continue without RNAseq data?')
 
 		if (user_choice == 2) {
-			q()
+			stop('Please copy RNAseq data to ', rna_path)
 		} else if (user_choice == 1) {
 			# insert code to add empty rna_* columns to tsv files
 		} else {
