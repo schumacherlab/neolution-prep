@@ -283,7 +283,7 @@ if (length(list.files(path = '.', pattern = 'oncogene_census\\.tsv')) < 1) {
 	stop('Please download recent oncogene census file from COSMIC and save as "oncogene_census.tsv" in working directory')
 } 
 
-oncogene_db = fread(list.files(path = '.', pattern = 'oncogene_census\\.tsv'))
+oncogene_db = fread(list.files(path = '.', pattern = 'oncogene_census\\.tsv', full.names = TRUE))
 oncogene_db = separate_rows(oncogene_db, Synonyms, sep = ',')	
 
 # load varcontext data
