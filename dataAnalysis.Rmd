@@ -251,7 +251,7 @@ protein_coding_medians = data.table(patient_id = names(rna_data),
 																																	 																 	gene_sample, tpm]),
 																																	 									 digits = 1)))
 																		
-protein_coding_medians = merge(x = prediction_table[, .(patient_id, selected_epitope_yield_rate_per_allele)],
+protein_coding_medians = merge(x = prediction_table[, .(patient_id, non_syn_coding_variants, selected_epitope_yield_rate_per_allele)],
 															 y = protein_coding_medians,
 															 by = 'patient_id')
 protein_coding_medians = protein_coding_medians[naturalorder(patient_id)]
