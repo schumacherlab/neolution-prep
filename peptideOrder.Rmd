@@ -83,24 +83,24 @@ Epitopes were predicted using in-house epitope prediction pipeline, using random
 
 ```{r variant_snpEff_info}
 snpeff_output = list.files(path = '4_snpEff',
-													 pattern = 'genes\\.txt',
-													 full.names = T)
+                           pattern = 'genes\\.txt',
+                           full.names = T)
 snpeff_output = snpeff_output[!grepl(pattern = 'snps', x = snpeff_output, fixed = TRUE)]
 
 sample_info = fread('sample_info.tsv')
 sample_info = sample_info[naturalorder(sample_info$patient_id)]
 
 effects_table = rbindlist(lapply(snpeff_output,
-																 function(path) {
-																 	data = fread(path, skip = 1)
-																 	
-																 	data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix, replacement = '', basename(path)), patient_id],
-																 						 syn_coding_variants = sum(data$variants_effect_synonymous_variant),
-																 						 non_syn_coding_variants = sum(data$variants_effect_missense_variant),
-																 						 stop_gained_variants = sum(data$variants_effect_stop_gained),
-																 						 inframe_insertion_variants = sum(data$variant_effect_inframe_insertion),
-																 						 frameshift_variants = sum(data$variants_effect_frameshift_variant))
-																 }))
+                                 function(path) {
+                                   data = fread(path, skip = 1)
+                                   
+                                   data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix, replacement = '', basename(path)), patient_id],
+                                              syn_coding_variants = sum(data$variants_effect_synonymous_variant),
+                                              non_syn_coding_variants = sum(data$variants_effect_missense_variant),
+                                              stop_gained_variants = sum(data$variants_effect_stop_gained),
+                                              inframe_insertion_variants = sum(data$variant_effect_inframe_insertion),
+                                              frameshift_variants = sum(data$variants_effect_frameshift_variant))
+                                 }))
 
 effects_table = effects_table[naturalorder(effects_table$patient_id)]
 
@@ -112,17 +112,17 @@ pander(effects_table, split.table = Inf)
 ```{r load_prediction_data, message = FALSE}
 # parse data
 project_predictions = parseEpitopePredictions(path = '3_neolution/predictions_output',
-																							pattern = '_epitopes_no_selfsim\\.csv')
+                                              pattern = '_epitopes_no_selfsim\\.csv')
 
 # parse unfiltered data to calculate some stats
 project_predictions_unfiltered = parseEpitopePredictions(path = '3_neolution/predictions_output', 
-																												 pattern = '_epitopes_unfiltered\\.csv')
+                                                         pattern = '_epitopes_unfiltered\\.csv')
 
 # take subsets based on epitopes per non-syn mutations + indels
 project_predictions_subset = applyCutoffs(predictions = project_predictions,
-																					model = runOptions$neolution$model_cutoff,
-																					expression = runOptions$neolution$expression_cutoff,
-																					selfsim = runOptions$neolution$selfsim_filter)
+                                          model = runOptions$neolution$model_cutoff,
+                                          expression = runOptions$neolution$expression_cutoff,
+                                          selfsim = runOptions$neolution$selfsim_filter)
 
 # exclude alleles
 project_predictions_subset = project_predictions_subset[!grepl(pattern = regexPatterns$allele_exclusion, x = names(project_predictions_subset))]
@@ -140,29 +140,29 @@ setkey(x = all_predictions, xmer, tumor_peptide_resin)
 
 # take subsets for individual patients for combi-coding setup lists
 predictions_by_patient = setNames(object = lapply(sample_info$dna_data_prefix,
-																									function(prefix) {
-																										data_subset = all_predictions[sample_prefix == prefix]
-																										
-																										data_unique = unique(x = data_subset,
-																																				 by = c('hla_allele', 'tumor_peptide'))
-																										
-																										setkey(x = data_unique, xmer, hla_allele)
-																										return(data_unique)
-																									}),
-																	nm = sample_info$patient_id)
+                                                  function(prefix) {
+                                                    data_subset = all_predictions[sample_prefix == prefix]
+                                                    
+                                                    data_unique = unique(x = data_subset,
+                                                                         by = c('hla_allele', 'tumor_peptide'))
+                                                    
+                                                    setkey(x = data_unique, xmer, hla_allele)
+                                                    return(data_unique)
+                                                  }),
+                                  nm = sample_info$patient_id)
 
 # prepare unfiltered predictions to generate some stats
 all_predictions_unfiltered = rbindlist(project_predictions_unfiltered)
 setnames(x = all_predictions_unfiltered,
-				 old = grep('affinity|percentile_rank', names(all_predictions_unfiltered), value = T),
-				 new = c('tumor_affinity_nM', 'tumor_affinity_rank', 'normal_affinity_nM', 'normal_affinity_rank'))
+         old = grep('affinity|percentile_rank', names(all_predictions_unfiltered), value = T),
+         new = c('tumor_affinity_nM', 'tumor_affinity_rank', 'normal_affinity_nM', 'normal_affinity_rank'))
 all_predictions_unfiltered_by_patient = setNames(object = lapply(sample_info$patient_id,
-																																 function(id) {
-																																 	data_subset = all_predictions_unfiltered[patient_id == id]
-																																 	
-																																 	return(data_subset)
-																																 }),
-																								 nm = sample_info$patient_id)
+                                                                 function(id) {
+                                                                   data_subset = all_predictions_unfiltered[patient_id == id]
+                                                                   
+                                                                   return(data_subset)
+                                                                 }),
+                                                 nm = sample_info$patient_id)
 ```
 
 <br>
@@ -171,21 +171,21 @@ all_predictions_unfiltered_by_patient = setNames(object = lapply(sample_info$pat
 
 ```{r generate_prediction_summary, results = 'hide'}
 prediction_table = merge(x = data.table(patient_id = names(sapply(predictions_by_patient, nrow)),
-																				alleles_included = sapply(names(all_predictions_unfiltered_by_patient),
-																																	 function(id) {
-																																	 	length(all_predictions_unfiltered_by_patient[[id]][, unique(hla_allele)])
-																																	 }),
-																				total_epitopes_predicted = sapply(all_predictions_unfiltered_by_patient, nrow),
-																				selected_epitopes_predicted = sapply(predictions_by_patient, nrow)),
-												 y = effects_table[, -c('syn_coding_variants'), with = F],
-												 by = 'patient_id')
+                                        alleles_included = sapply(names(all_predictions_unfiltered_by_patient),
+                                                                  function(id) {
+                                                                    length(all_predictions_unfiltered_by_patient[[id]][, unique(hla_allele)])
+                                                                  }),
+                                        total_epitopes_predicted = sapply(all_predictions_unfiltered_by_patient, nrow),
+                                        selected_epitopes_predicted = sapply(predictions_by_patient, nrow)),
+                         y = effects_table[, -c('syn_coding_variants'), with = F],
+                         by = 'patient_id')
 prediction_table = prediction_table[naturalorder(patient_id)]
 prediction_table[, total_epitope_yield_rate_per_allele := round(x = total_epitopes_predicted / non_syn_coding_variants / alleles_included, digits = 0)]
 prediction_table[, selected_epitope_yield_rate_per_allele := round(x = selected_epitopes_predicted / non_syn_coding_variants / alleles_included, digits = 2)]
 setcolorder(x = prediction_table,
-						neworder = c('patient_id', 'alleles_included', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele', 
-												 setdiff(x = names(prediction_table),
-												 				y = c('patient_id', 'alleles_included', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele'))))
+            neworder = c('patient_id', 'alleles_included', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele', 
+                         setdiff(x = names(prediction_table),
+                                 y = c('patient_id', 'alleles_included', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele'))))
 ```
 
 ```{r pander_prediction_summary}
@@ -218,14 +218,14 @@ pander(x = unique(x = subset(x = all_predictions,
 panderOptions('knitr.auto.asis', FALSE)
 
 for (i in 1:length(predictions_by_patient)) {
-	cat('\n#####', names(predictions_by_patient)[i], '\n')
-	
-	# highlight duplicates (epitopes binding to multiple alleles)
-	if (anyDuplicated(predictions_by_patient[[i]]$tumor_peptide)) {
-		emphasize.strong.rows(unique(c(which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = FALSE)),
-																	 which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = TRUE)))))	
-	}
-	pander(predictions_by_patient[[i]][, -c('sample_prefix', 'tumor_peptide_trunc', 'tumor_peptide_resin'), with = FALSE], split.table = 200)	
+  cat('\n#####', names(predictions_by_patient)[i], '\n')
+  
+  # highlight duplicates (epitopes binding to multiple alleles)
+  if (anyDuplicated(predictions_by_patient[[i]]$tumor_peptide)) {
+    emphasize.strong.rows(unique(c(which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = FALSE)),
+                                   which(duplicated(predictions_by_patient[[i]]$tumor_peptide, fromLast = TRUE)))))	
+  }
+  pander(predictions_by_patient[[i]][, -c('sample_prefix', 'tumor_peptide_trunc', 'tumor_peptide_resin'), with = FALSE], split.table = 200)	
 }
 ```
 
