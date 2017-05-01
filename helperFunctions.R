@@ -103,11 +103,11 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
 
                       # sort data
                       data_sorted = rbindlist(list(data %>%
-                                                     filter(!grepl(regexPatterns$gs_identifier, ID)) %>%
-                                                     .[naturalorder(.$`#CHROM`)],
+                                                     filter(!grepl(regexPatterns$gs_identifier, variant_id)) %>%
+                                                     .[naturalorder(.$chromosome)],
                                                    data %>%
-                                                     filter(grepl(regexPatterns$gs_identifier, ID)) %>%
-                                                     .[naturalorder(.$`#CHROM`)])
+                                                     filter(grepl(regexPatterns$gs_identifier, variant_id)) %>%
+                                                     .[naturalorder(.$chromosome)])
                                               )
 
                       return(data_sorted)
