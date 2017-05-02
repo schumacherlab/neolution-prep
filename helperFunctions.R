@@ -558,7 +558,16 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                                                       y = pileup_loc_data[[index_pileup_data]][, .(chromosome, start_position, ref_base, rna_read_bases)],
                                                       by = c('chromosome', 'start_position'),
                                                       all.x = TRUE)
-                                  setorder(merged_data, variant_id, chromosome, start_position)
+
+                                  # order data
+                                  setorder(merged_data, chromosome, start_position)
+                                  merged_data = rbindlist(list(merged_data %>%
+                                                                 filter(!grepl(regexPatterns$gs_identifier, ID)) %>%
+                                                                 .[naturalorder(chromosome)],
+                                                               merged_data %>%
+                                                                 filter(grepl(regexPatterns$gs_identifier, ID)) %>%
+                                                                 .[naturalorder(chromosome)])
+                                  )
                                 }})
 
   input_pileup_merge = lapply(input_pileup_merge,
