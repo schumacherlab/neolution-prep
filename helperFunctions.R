@@ -562,10 +562,10 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                                   # order data
                                   setorder(merged_data, chromosome, start_position)
                                   merged_data = rbindlist(list(merged_data %>%
-                                                                 filter(!grepl(regexPatterns$gs_identifier, ID)) %>%
+                                                                 filter(!grepl(regexPatterns$gs_identifier, variant_id)) %>%
                                                                  .[naturalorder(chromosome)],
                                                                merged_data %>%
-                                                                 filter(grepl(regexPatterns$gs_identifier, ID)) %>%
+                                                                 filter(grepl(regexPatterns$gs_identifier, variant_id)) %>%
                                                                  .[naturalorder(chromosome)])
                                   )
                                 }})
