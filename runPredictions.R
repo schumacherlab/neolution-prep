@@ -1,4 +1,6 @@
 ## Script runs neolution pipeline
+### '--threads=n' can be used to override number of parallel prediction threads to spawn (n should be an integer value)
+
 project_directory = getwd()
 
 setwd(project_directory)
