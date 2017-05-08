@@ -615,9 +615,8 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                                 dt$rna_alt_expression = sapply(1:nrow(dt),
                                                                function(row_index){
                                                                  if (is.na(dt$rna_ref_read_count[row_index]) | is.na(dt$rna_alt_read_count[row_index]) | is.na(dt$rna_total_read_count[row_index])) return(NA)
-                                                                 if (dt$rna_ref_read_count[row_index] >= 5
-                                                                     | dt$rna_alt_read_count[row_index] >= 5
-                                                                 ) {
+                                                                 if (sum(dt$rna_ref_read_count[row_index], dt$rna_alt_read_count[row_index]) >= 7 |
+                                                                     (dt$rna_ref_read_count[row_index] >= 5 | dt$rna_alt_read_count[row_index] >= 5)) {
                                                                    if (dt$rna_alt_read_count[row_index] > 0) {
                                                                      return(TRUE)
                                                                    } else if (dt$rna_alt_read_count[row_index] < 1) {
