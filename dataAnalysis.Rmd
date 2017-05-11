@@ -301,8 +301,8 @@ driver_table = data.table(patient_id = names(varcontext_full_data),
                                                   dt_subset = dt[variant_classification != 'silent_mutation'
                                                                  & transcript_remark != 'identical'
                                                                  & !duplicated(hugo_symbol)]
-                                                  drivers_symbol = sort(dt_subset$hugo_symbol)[which(sort(dt_subset$hugo_symbol) %in% oncogene_db[`Role in Cancer` != '', `Gene Symbol`])]
-                                                  drivers_synonym = sort(dt_subset$hugo_symbol)[which(sort(dt_subset$hugo_symbol) %in% oncogene_db[`Role in Cancer` != '', Synonyms])]
+                                                  drivers_symbol = sort(dt_subset$hugo_symbol)[which(sort(dt_subset$hugo_symbol) %in% oncogene_db[, `Gene Symbol`])]
+                                                  drivers_synonym = sort(dt_subset$hugo_symbol)[which(sort(dt_subset$hugo_symbol) %in% oncogene_db[, Synonyms])]
                                                   
                                                   return(paste0(unique(c(drivers_symbol, drivers_synonym)), collapse = ', '))
                                                 }))
