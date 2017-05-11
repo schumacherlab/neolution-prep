@@ -279,7 +279,7 @@ List of driver genes was obtained from [COSMIC: Cancer Gene census](http://cance
 
 ```{r check_oncogenes_selected_patients}
 # load oncogene db list, obtained from http://cancer.sanger.ac.uk/census
-if (length(list.files(path = '.', pattern = 'oncogene_census\\.tsv')) < 1) {
+if (length(list.files(path = '.', pattern = 'oncogene-census\\.tsv$')) < 1) {
   stop('Please download recent oncogene census file from COSMIC and save as "oncogene_census.tsv" in working directory')
 } 
 
