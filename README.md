@@ -1,4 +1,6 @@
-### Script for preparing input for neolution pipeline
+# Script for preparing input for neolution pipeline
+
+### Minimal usage example
 
 1. Make project directory and navigate to it in the Terminal
 2. Do 'git clone http://gitlab.nki.nl/l.fanchi/neolution-prep.git'
@@ -9,7 +11,8 @@
 	* create sub-directory 'bam' and copy BAM and BAI file(s) to it (necessary in case you want to determine expression of mutant allele)  
 5. Edit the runConfig.R file
 6. Edit the sample_info.tsv file. **Make sure to leave tab separation between data!**  
-Example data:
+
+#### Example sample info file
 
 | patient_id | dna\_data\_prefix | rna\_data\_prefix | hla\_a\_1 | hla\_a\_2 | hla\_b\_1 | hla\_b\_2 | hla\_c\_1 | hla\_c\_2 |
 |:-----:|:-------------------------:|:------------------------:|:-----:|:-----:|:-----:|:-----:|:----:|:----:|
