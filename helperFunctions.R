@@ -665,13 +665,14 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                    seq(1, length(input_pileup_merge))))
 }
 
-performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_reference = NULL, execute = TRUE) {
+performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_reference = NULL, optional_args = c('-E'), execute = TRUE) {
   dir.create(file.path(rootDirectory, '1b_rnaseq_data', 'pileups'), showWarnings = FALSE)
 
   command = paste(runOptions$samtools$samtoolsPath,
                   'mpileup',
                   if (!is.null(locations_file)) {paste('-l', locations_file)},
                   if (!is.null(fasta_reference)) {paste('-f', fasta_reference)},
+                  optional_args,
                   bam_file,
                   '-o', file.path(rootDirectory, '1b_rnaseq_data', 'pileups', paste0(sub(regexPatterns$file_extension, '', basename(bam_file)),
                                                                                      if (is.null(locations_file)) {'_mpil.tsv'} else {'_mpil_loc.tsv'})))
