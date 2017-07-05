@@ -218,6 +218,8 @@ ggplot(data = dna_vaf_summary,
                      y = median_dna_vaf,
                      color = patient_id)) +
   geom_point(aes(size = non_syn_coding_variants)) +
+  scale_size(limits = c(1, 2000),
+             range = c(1, 5)) +
   scale_x_continuous(limits = c(0, max(dna_vaf_summary$selected_epitope_yield_rate_per_allele))) +
   scale_y_continuous(limits = c(0, max(dna_vaf_summary$median_dna_vaf)))
 ```
@@ -267,6 +269,8 @@ ggplot(data = protein_coding_medians,
                      y = median_rna_expression,
                      color = patient_id)) +
   geom_point(aes(size = non_syn_coding_variants)) +
+  scale_size(limits = c(1, 2000),
+             range = c(1, 5)) +
   scale_x_continuous(limits = c(0, max(protein_coding_medians$selected_epitope_yield_rate_per_allele))) + 
   scale_y_continuous(limits = c(0, max(protein_coding_medians$median_rna_expression)))
 ```
