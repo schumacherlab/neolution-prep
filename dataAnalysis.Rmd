@@ -19,6 +19,8 @@ setwd('~/projects/## PROJECT DIR ##')
 
 source('runConfig.R')
 source('helperFunctions.R')
+
+theme_set(theme_gray())
 ```
 
 <link href="style.css" rel="stylesheet" type="text/css" />
