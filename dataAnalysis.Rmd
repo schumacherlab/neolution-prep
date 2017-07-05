@@ -129,8 +129,8 @@ prediction_table = merge(x = data.table(patient_id = names(sapply(predictions_by
                                                                   function(id) {
                                                                     length(all_predictions_unfiltered_by_patient[[id]][, unique(hla_allele)])
                                                                   }),
-                                        total_epitopes_predicted = sapply(all_predictions_unfiltered_by_patient, nrow),
-                                        selected_epitopes_predicted = sapply(predictions_by_patient, nrow)),
+                                        total_epitopes_predicted = sapply(all_predictions_unfiltered_by_patient, function(dt) dt[ , .N]),
+                                        selected_epitopes_predicted = sapply(predictions_by_patient, function(dt) dt[!duplicated(tumor_peptide), .N])),
                          y = effects_table[, -c('syn_coding_variants'), with = F],
                          by = 'patient_id')
 prediction_table = prediction_table[naturalorder(patient_id)]
@@ -170,12 +170,12 @@ all_predictions_unfiltered_by_patient = lapply(all_predictions_unfiltered_by_pat
 filter_consequences = rbindlist(lapply(all_predictions_unfiltered_by_patient,
                                        function(dt) {
                                          data.table(patient_id = dt[, unique(patient_id)],
-                                                    passes_model_cutoff = round(nrow(dt[passes_model_cutoff == TRUE]) / nrow(dt) * 100, 2),
-                                                    passes_expression_cutoff = round(nrow(dt[passes_expression_cutoff == TRUE]) / nrow(dt) * 100, 1),
-                                                    passes_both_cutoffs = round(nrow(dt[passes_model_cutoff == TRUE & passes_expression_cutoff == TRUE]) / nrow(dt) * 100, 2),
-                                                    median_tumor_affinity_rank = median(dt$tumor_affinity_rank),
-                                                    median_tumor_processing_score = round(median(dt$tumor_processing_score), 2),
-                                                    median_rna_expression = round(median(dt$rna_expression, na.rm = TRUE), 2))
+                                                    passes_model_cutoff = round(dt[passes_model_cutoff == TRUE & !duplicated(tumor_peptide), .N] / dt[!duplicated(tumor_peptide), .N] * 100, 2),
+                                                    passes_expression_cutoff = round(dt[passes_expression_cutoff == TRUE & !duplicated(tumor_peptide), .N] / dt[!duplicated(tumor_peptide), .N] * 100, 1),
+                                                    passes_both_cutoffs = round(dt[passes_model_cutoff == TRUE & passes_expression_cutoff == TRUE & !duplicated(tumor_peptide), .N] / dt[!duplicated(tumor_peptide), .N] * 100, 2),
+                                                    median_tumor_affinity_rank = median(dt[!duplicated(tumor_peptide), tumor_affinity_rank]),
+                                                    median_tumor_processing_score = round(median(dt[!duplicated(tumor_peptide), tumor_processing_score]), 2),
+                                                    median_rna_expression = round(median(dt[!duplicated(tumor_peptide), rna_expression], na.rm = TRUE), 2))
                                        }))
 
 pander(filter_consequences, split.table = 200)
