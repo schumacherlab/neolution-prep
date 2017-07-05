@@ -2,7 +2,7 @@
 if (!require('pacman')) install.packages('pacman')
 library(pacman)
 
-required_packages = c('BSgenome', 'compiler', 'data.table', 'deconstructSigs', 'doMC', 'dplyr', 'dtplyr', 'foreach', 'ggplot2', 'gtools', 'koRpus',
+required_packages = c('BSgenome', 'compiler', 'cowplot', 'data.table', 'deconstructSigs', 'doMC', 'dplyr', 'dtplyr', 'foreach', 'ggplot2', 'gtools', 'koRpus',
                       'naturalsort', 'optparse', 'pander', 'parallel', 'pbapply', 'rtracklayer', 'stringr', 'tidyr', 'utils')
 
 if (!p_isinstalled('BSgenome')) {
