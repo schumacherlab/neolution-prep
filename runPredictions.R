@@ -44,7 +44,7 @@ switch(EXPR = system(command = 'hostname', intern = TRUE),
 samples_by_hla = samples_by_hla[subset]
 
 # start predictions
-setwd('/home/NFS/users/l.fanchi/dev_environments/neolution-live/')
+setwd('/home/NFS/users/l.fanchi/stable_environments/neolution-live/')
 
 invisible(foreach(i = 1:nrow(samples_by_hla)) %dopar% {
   invisible(sapply(seq(1, length(runOptions$neolution$xmer)),
