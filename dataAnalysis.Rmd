@@ -49,7 +49,11 @@ effects_table = rbindlist(lapply(snpeff_output,
                                  function(path) {
                                    data = fread(path, skip = 1)
                                    
-                                   data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix, replacement = '', basename(path)), patient_id],
+                                   data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix,
+                                                                                               replacement = '',
+                                                                                               basename(path),
+                                                                                               perl = T),
+                                                                       patient_id],
                                               syn_coding_variants = sum(data$variants_effect_synonymous_variant),
                                               non_syn_coding_variants = sum(data$variants_effect_missense_variant),
                                               stop_gained_variants = sum(data$variants_effect_stop_gained),
