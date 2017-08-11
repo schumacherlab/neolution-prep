@@ -199,7 +199,11 @@ varcontext_output = setNames(object = lapply(list.files(path = '2_varcontext', p
                                                data = fread(path, colClasses = c(chromosome = 'character'),
                                                             select = c('variant_id','chromosome','start_position', 'end_position', 'ref_allele', 'alt_allele', 'dna_vaf', 'variant_classification'))
                                                data = unique(x = data, by = names(data))
-                                               data[, patient_id := sample_info[dna_data_prefix == gsub(regexPatterns$seqdata_prefix, '', basename(path)), patient_id]]
+                                               data[, patient_id := sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix,
+                                                                                                        replacement = '',
+                                                                                                        x = basename(path),
+                                                                                                        perl = T),
+                                                                                patient_id]]
                                              }),
                              nm = list.files(path = '2_varcontext', pattern = 'varcontext.tsv'))
 
@@ -248,7 +252,10 @@ To determine whether differences in selected epitope yield rate are due to diffe
 gtf_data = as.data.table(readGFF(runOptions$general$gtf_annotation))
 
 rna_data = setNames(object = lapply(list.files(path = '1b_rnaseq_data/processed_salmon', pattern = '\\.tsv$', full.names = T), fread),
-                    nm = sample_info[sapply(gsub(pattern = regexPatterns$seqdata_prefix, replacement = '', x = basename(list.files('1b_rnaseq_data/processed_salmon', '\\.tsv$'))),
+                    nm = sample_info[sapply(gsub(pattern = regexPatterns$seqdata_prefix,
+                                                 replacement = '',
+                                                 x = basename(list.files('1b_rnaseq_data/processed_salmon', '\\.tsv$')),
+                                                 perl = T),
                                             function(prefix) grep(prefix, rna_data_prefix)),
                                      patient_id])
 
@@ -302,7 +309,12 @@ oncogene_db = separate_rows(oncogene_db, Synonyms, sep = ',')
 # load varcontext data
 varcontext_full_data = setNames(object = lapply(list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = TRUE),
                                                 fread, colClasses = c(chromosome = 'character')),
-                                nm = sapply(gsub(regexPatterns$seqdata_prefix, '', list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = FALSE)), function(prefix) sample_info[dna_data_prefix == prefix, patient_id]))
+                                nm = sapply(gsub(pattern = regexPatterns$seqdata_prefix,
+                                                 replacement =  '',
+                                                 x =  list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = FALSE),
+                                                 perl = T),
+                                            function(prefix) sample_info[dna_data_prefix == prefix, patient_id]))
+
 varcontext_full_data = varcontext_full_data[naturalorder(names(varcontext_full_data))]
 
 driver_table = data.table(patient_id = names(varcontext_full_data),
