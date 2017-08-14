@@ -883,7 +883,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
                                                                                                          digits = 1))
     )
 
-    rna_expression_summary = data.table(sample = names(prediction_input),
+    rna_expression_summary = data.table(sample = names(rnaseq_data),
                                         percent_no_expression = sapply(rnaseq_data, function(x) round(x = length(which(x[[expression_unit]] == 0)) / nrow(x) * 100,
                                                                                                       digits = 1))
     )
