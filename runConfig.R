@@ -10,13 +10,16 @@ regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (every
                      allele_exclusion = 'C[0-9]{4}') # for excluding particular alleles from analysis
 
 # run options
-runOptions = list(general = list(gtf_annotation = '~/resources/ensembl_88/gtf/Homo_sapiens.GRCh38.88.gtf'),
+userPaths = list(data_path = '/DATA/users/l.fanchi',
+                 home_path = '/home/l.fanchi')
+
+runOptions = list(general = list(gtf_annotation = file.path(userPaths$data_path, 'resources/ensembl_88/gtf/Homo_sapiens.GRCh38.88.gtf')),
 
                   # set samtools mpileup options
-                  samtools = list(samtoolsPath = '/home/NFS/users/l.fanchi/libs/samtools-1.4/bin/samtools',
-                                  sambambaPath = '/home/NFS/users/l.fanchi/libs/sambamba-0.6.6-Linux_x86_64/sambamba',
+                  samtools = list(samtoolsPath = file.path(userPaths$data_path, 'libs/samtools-1.4/bin/samtools'),
+                                  sambambaPath = file.path(userPaths$data_path, 'libs/sambamba-0.6.6-Linux_x86_64/sambamba'),
                                   numberOfWorkers = 10,
-                                  fastaGenomeRef = '/home/NFS/users/l.fanchi/resources/ensembl_88/fasta_dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa'),
+                                  fastaGenomeRef = file.path(userPaths$data_path, 'resources/ensembl_88/fasta_dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa')),
 
                   # set varcontext options
                   varcontext = list(numberOfWorkers = 10,
@@ -26,10 +29,10 @@ runOptions = list(general = list(gtf_annotation = '~/resources/ensembl_88/gtf/Ho
                                     peptideContext = FALSE,
                                     nmdStatus = TRUE,
 
-                                    varcontextDirectory = '/home/NFS/users/l.fanchi/dev_environments/varcontext',
-                                    ensemblApi = '/home/NFS/users/l.fanchi/libs/ensembl_88/',
-                                    perlLibs = paste('/home/NFS/users/l.fanchi/perl5/lib/perl5','/home/NFS/users/l.fanchi/libs/bioperl-live',
-                                                     '/home/NFS/users/l.fanchi/libs/ensembl/modules','/home/NFS/users/l.fanchi/libs/ensembl-variation/modules', sep = ':')),
+                                    varcontextDirectory = file.path(userPaths$home_path, 'dev_environments/varcontext'),
+                                    ensemblApi = file.path(userPaths$data_path, 'libs/ensembl_88/'),
+                                    perlLibs = paste(file.path(userPaths$data_path, c('perl5/lib/perl5','libs/bioperl-live',
+                                                     'libs/ensembl/modules', 'libs/ensembl-variation/modules')), collapse = ':')),
 
                   # set neolution options
                   neolution = list(numberOfWorkers = 3, # number of threads for predictions (each thread spawns 16 children during self-sim checking)
@@ -45,7 +48,7 @@ runOptions = list(general = list(gtf_annotation = '~/resources/ensembl_88/gtf/Ho
                                    selflist = FALSE),
 
                   # set snpEff locations
-                  snpeff = list(path = '/home/NFS/users/l.fanchi/libs/snpEff',
+                  snpeff = list(path = file.path(userPaths$data_path, 'libs/snpEff'),
                                 build = 'GRCh38.86'))
 
 
