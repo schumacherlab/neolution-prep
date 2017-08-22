@@ -749,10 +749,12 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
   message('Step 2: Generating context for variants')
   message('Using gene build: ', runOptions$varcontext$ensemblApi)
 
-  generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
-                                             pattern = variant_regex,
-                                             full.names = TRUE),
-                     execute = execute)
+  cmd = generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
+                                                   pattern = variant_regex,
+                                                   full.names = TRUE),
+                           execute = execute)
+
+  if (!execute) message(cmd)
 }
 
 generateVarcontext = function(input_list, execute = TRUE) {
@@ -795,7 +797,8 @@ generateVarcontext = function(input_list, execute = TRUE) {
                        ' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
                        ' 2> "', file.path(rootDirectory, '2_varcontext', 'varcontext_logs', paste(filename, 'warnings.log"', sep = '_')))
 
-      commandWrapper(command = command, nice = NULL, wait = FALSE, execute = execute)
+      cmd = commandWrapper(command = command, nice = NULL, wait = FALSE, execute = execute)
+      if (!execute) return(cmd)
     })
   }
 
