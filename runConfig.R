@@ -30,7 +30,7 @@ runOptions = list(general = list(gtf_annotation = file.path(userPaths$resources_
                                     peptideContext = FALSE,
                                     nmdStatus = TRUE,
 
-                                    varcontextDirectory = file.path(userPaths$home_path, 'dev_environments/varcontext'),
+                                    varcontextDirectory = file.path(userPaths$home_path, 'stable_environments/varcontext'),
                                     ensemblApi = file.path(userPaths$libs_path, 'ensembl_88/'),
                                     perlLibs = paste(file.path(userPaths$libs_path,
                                                                c('perl5/lib/perl5', 'bioperl-live', 'ensembl_88/ensembl/modules', 'ensembl_88/ensembl-variation/modules')),
