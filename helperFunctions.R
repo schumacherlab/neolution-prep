@@ -749,12 +749,10 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
   message('Step 2: Generating context for variants')
   message('Using gene build: ', runOptions$varcontext$ensemblApi)
 
-  cmd = generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
-                                                   pattern = variant_regex,
-                                                   full.names = TRUE),
-                           execute = execute)
-
-  if (!execute) message(cmd)
+  generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
+                                             pattern = variant_regex,
+                                             full.names = TRUE),
+                     execute = execute)
 }
 
 generateVarcontext = function(input_list, execute = TRUE) {
@@ -763,6 +761,22 @@ generateVarcontext = function(input_list, execute = TRUE) {
   }
 
   setwd(runOptions$varcontext$varcontextDirectory)
+
+  commandList = sapply(1:length(input_list),
+                       function(i) {
+                         filename = sub(pattern = regexPatterns$file_extension, replacement = '', x = basename(input_list[i]))
+
+                         command = paste0('export ENSEMBLAPI="', runOptions$varcontext$ensemblApi, '";',
+                                          'export PERL5LIB="$PERL5LIB:', runOptions$varcontext$perlLibs,'";',
+                                          'perl ', file.path(runOptions$varcontext$varcontextDirectory, 'varcontext/create_context.pl'), ' ',
+                                          '--separator=', runOptions$varcontext$fieldSeparator, ' ',
+                                          ifelse(runOptions$varcontext$canonicalOnly, '--canonical ', ''),
+                                          ifelse(runOptions$varcontext$peptideContext, '--peptide ', ''),
+                                          ifelse(runOptions$varcontext$nmdStatus, '--nmd ', ''),
+                                          '"', input_list[i], '"',
+                                          ' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
+                                          ' 2> "', file.path(rootDirectory, '2_varcontext', 'varcontext_logs', paste(filename, 'warnings.log"', sep = '_')))
+                       })
 
   if (execute) {
     invisible(foreach(i = 1:length(input_list)) %dopar% {
@@ -786,20 +800,15 @@ generateVarcontext = function(input_list, execute = TRUE) {
                                    sep = "_")),
             append = FALSE)
 
-      command = paste0('export ENSEMBLAPI="', runOptions$varcontext$ensemblApi, '";',
-                       'export PERL5LIB="$PERL5LIB:', runOptions$varcontext$perlLibs,'";',
-                       'perl ', file.path(runOptions$varcontext$varcontextDirectory, 'varcontext/create_context.pl'), ' ',
-                       '--separator=', runOptions$varcontext$fieldSeparator, ' ',
-                       ifelse(runOptions$varcontext$canonicalOnly, '--canonical ', ''),
-                       ifelse(runOptions$varcontext$peptideContext, '--peptide ', ''),
-                       ifelse(runOptions$varcontext$nmdStatus, '--nmd ', ''),
-                       '"', input_list[i], '"',
-                       ' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
-                       ' 2> "', file.path(rootDirectory, '2_varcontext', 'varcontext_logs', paste(filename, 'warnings.log"', sep = '_')))
+      command = commandList[i]
 
-      cmd = commandWrapper(command = command, nice = NULL, wait = FALSE, execute = execute)
-      if (!execute) return(cmd)
+      commandWrapper(command = command, nice = NULL, wait = FALSE, execute = execute)
     })
+  } else {
+    sapply(commandList,
+           function(msg) {
+             message(msg, '\n')
+           })
   }
 
   setwd(rootDirectory)
