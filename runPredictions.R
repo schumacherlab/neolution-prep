@@ -42,7 +42,7 @@ if (any(nchar(samples_by_hla$hla_type) < 5)) {
 # samples_by_hla = samples_by_hla[subset]
 
 # start predictions
-setwd('/home/NFS/users/l.fanchi/stable_environments/neolution-live/')
+setwd(runOptions$neolution$path)
 
 invisible(foreach(i = 1:nrow(samples_by_hla)) %dopar% {
   invisible(sapply(seq(1, length(runOptions$neolution$xmer)),
