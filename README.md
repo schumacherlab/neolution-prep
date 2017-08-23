@@ -12,6 +12,10 @@
 	* create sub-directory `bam` and copy BAM and BAI file(s) to it (necessary in case you want to determine expression of mutant allele)  
 5. Edit the `runConfig.R` file (some vars to check: `userPaths`, `runOptions$varcontext`, `runOptions$neolution`) 
 6. Edit the `sample_info.tsv` file. **Make sure to leave tab separation between data!**  
+7. Open `prepareNeolutionInput.R`, edit the working directory and run interactively to prepare input files for neo-antigen predictions
+8. If all files were generated successfully, run predictions by:  
+`nohup nice -n 10 Rscript runPredictions.R > nohup_preds.out &`  
+This will start predictions in the background. stdout & stderr will be written to `nohup_preds.out`
 
 #### Example sample info file
 
