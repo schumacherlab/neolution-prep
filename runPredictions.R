@@ -36,12 +36,10 @@ if (any(nchar(samples_by_hla$hla_type) < 5)) {
 }
 
 # switch to run on mulitple servers
-switch(EXPR = system(command = 'hostname', intern = TRUE),
-       # 'steroid' = {subset = seq(round(nrow(samples_by_hla)/2) + 1, nrow(samples_by_hla))},
-       'void' = {subset = seq(1, round(nrow(samples_by_hla)/2))},
-       'paranoid' = {subset = seq(round(nrow(samples_by_hla)/2) + 1, nrow(samples_by_hla))})
-
-samples_by_hla = samples_by_hla[subset]
+# switch(EXPR = system(command = 'hostname', intern = TRUE),
+#        'hpc1' = {subset = seq(1, round(nrow(samples_by_hla)/2))},
+#        'hpc2' = {subset = seq(round(nrow(samples_by_hla)/2) + 1, nrow(samples_by_hla))})
+# samples_by_hla = samples_by_hla[subset]
 
 # start predictions
 setwd('/home/NFS/users/l.fanchi/stable_environments/neolution-live/')
