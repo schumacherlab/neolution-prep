@@ -1164,11 +1164,11 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
 applyCutoffs = function(predictions, model = NULL, rank = NULL, affinity = NULL, processing = NULL, expression = NULL, selfsim = NULL, invert = FALSE) {
   # do checks for necessary cutoff values here
   if (is.numeric(model) & is.numeric(expression) & is.logical(selfsim)) {
-    message('Applying cutoffs -> model: ', model, ' | expression: ', expression, ' | selfsim: ', selfsim)
+    message('Applying cutoffs -> model >= ', model, ' | expression > ', expression, ' | selfsim: ', selfsim)
   } else if (is.numeric(rank) & is.numeric(processing) & is.numeric(expression) & is.logical(selfsim)) {
-    message('Applying cutoffs -> rank: ', rank, ' | processing: ', processing, ' | expression: ', expression, ' | selfsim: ', selfsim)
+    message('Applying cutoffs -> rank <= ', rank, ' | processing >= ', processing, ' | expression > ', expression, ' | selfsim: ', selfsim)
   } else if (is.numeric(affinity) & is.numeric(processing) & is.numeric(expression) & is.logical(selfsim)) {
-    message('Applying cutoffs -> affinity: ', rank, ' | processing: ', processing, ' | expression: ', expression, ' | selfsim: ', selfsim)
+    message('Applying cutoffs -> affinity <= ', rank, ' | processing >= ', processing, ' | expression > ', expression, ' | selfsim: ', selfsim)
   } else {
     stop('Please provide required cutoff values as arguments')
   }
