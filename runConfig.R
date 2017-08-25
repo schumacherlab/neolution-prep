@@ -6,7 +6,7 @@ regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (every
                      gs_identifier = 'gs\\d+', # for matching germline snps annotated by our pipeline, keep boundless (no '^' or '$')
                      rs_identifier = 'rs\\d+', # for matching snps found in dbSNP, keep boundless (no '^' or '$')
                      cosmic_identifier = 'COSM\\d+', # for matching variants found in COSMIC coding muts database, keep boundless
-                     seqdata_prefix = '(?<=[ATCG]{8}).+', # for isolating GCF prefix
+                     seqdata_prefix = '(?<=[ATCG]{7,8}).+', # for isolating GCF prefix
                      allele_exclusion = 'C[0-9]{4}') # for excluding particular alleles from analysis
 
 # run options
