@@ -38,7 +38,7 @@ runOptions = list(general = list(gtf_annotation = file.path(userPaths$resources_
 
                   # set neolution options
                   neolution = list(path = file.path(userPaths$home_path, 'stable_environments/neolution-live'),
-                                   numberOfWorkers = 2, # number of threads for predictions (each thread spawns 'machine_cores/4' children during self-sim checking)
+                                   numberOfWorkers = 3, # number of sample threads for predictions (each thread spawns 'machine_cores/6' children during self-sim checking)
 
                                    rank_cutoff = NA,
                                    processing_cutoff = NA,
