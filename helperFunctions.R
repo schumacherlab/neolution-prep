@@ -158,9 +158,14 @@ parseVcfFields = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
     stop('"',n_tag, '" and/or "', t_tag, '" not found in VCF header, please doublecheck normal & tumor sample tags')
   }
 
-  if (all(vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), n_tag, with = FALSE] == '')) {
-    vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (n_tag) := vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), t_tag, with = FALSE]]
-    vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (t_tag) := NA]
+  # if SNP info was merged under the TUMOR instead of the NORMAL column, switch them
+  if (any(grepl(regexPatterns$gs_identifier, vcf_dt$variant_id))) {
+    if (all(vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), n_tag, with = FALSE] == '')) {
+      vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (n_tag) := vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), t_tag, with = FALSE]]
+      vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (t_tag) := NA]
+    } else {
+      stop("Germline variants have info in both NORMAL and TUMOR columns, something wrong here, as this shouldn't happen")
+    }
   }
 
   if (extract_fields) {
