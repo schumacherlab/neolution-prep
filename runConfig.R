@@ -11,7 +11,7 @@ regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (every
 
 # run options
 userPaths = list(libs_path = '/DATA/users/l.fanchi/libs',
-                 resources_path = 'DATA/users/l.fanchi/resources',
+                 resources_path = '/DATA/users/l.fanchi/resources',
                  home_path = '/home/l.fanchi')
 
 runOptions = list(general = list(gtf_annotation = file.path(userPaths$resources_path, 'ensembl_88/gtf/Homo_sapiens.GRCh38.88.gtf')),
