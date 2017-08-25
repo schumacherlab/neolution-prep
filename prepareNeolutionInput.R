@@ -9,7 +9,7 @@ source('./helperFunctions.R')
 source('./runConfig.R')
 
 # parse and clean VCF
-parseAndExtractFieldsFromVcf()
+parseVcfs()
 
 # find evidence for variants in RNAseq data (skipped if no RNAseq data is found)
 findRnaReadLevelEvidenceForVariants()
