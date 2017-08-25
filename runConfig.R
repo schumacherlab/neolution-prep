@@ -3,7 +3,7 @@
 # regexes
 regexPatterns = list(file_extension = '\\.[^.]+$', # match file extension (everything after last dot, inclusive)
                      snp_identifier = '[gr]s\\d+', # for matching SNPs
-                     gs_identifier = 'gs\\d+', # for matching snps not found in dbSNP, keep boundless (no '^' or '$')
+                     gs_identifier = 'gs\\d+', # for matching germline snps annotated by our pipeline, keep boundless (no '^' or '$')
                      rs_identifier = 'rs\\d+', # for matching snps found in dbSNP, keep boundless (no '^' or '$')
                      cosmic_identifier = 'COSM\\d+', # for matching variants found in COSMIC coding muts database, keep boundless
                      seqdata_prefix = '(?<=[ATCG]{8}).+', # for isolating GCF prefix

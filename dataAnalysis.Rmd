@@ -14,9 +14,8 @@ knitr::opts_chunk$set(echo = FALSE)
 
 setwd('~/projects/## PROJECT DIR ##')
 
-############# KEEP IN MIND: GATK MuTect2 annotates rs identifiers in somatic variants, these should be taken along as tumor-specific variants ##################################
-############# This means that all instances of 'regexPatterns$snp_identifier', have been changed to 'regexPatterns$gs_identifier'             ##################################
-############# When using legacy somaticSniper variant calls, make sure to change instances back to 'regexPatterns$snp_identifier'             ##################################
+############# KEEP IN MIND: correct data analysis depends on the addition of gs identifiers to germline variants #############
+############# these should be added to the ID field (this has been done, if ngs-tools is used)                   #############
 
 source('runConfig.R')
 source('helperFunctions.R')
