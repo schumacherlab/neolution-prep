@@ -58,7 +58,7 @@ parseCommandlineArguments = function() {
 
 ## VCF parsing ---------------------------------------------------
 # helper functions for input file generation
-parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_regex = '\\.vcf$', normal_tag = 'NORMAL', tumor_tag = 'TUMOR', extract_fields = NULL, write = TRUE) {
+parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_regex = '\\.vcf$', normal_tag = 'NORMAL', tumor_tag = 'TUMOR', extract_fields = TRUE, write = TRUE) {
   # extract relevant info from VCF
   message('Step 1: Parsing & extracting fields from VCF')
 
@@ -80,10 +80,10 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
   on.exit(closepb(progress_bar))
 
   vcf_data = mapply(function(file, n, t, i) {
-    data = parseVcf(vcf_path = file,
-                    n_tag = n,
-                    t_tag = t,
-                    extract_fields = extract_fields)
+    data = parseVcfFields(vcf_path = file,
+                          n_tag = n,
+                          t_tag = t,
+                          extract_fields = extract_fields)
     setpb(progress_bar, i)
     return(data)
   },
@@ -96,10 +96,14 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
   vcf_data = lapply(vcf_data,
                     function(vcf) {
                       # subset data
-                      data = vcf[grepl(regexPatterns$snp_identifier, variant_id) # always include SNPs
-                                 | sapply(1:nrow(vcf), function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index])) # legacy (somSniper pipeline) support: include all indels, since sample order (NORMAL/TUMOR) is inconsistent for indel calls
-                                 | genotype != '0/0' | is.na(genotype), # safety check, shouldn't happen: exclude tumor-specific variants which are ref
-                                 .(variant_id, chromosome, start_position, ref_allele, alt_allele, dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
+                      if (extract_fields) {
+                        data = vcf[grepl(regexPatterns$snp_identifier, variant_id) # always include SNPs
+                                   | sapply(1:nrow(vcf), function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index])) # legacy (somSniper pipeline) support: include all indels, since sample order (NORMAL/TUMOR) is inconsistent for indel calls
+                                   | genotype != '0/0' | is.na(genotype), # safety check, shouldn't happen: exclude tumor-specific variants which are ref
+                                   .(variant_id, chromosome, start_position, ref_allele, alt_allele, dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
+                      } else {
+                        data = vcf
+                      }
 
                       # sort data
                       data_sorted = rbindlist(list(data %>%
@@ -108,7 +112,7 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
                                                    data %>%
                                                      filter(grepl(regexPatterns$gs_identifier, variant_id)) %>%
                                                      .[naturalorder(.$chromosome)])
-                                              )
+                      )
 
                       return(data_sorted)
                     })
@@ -132,7 +136,7 @@ parseAndExtractFieldsFromVcf = function(vcf_path = file.path(rootDirectory, '1a_
 
 }
 
-parseVcf = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
+parseVcfFields = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
   require(data.table)
   require(stringr)
 
@@ -159,145 +163,149 @@ parseVcf = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
     vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (t_tag) := NA]
   }
 
-  # check if IndelGenotyper is used: if so, set genotype to NA, as sample_tag order is not consistent and can therefore not be extracted with confidence
-  indel_genotyper = 'IndelGenotyperV2' %in% sort(gsub(pattern = '##source=', '', grep(pattern = '##source', x = vcf_lines, value = TRUE)))
+  if (extract_fields) {
+    # check if IndelGenotyper is used: if so, set genotype to NA, as sample_tag order is not consistent and can therefore not be extracted with confidence
+    indel_genotyper = 'IndelGenotyperV2' %in% sort(gsub(pattern = '##source=', '', grep(pattern = '##source', x = vcf_lines, value = TRUE)))
 
-  # enumerate tags
-  tags = list(filter_tags = sort(gsub(pattern = 'ID=', '', x = str_extract(string = grep(pattern = '##FILTER', x = vcf_lines, value = TRUE),
-                                                                           pattern = 'ID=[^,]+'))),
-              format_tags = sort(gsub(pattern = 'ID=', '', x = str_extract(string = grep(pattern = '##FORMAT', x = vcf_lines, value = TRUE),
-                                                                           pattern = 'ID=[^,]+'))),
-              info_tags = sort(gsub(pattern = 'ID=', '', x = str_extract(string = grep(pattern = '##INFO', x = vcf_lines, value = TRUE),
-                                                                         pattern = 'ID=[^,]+'))))
+    # enumerate tags
+    tags = list(filter_tags = sort(gsub(pattern = 'ID=', '', x = str_extract(string = grep(pattern = '##FILTER', x = vcf_lines, value = TRUE),
+                                                                             pattern = 'ID=[^,]+'))),
+                format_tags = sort(gsub(pattern = 'ID=', '', x = str_extract(string = grep(pattern = '##FORMAT', x = vcf_lines, value = TRUE),
+                                                                             pattern = 'ID=[^,]+'))),
+                info_tags = sort(gsub(pattern = 'ID=', '', x = str_extract(string = grep(pattern = '##INFO', x = vcf_lines, value = TRUE),
+                                                                           pattern = 'ID=[^,]+'))))
 
-  # take subset of full vcf and start parsing/adding data
-  vcf_parsed = vcf_dt[, .(chromosome, start_position, variant_id, ref_allele, alt_allele)]
+    # take subset of full vcf and start parsing/adding data
+    vcf_parsed = vcf_dt[, .(chromosome, start_position, variant_id, ref_allele, alt_allele)]
 
-  # replace 'chr' prefix in chromosome, if present
-  vcf_parsed[, chromosome := gsub('^chr', '', chromosome)]
+    # replace 'chr' prefix in chromosome, if present
+    vcf_parsed[, chromosome := gsub('^chr', '', chromosome)]
 
-  # extract genotype tag info for variants
-  if ('GT' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), genotype := extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                          sample_tag = t_tag,
-                                                                                                          format_tag = 'GT')]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), genotype := extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                         sample_tag = n_tag,
-                                                                                                         format_tag = 'GT')]
-  }
+    # extract genotype tag info for variants
+    if ('GT' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), genotype := extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                            sample_tag = t_tag,
+                                                                                                            format_tag = 'GT')]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), genotype := extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                           sample_tag = n_tag,
+                                                                                                           format_tag = 'GT')]
+    }
 
-  if (indel_genotyper) {vcf_parsed[which(grepl(pattern = 'SOMATIC', x = vcf_dt$info)), genotype := NA]}
+    if (indel_genotyper) {vcf_parsed[which(grepl(pattern = 'SOMATIC', x = vcf_dt$info)), genotype := NA]}
 
-  # extract genotype/variant allele/mapping quality info for variants
-  if ('GQ' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), genotype_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                             sample_tag = t_tag,
-                                                                                                                             format_tag = 'GQ'))]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), genotype_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                            sample_tag = n_tag,
-                                                                                                                            format_tag = 'GQ'))]
-  }
-  if ('VAQ' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), variant_allele_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+    # extract genotype/variant allele/mapping quality info for variants
+    if ('GQ' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), genotype_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                               sample_tag = t_tag,
+                                                                                                                               format_tag = 'GQ'))]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), genotype_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                              sample_tag = n_tag,
+                                                                                                                              format_tag = 'GQ'))]
+    }
+    if ('VAQ' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), variant_allele_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                     sample_tag = t_tag,
+                                                                                                                                     format_tag = 'VAQ'))]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), variant_allele_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                    sample_tag = n_tag,
+                                                                                                                                    format_tag = 'VAQ'))]
+    }
+    if ('MQ' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), average_mapping_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                      sample_tag = t_tag,
+                                                                                                                                      format_tag = 'MQ'))]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), average_mapping_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                     sample_tag = n_tag,
+                                                                                                                                     format_tag = 'MQ'))]
+    }
+
+    # extract base quality scores
+    if ('QSS' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), c('ref_base_quality_score', 'alt_base_quality_score') := extractSplitDataFromVcf(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                                   sample_tag = t_tag,
+                                                                                                                                                   format_tag = 'QSS')]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), c('ref_base_quality_score', 'alt_base_quality_score') := extractSplitDataFromVcf(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                                  sample_tag = n_tag,
+                                                                                                                                                  format_tag = 'QSS')]
+    }
+
+    # extract sample base read counts
+    if ('BCOUNT' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), c('A', 'C', 'G', 'T') := extractVariantReadCountsFromVcf(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                           sample_tag = t_tag,
+                                                                                                                           count_tag = 'BCOUNT')]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), c('A', 'C', 'G', 'T') := extractVariantReadCountsFromVcf(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                          sample_tag = n_tag,
+                                                                                                                          count_tag = 'BCOUNT')]
+    }
+
+    # pick alt allele with highest read count (in case two alt's are given)
+    if ('BCOUNT' %in% tags$format_tags) {
+      vcf_parsed[, alt_allele := unlist(mclapply(seq(1, nrow(vcf_parsed)),
+                                                 function(row_index) {
+                                                   if (any(is.na(vcf_parsed[, .(A,C,G,T)][row_index])) | nchar(vcf_parsed$alt_allele[row_index]) == 1) {
+                                                     return(vcf_parsed$alt_allele[row_index])
+                                                   } else {
+                                                     alts = unlist(str_split(vcf_parsed$alt_allele[row_index], ','))
+                                                     counts = sapply(alts,
+                                                                     function(alt) {
+                                                                       count = vcf_parsed[[alt]][row_index]
+                                                                     })
+                                                     base = names(which.max(counts))
+                                                     return(base)
+                                                   }
+                                                 }, mc.cores = 20))]
+    }
+
+    # extract ref and alt read counts
+    if ('DP4' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), c('dna_ref_read_count', 'dna_alt_read_count') := extractSplitDataFromVcf(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                           sample_tag = t_tag,
+                                                                                                                                           format_tag = 'DP4')]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), c('dna_ref_read_count', 'dna_alt_read_count') := extractSplitDataFromVcf(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                          sample_tag = n_tag,
+                                                                                                                                          format_tag = 'DP4')]
+    } else if ('AD' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), c('dna_ref_read_count', 'dna_alt_read_count') := extractSplitDataFromVcf(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                           sample_tag = t_tag,
+                                                                                                                                           format_tag = 'AD')]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), c('dna_ref_read_count', 'dna_alt_read_count') := extractSplitDataFromVcf(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                          sample_tag = n_tag,
+                                                                                                                                          format_tag = 'AD')]
+    }
+
+    # extract total read counts
+    if ('DP' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), dna_total_read_count := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
                                                                                                                                    sample_tag = t_tag,
-                                                                                                                                   format_tag = 'VAQ'))]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), variant_allele_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                                   format_tag = 'DP'))]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), dna_total_read_count := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
                                                                                                                                   sample_tag = n_tag,
-                                                                                                                                  format_tag = 'VAQ'))]
-  }
-  if ('MQ' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), average_mapping_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                    sample_tag = t_tag,
-                                                                                                                                    format_tag = 'MQ'))]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), average_mapping_quality := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                   sample_tag = n_tag,
-                                                                                                                                   format_tag = 'MQ'))]
-  }
+                                                                                                                                  format_tag = 'DP'))]
+    }
 
-  # extract base quality scores
-  if ('QSS' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), c('ref_base_quality_score', 'alt_base_quality_score') := extractSplitDataFromVcf(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                                 sample_tag = t_tag,
-                                                                                                                                                 format_tag = 'QSS')]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), c('ref_base_quality_score', 'alt_base_quality_score') := extractSplitDataFromVcf(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                                sample_tag = n_tag,
-                                                                                                                                                format_tag = 'QSS')]
-  }
-
-  # extract sample base read counts
-  if ('BCOUNT' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), c('A', 'C', 'G', 'T') := extractVariantReadCountsFromVcf(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                         sample_tag = t_tag,
-                                                                                                                         count_tag = 'BCOUNT')]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), c('A', 'C', 'G', 'T') := extractVariantReadCountsFromVcf(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                        sample_tag = n_tag,
-                                                                                                                        count_tag = 'BCOUNT')]
-  }
-
-  # pick alt allele with highest read count (in case two alt's are given)
-  if ('BCOUNT' %in% tags$format_tags) {
-    vcf_parsed[, alt_allele := unlist(mclapply(seq(1, nrow(vcf_parsed)),
-                                               function(row_index) {
-                                                 if (any(is.na(vcf_parsed[, .(A,C,G,T)][row_index])) | nchar(vcf_parsed$alt_allele[row_index]) == 1) {
-                                                   return(vcf_parsed$alt_allele[row_index])
-                                                 } else {
-                                                   alts = unlist(str_split(vcf_parsed$alt_allele[row_index], ','))
-                                                   counts = sapply(alts,
-                                                                   function(alt) {
-                                                                     count = vcf_parsed[[alt]][row_index]
-                                                                   })
-                                                   base = names(which.max(counts))
-                                                   return(base)
-                                                 }
-                                               }, mc.cores = 20))]
-  }
-
-  # extract ref and alt read counts
-  if ('DP4' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), c('dna_ref_read_count', 'dna_alt_read_count') := extractSplitDataFromVcf(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                         sample_tag = t_tag,
-                                                                                                                                         format_tag = 'DP4')]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), c('dna_ref_read_count', 'dna_alt_read_count') := extractSplitDataFromVcf(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                        sample_tag = n_tag,
-                                                                                                                                        format_tag = 'DP4')]
-  } else if ('AD' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), c('dna_ref_read_count', 'dna_alt_read_count') := extractSplitDataFromVcf(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                         sample_tag = t_tag,
-                                                                                                                                         format_tag = 'AD')]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), c('dna_ref_read_count', 'dna_alt_read_count') := extractSplitDataFromVcf(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                        sample_tag = n_tag,
-                                                                                                                                        format_tag = 'AD')]
-  }
-
-  # extract total read counts
-  if ('DP' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), dna_total_read_count := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                 sample_tag = t_tag,
-                                                                                                                                 format_tag = 'DP'))]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), dna_total_read_count := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                                sample_tag = n_tag,
-                                                                                                                                format_tag = 'DP'))]
-  }
-
-  # extract/compute dna_vaf
-  if ('AF' %in% tags$format_tags) {
-    vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), dna_vaf := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                    sample_tag = t_tag,
-                                                                                                                    format_tag = 'AF',
-                                                                                                                    split_by = ','))]
-    vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), dna_vaf := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
-                                                                                                                   sample_tag = n_tag,
-                                                                                                                   format_tag = 'AF',
-                                                                                                                   split_by = ','))]
+    # extract/compute dna_vaf
+    if ('AF' %in% tags$format_tags) {
+      vcf_parsed[!grepl(regexPatterns$gs_identifier, variant_id), dna_vaf := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[!grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                      sample_tag = t_tag,
+                                                                                                                      format_tag = 'AF',
+                                                                                                                      split_by = ','))]
+      vcf_parsed[grepl(regexPatterns$gs_identifier, variant_id), dna_vaf := as.numeric(extractSingleDataFromVcfField(vcf_table = vcf_dt[grepl(regexPatterns$gs_identifier, variant_id)],
+                                                                                                                     sample_tag = n_tag,
+                                                                                                                     format_tag = 'AF',
+                                                                                                                     split_by = ','))]
+    } else {
+      vcf_parsed[, dna_vaf := unlist(mclapply(seq(1, nrow(vcf_parsed)),
+                                              function(row_index) {
+                                                if (is.numeric(vcf_parsed$dna_alt_read_count[row_index]) & is.numeric(vcf_parsed$dna_total_read_count[row_index])) {
+                                                  return(vcf_parsed$dna_alt_read_count[row_index] / vcf_parsed$dna_total_read_count[row_index])
+                                                } else {
+                                                  return(NA)
+                                                }
+                                              }, mc.cores = 20))]
+    }
   } else {
-    vcf_parsed[, dna_vaf := unlist(mclapply(seq(1, nrow(vcf_parsed)),
-                                            function(row_index) {
-                                              if (is.numeric(vcf_parsed$dna_alt_read_count[row_index]) & is.numeric(vcf_parsed$dna_total_read_count[row_index])) {
-                                                return(vcf_parsed$dna_alt_read_count[row_index] / vcf_parsed$dna_total_read_count[row_index])
-                                              } else {
-                                                return(NA)
-                                              }
-                                            }, mc.cores = 20))]
+    vcf_parsed = vcf_dt
   }
 
   # # if multiple variant_ids are present:
