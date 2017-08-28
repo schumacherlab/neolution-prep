@@ -303,7 +303,7 @@ if (length(oncogene_census) < 1) {
 } 
 
 oncogene_db = fread(oncogene_census)
-oncogene_db = separate_rows(oncogene_db, Synonyms, sep = ',')	
+oncogene_db = oncogene_db[, list(Synonyms = unlist(strsplit(Synonyms, ','))), by = `Gene Symbol`]
 
 # load varcontext data
 varcontext_full_data = setNames(object = lapply(list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = TRUE),
