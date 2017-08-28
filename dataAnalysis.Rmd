@@ -49,7 +49,7 @@ effects_table = rbindlist(lapply(snpeff_output,
                                    data = fread(path, skip = 1)
                                    
                                    data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix,
-                                                                                               replacement = '',
+                                                                                               replacement = '\\1',
                                                                                                basename(path),
                                                                                                perl = T),
                                                                        patient_id],
@@ -199,7 +199,7 @@ varcontext_output = setNames(object = lapply(list.files(path = '2_varcontext', p
                                                             select = c('variant_id','chromosome','start_position', 'end_position', 'ref_allele', 'alt_allele', 'dna_vaf', 'variant_classification'))
                                                data = unique(x = data, by = names(data))
                                                data[, patient_id := sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix,
-                                                                                                        replacement = '',
+                                                                                                        replacement = '\\1',
                                                                                                         x = basename(path),
                                                                                                         perl = T),
                                                                                 patient_id]]
@@ -252,7 +252,7 @@ gtf_data = as.data.table(readGFF(runOptions$general$gtf_annotation))
 
 rna_data = setNames(object = lapply(list.files(path = '1b_rnaseq_data/processed_salmon', pattern = '\\.tsv$', full.names = T), fread),
                     nm = sample_info[sapply(gsub(pattern = regexPatterns$seqdata_prefix,
-                                                 replacement = '',
+                                                 replacement = '\\1',
                                                  x = basename(list.files('1b_rnaseq_data/processed_salmon', '\\.tsv$')),
                                                  perl = T),
                                             function(prefix) grep(prefix, rna_data_prefix)),
@@ -309,7 +309,7 @@ oncogene_db = separate_rows(oncogene_db, Synonyms, sep = ',')
 varcontext_full_data = setNames(object = lapply(list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = TRUE),
                                                 fread, colClasses = c(chromosome = 'character')),
                                 nm = sapply(gsub(pattern = regexPatterns$seqdata_prefix,
-                                                 replacement =  '',
+                                                 replacement =  '\\1',
                                                  x =  list.files(path = '2_varcontext', pattern = 'varcontext\\.tsv', full.names = FALSE),
                                                  perl = T),
                                             function(prefix) sample_info[dna_data_prefix == prefix, patient_id]))

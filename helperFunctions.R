@@ -1156,7 +1156,7 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
                        function(i) {
                          data = fread(files[i])
                          data[, sample_prefix := sub(pattern = regexPatterns$seqdata_prefix,
-                                                     replacement = '',
+                                                     replacement = '\\1',
                                                      x = short_names[i],
                                                      perl = T)]
                          data[, patient_id := sample_table[dna_data_prefix == data[, unique(sample_prefix)], patient_id]]

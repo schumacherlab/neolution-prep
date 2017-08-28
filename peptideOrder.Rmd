@@ -95,7 +95,7 @@ effects_table = rbindlist(lapply(snpeff_output,
                                    data = fread(path, skip = 1)
                                    
                                    data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix,
-                                                                                               replacement = '',
+                                                                                               replacement = '\\1',
                                                                                                x = basename(path),
                                                                                                perl = T),
                                                                        patient_id],
