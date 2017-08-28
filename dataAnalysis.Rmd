@@ -251,11 +251,11 @@ To determine whether differences in selected epitope yield rate are due to diffe
 gtf_data = as.data.table(readGFF(runOptions$general$gtf_annotation))
 
 rna_data = setNames(object = lapply(list.files(path = '1b_rnaseq_data/processed_salmon', pattern = '\\.tsv$', full.names = T), fread),
-                    nm = sample_info[sapply(gsub(pattern = regexPatterns$seqdata_prefix,
-                                                 replacement = '\\1',
-                                                 x = basename(list.files('1b_rnaseq_data/processed_salmon', '\\.tsv$')),
-                                                 perl = T),
-                                            function(prefix) grep(prefix, rna_data_prefix)),
+                    nm = sample_info[unlist(sapply(gsub(pattern = regexPatterns$seqdata_prefix,
+                                                        replacement = '\\1',
+                                                        x = basename(list.files('1b_rnaseq_data/processed_salmon', '\\.tsv$')),
+                                                        perl = T),
+                                                   function(prefix) grep(prefix, rna_data_prefix))),
                                      patient_id])
 
 gene_sample = sample(gtf_data[gene_biotype == 'protein_coding', gene_id], size = 2500)
