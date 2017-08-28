@@ -356,3 +356,31 @@ for (i in 1:length(mutational_signatures)) {
 }
 ```
 
+<br>
+
+##### Immune response pathway mutation analysis
+
+
+```{r pathway_mutation_analysis}
+panderOptions('knitr.auto.asis', FALSE)
+
+ifng_symbols = c('IFN', 'JAK', 'STAT', 'IRF', 'SOCS', 'DAPK', 'SLFN')
+ag_pres_symbols = c('B2M', 'HLA', 'PSM', 'TAP', 'ERAP')
+
+vcfs_parsed = parseVcfs(vcf_path = '4_snpEff', extract_fields = F, write = F)
+
+vcfs_muts = lapply(vcfs_parsed,
+                   function(vcf_dt) {
+                     vcf_ifn = vcf_dt[grep(pattern = paste0(ifng_symbols, collapse = '|'), x = vcf_dt$info)]
+                     vcf_ag_pres = vcf_dt[grep(pattern = paste0(ag_pres_symbols, collapse = '|'), x = vcf_dt$info)]
+                     
+                     vcf_muts = rbindlist(list(vcf_ifn, vcf_ag_pres))
+                     vcf_muts = vcf_muts[grep(pattern = 'MODERATE|HIGH', info), .(chromosome, start_position, info)]
+                     
+                     return(vcf_muts)
+                   })
+
+for (i in 1:length(vcfs_muts)) {
+  pander(vcfs_muts[[i]])
+}
+```
