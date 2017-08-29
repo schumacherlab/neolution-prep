@@ -58,7 +58,7 @@ parseCommandlineArguments = function() {
 
 ## VCF parsing ---------------------------------------------------
 # helper functions for input file generation
-parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_regex = '\\.vcf$', normal_tag = 'NORMAL', tumor_tag = 'TUMOR', extract_fields = TRUE, write = TRUE) {
+parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_regex = '\\.vcf$', normal_tag = 'NORMAL', tumor_tag = 'TUMOR', check_tags = TRUE, extract_fields = TRUE, write = TRUE) {
   # extract relevant info from VCF
   message('Step 1: Parsing & extracting fields from VCF')
 
@@ -83,6 +83,7 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
     data = parseVcfFields(vcf_path = file,
                           n_tag = n,
                           t_tag = t,
+                          check_tags = check_tags,
                           extract_fields = extract_fields)
     setpb(progress_bar, i)
     return(data)
@@ -136,7 +137,7 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 
 }
 
-parseVcfFields = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
+parseVcfFields = function(vcf_path, n_tag, t_tag, check_tags = TRUE, extract_fields = NULL) {
   require(data.table)
   require(stringr)
 
@@ -159,12 +160,14 @@ parseVcfFields = function(vcf_path, n_tag, t_tag, extract_fields = NULL) {
   }
 
   # if SNP info was merged under the TUMOR instead of the NORMAL column, switch them
-  if (any(grepl(regexPatterns$gs_identifier, vcf_dt$variant_id))) {
-    if (all(vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), n_tag, with = FALSE] == '')) {
-      vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (n_tag) := vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), t_tag, with = FALSE]]
-      vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (t_tag) := NA]
-    } else {
-      stop("Germline variants have info in both NORMAL and TUMOR columns, something wrong here, as this shouldn't happen")
+  if (check_tags) {
+    if (any(grepl(regexPatterns$gs_identifier, vcf_dt$variant_id))) {
+      if (all(vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), n_tag, with = FALSE] == '')) {
+        vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (n_tag) := vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), t_tag, with = FALSE]]
+        vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), (t_tag) := NA]
+      } else {
+        stop("Germline variants have info in both NORMAL and TUMOR columns, something wrong here, as this shouldn't happen")
+      }
     }
   }
 
