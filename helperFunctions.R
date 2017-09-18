@@ -564,9 +564,13 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                                            row.names = FALSE)))
 
   # make overview of sample input files
-  regex_pattern = if (quant_mode == 'cufflinks') {'accepted_hits\\.bam$'}
-  else if (quant_mode == 'salmon') {'Aligned\\.sortedByCoord\\.out\\.bam$'}
-  else {stop('Please define valid quant_mode (cufflinks/salmon)')}
+  regex_pattern = if (quant_mode == 'cufflinks') {
+    'accepted_hits\\.bam$'
+  } else if (quant_mode == 'salmon') {
+    'Aligned\\.sortedByCoord\\.out\\.bam$'
+  } else {
+    stop('Please define valid quant_mode (cufflinks/salmon)')
+  }
 
   if (do_pileups) {
     sample_combinations = data.table(locations_file = sapply(sample_info$dna_data_prefix,
