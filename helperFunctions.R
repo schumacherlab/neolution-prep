@@ -117,10 +117,10 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
                       # sort data
                       data_sorted = rbindlist(list(data %>%
                                                      filter(!grepl(regexPatterns$gs_identifier, variant_id)) %>%
-                                                     .[naturalorder(.$chromosome)],
+                                                     .[naturalorder(.$variant_id)],
                                                    data %>%
                                                      filter(grepl(regexPatterns$gs_identifier, variant_id)) %>%
-                                                     .[naturalorder(.$chromosome)])
+                                                     .[naturalorder(.$variant_id)])
                       )
 
                       return(data_sorted)
