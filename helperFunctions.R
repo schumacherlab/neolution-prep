@@ -743,14 +743,14 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                                                       USE.NAMES = F)
                                   return(dt)
                                 })
+  } else if (!do_pileups) {
+    input_pileup_merge = lapply(input_data,
+                                function(dt) {
+                                  dt[, c('rna_ref_read_count', 'rna_alt_read_count', 'rna_total_read_count', 'rna_vaf', 'rna_alt_expression') := NA]
+
+                                  return(dt)
+                                })
   }
-
-  input_pileup_merge = lapply(input_data,
-                              function(dt) {
-                                dt[, c('rna_ref_read_count', 'rna_alt_read_count', 'rna_total_read_count', 'rna_vaf', 'rna_alt_expression') := NA]
-
-                                return(dt)
-                              })
 
   input_pileup_merge = lapply(input_pileup_merge,
                               function(dt) {
