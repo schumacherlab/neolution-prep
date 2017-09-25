@@ -58,10 +58,40 @@ parseCommandlineArguments = function() {
   return(parsed_args)
 }
 
+#' Parse single VCF
+#'
+#' @param vcf \code{data.table} from VCF
+extract_fields_vcf <- function(vcf, extract_fields = TRUE) {
+  if (extract_fields) {
+    data = vcf[grepl(regexPatterns$snp_identifier, variant_id) # include SNPs
+               | sapply(1:nrow(vcf),
+                        # legacy (somSniper pipeline) support: include all indels, since sample order (NORMAL/TUMOR) is inconsistent for indel calls
+                        function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index]))
+               | genotype != '0/0' | is.na(genotype), # safety check, shouldn't happen: exclude tumor-specific variants which are ref
+               .(variant_id, chromosome, start_position, ref_allele, alt_allele,
+                 dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
+  } else {
+    data = vcf
+  }
+
+  # sort data, somatic above germline calls
+  data_sorted = rbindlist(list(data %>%
+                                 filter(!grepl(regexPatterns$gs_identifier, variant_id)) %>%
+                                 .[naturalorder(.$variant_id)],
+                               data %>%
+                                 filter(grepl(regexPatterns$gs_identifier, variant_id)) %>%
+                                 .[naturalorder(.$variant_id)])
+  )
+
+  return(data_sorted)
+}
+
+
 
 ## VCF parsing ---------------------------------------------------
 # helper functions for input file generation
-parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), vcf_regex = '\\.vcf$',
+parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
+                     vcf_regex = '\\.vcf$',
                      normal_tag = 'NORMAL', tumor_tag = 'TUMOR',
                      check_tags = TRUE, extract_fields = TRUE, write = TRUE) {
   # extract relevant info from VCF
@@ -84,7 +114,7 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
   progress_bar = startpb(min = 0, max = length(vcf_files))
   on.exit(closepb(progress_bar))
 
-  vcf_data = mapply(function(file, n, t, i) {
+  vcf_data <- mapply(function(file, n, t, i) {
     data = parseVcfFields(vcf_path = file,
                           n_tag = n,
                           t_tag = t,
@@ -92,39 +122,9 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
                           extract_fields = extract_fields)
     setpb(progress_bar, i)
     return(data)
-  },
-  vcf_files,
-  normal_tag,
-  tumor_tag,
-  1:length(vcf_files),
-  SIMPLIFY = F)
+  }, vcf_files, normal_tag, tumor_tag, 1:length(vcf_files), SIMPLIFY = F)
 
-  vcf_data = lapply(vcf_data,
-                    function(vcf) {
-                      # subset data
-                      if (extract_fields) {
-                        data = vcf[grepl(regexPatterns$snp_identifier, variant_id) # always include SNPs
-                                   | sapply(1:nrow(vcf),
-                                            # legacy (somSniper pipeline) support: include all indels, since sample order (NORMAL/TUMOR) is inconsistent for indel calls
-                                            function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index]))
-                                   | genotype != '0/0' | is.na(genotype), # safety check, shouldn't happen: exclude tumor-specific variants which are ref
-                                   .(variant_id, chromosome, start_position, ref_allele, alt_allele,
-                                     dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
-                      } else {
-                        data = vcf
-                      }
-
-                      # sort data
-                      data_sorted = rbindlist(list(data %>%
-                                                     filter(!grepl(regexPatterns$gs_identifier, variant_id)) %>%
-                                                     .[naturalorder(.$variant_id)],
-                                                   data %>%
-                                                     filter(grepl(regexPatterns$gs_identifier, variant_id)) %>%
-                                                     .[naturalorder(.$variant_id)])
-                      )
-
-                      return(data_sorted)
-                    })
+  vcf_data <- lapply(vcf_data, extract_fields_vcf)
 
   if (write) {
     dir.create(file.path(rootDirectory, '1a_variants', 'parsed'), showWarnings = F)
@@ -145,10 +145,8 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 
 }
 
-parseVcfFields = function(vcf_path, n_tag, t_tag, check_tags = TRUE, extract_fields = NULL) {
-  require(data.table)
-  require(stringr)
-
+parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
+                           extract_fields = NULL) {
   if (!file.exists(vcf_path)) stop('VCF not found')
 
   # read data
