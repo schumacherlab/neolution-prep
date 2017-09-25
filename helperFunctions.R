@@ -2,9 +2,11 @@
 if (!require('pacman')) install.packages('pacman')
 library(pacman)
 
-required_packages = c('BSgenome', 'compiler', 'cowplot', 'data.table', 'deconstructSigs', 'doMC', 'dplyr', 'dtplyr',
-                      'foreach', 'ggplot2', 'gtools', 'koRpus', 'naturalsort', 'optparse', 'pander', 'parallel', 'pbapply',
-                      'rtracklayer', 'stringr', 'tidyr', 'utils')
+required_packages = c('BSgenome', 'compiler', 'cowplot', 'data.table',
+                      'deconstructSigs', 'doMC', 'dplyr', 'dtplyr', 'foreach',
+                      'ggplot2', 'gtools', 'koRpus', 'naturalsort', 'optparse',
+                      'pander', 'parallel', 'pbapply', 'rtracklayer',
+                      'stringr', 'tidyr', 'utils', 'GEOquery')
 
 if (!p_isinstalled('BSgenome')) {
   source('https://bioconductor.org/biocLite.R')
@@ -14,7 +16,10 @@ if (!p_isinstalled('rtracklayer')) {
   source('https://bioconductor.org/biocLite.R')
   biocLite('rtracklayer', suppressUpdates = T)
 }
-
+if (!p_isinstalled('GEOquery')) {
+  source('https://bioconductor.org/biocLite.R')
+  biocLite('GEOquery', suppressUpdates = T)
+}
 pacman::p_load(char = required_packages)
 
 
@@ -127,11 +132,13 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
   vcf_data <- lapply(vcf_data, extract_fields_vcf)
 
   if (write) {
-    dir.create(file.path(rootDirectory, '1a_variants', 'parsed'), showWarnings = F)
+    dir.create(file.path(rootDirectory, '1a_variants', 'parsed'), 
+               showWarnings = F)
 
     invisible(mapply(function(vcf, index) {
       write.table(x = vcf,
-                  file = file.path(rootDirectory, '1a_variants', 'parsed', paste0(names(vcf_data)[index], '.tsv')),
+                  file = file.path(rootDirectory, '1a_variants', 'parsed', 
+                                   paste0(names(vcf_data)[index], '.tsv')),
                   sep = '\t',
                   append = FALSE,
                   quote = FALSE,
@@ -148,6 +155,12 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
 parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
                            extract_fields = NULL) {
   if (!file.exists(vcf_path)) stop('VCF not found')
+  if (grepl('.gz$', vcf_path)) {
+    unzipped_path <- gsub('[.]gz$', '', vcf_path)
+    gunzip(vcf_path, destname = gsub('[.]gz$', '', unzipped_path), 
+           overwrite = FALSE, remove = FALSE, BFR.SIZE = 1e+07)
+    vcf_path <- unzipped_path
+  }
 
   # read data
   vcf_lines = readLines(vcf_path)
@@ -158,8 +171,10 @@ parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
                  colClasses = list(character = c('#CHROM')),
                  fill = TRUE)
   setnames(x = vcf_dt,
-           old = c('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'),
-           new = c('chromosome', 'start_position', 'variant_id', 'ref_allele', 'alt_allele', 'quality', 'filter', 'info', 'format'))
+           old = c('#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER',
+                   'INFO', 'FORMAT'),
+           new = c('chromosome', 'start_position', 'variant_id', 'ref_allele',
+                   'alt_allele', 'quality', 'filter', 'info', 'format'))
 
   if (n_tag %nin% names(vcf_dt) | t_tag %nin% names(vcf_dt)) {
     stop('"',n_tag, '" and/or "', t_tag, '" not found in VCF header, please doublecheck normal & tumor sample tags')
