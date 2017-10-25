@@ -2,11 +2,10 @@
 if (!require('pacman')) install.packages('pacman')
 library(pacman)
 
-required_packages = c('BSgenome', 'compiler', 'cowplot', 'data.table',
-                      'deconstructSigs', 'doMC', 'dplyr', 'dtplyr', 'foreach',
-                      'ggplot2', 'gtools', 'koRpus', 'naturalsort', 'optparse',
-                      'pander', 'parallel', 'pbapply', 'rtracklayer',
-                      'stringr', 'tidyr', 'utils', 'GEOquery')
+required_packages = c('BSgenome', 'compiler', 'cowplot', 'data.table', 'deconstructSigs', 'doMC',
+                      'dplyr', 'dtplyr', 'foreach', 'ggplot2', 'gtools', 'knitr', 'kableExtra', 'koRpus',
+                      'naturalsort', 'optparse', 'parallel', 'pbapply', 'rtracklayer', 'stringr', 'tidyr',
+                      'utils', 'GEOquery')
 
 if (!p_isinstalled('BSgenome')) {
   source('https://bioconductor.org/biocLite.R')

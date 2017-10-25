@@ -64,7 +64,7 @@ effects_table = effects_table[naturalorder(effects_table$patient_id)]
 
 # pander(sample_info, split.table = Inf, missing = '')
 
-pander(effects_table, split.table = Inf)
+knitr::kable(effects_table)
 ```
 
 ```{r load_prediction_data, message = FALSE}
@@ -146,8 +146,9 @@ setcolorder(x = prediction_table,
                                  y = c('patient_id', 'alleles_included', 'total_epitopes_predicted', 'total_epitope_yield_rate_per_allele', 'selected_epitopes_predicted', 'selected_epitope_yield_rate_per_allele'))))
 ```
 
-```{r pander_prediction_summary}
-pander(prediction_table, split.table = 200, split.cells = 20, use.hyphening = TRUE)
+```{r knit_prediction_summary}
+knitr::kable(prediction_table) %>%
+  kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
 
 <br>
@@ -182,7 +183,8 @@ filter_consequences = rbindlist(lapply(all_predictions_unfiltered_by_patient,
                                                     median_rna_expression = round(median(dt[!duplicated(tumor_peptide), rna_expression], na.rm = TRUE), 2))
                                        }))
 
-pander(filter_consequences, split.table = 200)
+knitr::kable(filter_consequences) %>%
+  kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
 
 <br>
@@ -329,7 +331,8 @@ driver_table = data.table(patient_id = names(varcontext_full_data),
                                                   return(paste0(unique(c(drivers_symbol, drivers_synonym)), collapse = ', '))
                                                 }))
 
-pander(driver_table, split.table = 250)
+knitr::kable(driver_table) %>%
+  kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
 
 <br>
@@ -361,9 +364,7 @@ for (i in 1:length(mutational_signatures)) {
 ##### Immune response pathway mutation analysis
 
 
-```{r pathway_mutation_analysis}
-panderOptions('knitr.auto.asis', FALSE)
-
+```{r pathway_mutation_analysis, result = 'asis'}
 ifng_symbols = c('IFN', 'JAK', 'STAT', 'IRF', 'SOCS', 'DAPK', 'SLFN')
 ag_pres_symbols = c('B2M', 'HLA', 'PSM', 'TAP', 'ERAP')
 
@@ -381,6 +382,8 @@ vcfs_muts = lapply(vcfs_parsed,
                    })
 
 for (i in 1:length(vcfs_muts)) {
-  pander(vcfs_muts[[i]])
+  knitr::kable(vcfs_muts[[i]]) %>%
+    kable_styling(bootstrap_options = c('striped', 'hover')) %>%
+    print()
 }
 ```
