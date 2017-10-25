@@ -95,7 +95,7 @@ extract_fields_vcf <- function(vcf, extract_fields = TRUE) {
 
 ## VCF parsing ---------------------------------------------------
 # helper functions for input file generation
-parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
+parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
                      vcf_regex = '\\.vcf$',
                      normal_tag = 'NORMAL', tumor_tag = 'TUMOR',
                      check_tags = TRUE, extract_fields = TRUE, write = TRUE) {
@@ -132,12 +132,12 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
   vcf_data <- lapply(vcf_data, extract_fields_vcf)
 
   if (write) {
-    dir.create(file.path(rootDirectory, '1a_variants', 'parsed'), 
+    dir.create(file.path(rootDirectory, '1a_variants', 'parsed'),
                showWarnings = F)
 
     invisible(mapply(function(vcf, index) {
       write.table(x = vcf,
-                  file = file.path(rootDirectory, '1a_variants', 'parsed', 
+                  file = file.path(rootDirectory, '1a_variants', 'parsed',
                                    paste0(names(vcf_data)[index], '.tsv')),
                   sep = '\t',
                   append = FALSE,
@@ -157,7 +157,7 @@ parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
   if (!file.exists(vcf_path)) stop('VCF not found')
   if (grepl('.gz$', vcf_path)) {
     unzipped_path <- gsub('[.]gz$', '', vcf_path)
-    gunzip(vcf_path, destname = gsub('[.]gz$', '', unzipped_path), 
+    gunzip(vcf_path, destname = gsub('[.]gz$', '', unzipped_path),
            overwrite = FALSE, remove = FALSE, BFR.SIZE = 1e+07)
     vcf_path <- unzipped_path
   }
