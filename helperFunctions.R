@@ -97,7 +97,7 @@ extract_fields_vcf <- function(vcf, extract_fields = TRUE) {
 parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
                      vcf_regex = '\\.vcf$',
                      normal_tag = 'NORMAL', tumor_tag = 'TUMOR',
-                     check_tags = TRUE, extract_fields = TRUE, write = TRUE) {
+                     check_tags = FALSE, extract_fields = TRUE, write = TRUE) {
   # extract relevant info from VCF
   message('Step 1: Parsing & extracting fields from VCF')
 
@@ -180,6 +180,7 @@ parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
   }
 
   # if SNP info was merged under the TUMOR instead of the NORMAL column, switch them
+  # this happened in the legacy somaticSniper pipeline, newer MuTect2-based doesn't have this issue
   if (check_tags) {
     if (any(grepl(regexPatterns$gs_identifier, vcf_dt$variant_id))) {
       if (all(vcf_dt[grepl(regexPatterns$gs_identifier, variant_id), n_tag, with = FALSE] == '')) {
