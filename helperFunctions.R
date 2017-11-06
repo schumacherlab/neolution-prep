@@ -935,7 +935,7 @@ generateVarcontext = function(input_list, execute = TRUE) {
                        'Assembly build:\t', runOptions$varcontext$assembly_build, '\n\n',
                        'Canonical transcripts:\t', runOptions$varcontext$canonical_only, '\n',
                        'cDNA context:\t\t\t', runOptions$varcontext$cdna_context,'\n',
-                       'cDNA context size:\t\t', runOptions$varcontext$cdna_context,'\n',
+                       'cDNA context size:\t\t', runOptions$varcontext$cdna_context_size,'\n',
                        'Peptide context:\t\t', runOptions$varcontext$peptide_context,'\n',
                        'Protein context:\t\t', runOptions$varcontext$protein_context,'\n',
                        'NMD status:\t\t\t\t', runOptions$varcontext$nmd_status, '\n'),
