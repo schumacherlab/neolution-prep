@@ -911,7 +911,7 @@ generateVarcontext = function(input_list, execute = TRUE) {
                                                        no = '--nonmd'),
                                                 ifelse(test = runOptions$varcontext$trim_overlapping_bases,
                                                        yes = '--trim_bases',
-                                                       no = '--notrim_bases'),
+                                                       no = ''),
                                                 sep = ' '),
                                           '"', input_list[i], '"',
                                           ' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
