@@ -15,7 +15,7 @@ userPaths = list(libs_path = '/DATA/users/l.fanchi/libs',
                  home_path = '/home/l.fanchi')
 
 runOptions = list(general = list(gtf_annotation = file.path(userPaths$resources_path,
-                                                            'ensembl_88/gtf/Homo_sapiens.GRCh38.88.gtf')),
+                                                            'ensembl_90/gtf/Homo_sapiens.GRCh38.90.gtf')),
 
                   # set samtools mpileup options
                   samtools = list(samtoolsPath = file.path(userPaths$libs_path,
@@ -30,6 +30,8 @@ runOptions = list(general = list(gtf_annotation = file.path(userPaths$resources_
                   varcontext = list(number_of_workers = 10,
 
                                     field_separator = '"\t"',
+                                    trim_overlapping_bases = FALSE,
+
                                     ensembl_build = 90,
                                     assembly_build = 38,
                                     canonical_only = FALSE,
@@ -38,7 +40,6 @@ runOptions = list(general = list(gtf_annotation = file.path(userPaths$resources_
                                     peptide_context = FALSE,
                                     protein_context = TRUE,
                                     nmd_status = TRUE,
-                                    trim_overlapping_bases = FALSE,
 
                                     varcontext_directory = file.path(userPaths$home_path, 'stable_environments/varcontext'),
                                     ensembl_api = file.path(userPaths$libs_path, 'ensembl_90/'),
