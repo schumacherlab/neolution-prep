@@ -27,19 +27,23 @@ runOptions = list(general = list(gtf_annotation = file.path(userPaths$resources_
                                                              'ensembl_88/fasta_dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa')),
 
                   # set varcontext options
-                  varcontext = list(numberOfWorkers = 10,
+                  varcontext = list(number_of_workers = 10,
 
-                                    fieldSeparator = '"\t"',
-                                    canonicalOnly = FALSE,
-                                    peptideContext = FALSE,
-                                    nmdStatus = TRUE,
+                                    field_separator = '"\t"',
+                                    ensembl_build = 90,
+                                    assembly_build = 38,
+                                    canonical_only = FALSE,
+                                    cdna_context = FALSE,
+                                    cdna_context_size = 54,
+                                    peptide_context = FALSE,
+                                    protein_context = TRUE,
+                                    nmd_status = TRUE,
+                                    trim_overlapping_bases = FALSE,
 
-                                    varcontextDirectory = file.path(userPaths$home_path, 'stable_environments/varcontext'),
-                                    ensemblApi = file.path(userPaths$libs_path, 'ensembl_89/'),
-                                    perlLibs = paste(c(file.path(userPaths$libs_path,
-                                                                 c('perl5/lib/perl5', 'bioperl-live')),
-                                                       file.path(userPaths$libs_path,
-                                                                 c('ensembl_89/ensembl/modules', 'ensembl_89/ensembl-variation/modules'))),
+                                    varcontext_directory = file.path(userPaths$home_path, 'stable_environments/varcontext'),
+                                    ensembl_api = file.path(userPaths$libs_path, 'ensembl_90/'),
+                                    perl_libs = paste(c(file.path(userPaths$libs_path,
+                                                                 c('perl5/lib/perl5', 'bioperl-live'))),
                                                      collapse = ':')),
 
                   # set neolution options
