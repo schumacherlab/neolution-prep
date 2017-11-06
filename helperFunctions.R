@@ -540,52 +540,51 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                         nm = list.files(path = variant_input_path,
                                         pattern = variant_regex))
 
-  # load sample info
-  if (file.exists(sample_info_path)) {
-    sample_info = fread(sample_info_path, sep = '\t', header = T, na.strings = c('','NA', 'N.A.'))
-  } else {
-    stop('Sample info file missing at "', sample_info_path, '", please provide correct path in argument to findRnaReadLevelEvidenceForVariants')
-  }
-
-  if (sample_info$patient_id[1] == 'place_holder') {
-    stop('Please fill in sample_info.tsv')
-  }
-
-  # make list of all unique variants found in parsed VCF
-  snv_positions = lapply(input_data,
-                         function(x) {
-                           setorder(x = unique(x[grepl(pattern = '^[0-9]{1,2}$|^[XY]$',
-                                                       x = x$chromosome) &
-                                                   !grepl(pattern = regexPatterns$gs_identifier, # rs_id's are now regarded as tumor-specific variants
-                                                          x = x$variant_id) &
-                                                   nchar(x$ref_allele) == 1 &
-                                                   nchar(x$alt_allele) == 1,
-                                                 .(chromosome, start_position), ]),
-                                    chromosome,
-                                    start_position)
-                         })
-
-  # generate position list files to feed to samtools mpileup
-  dir.create(path = file.path(rootDirectory, '1a_variants', 'poslist'), showWarnings = F)
-
-  invisible(sapply(1:length(snv_positions),
-                   function(x) write.table(x = snv_positions[[x]],
-                                           file = file.path(rootDirectory, '1a_variants', 'poslist',
-                                                            paste0(sub(regexPatterns$file_extension, '', names(snv_positions)[x]), '_poslist.tsv')),
-                                           quote = FALSE,
-                                           col.names = FALSE,
-                                           row.names = FALSE)))
-
-  # make overview of sample input files
-  regex_pattern = if (quant_mode == 'cufflinks') {
-    'accepted_hits\\.bam$'
-  } else if (quant_mode == 'salmon') {
-    'Aligned\\.sortedByCoord\\.out\\.bam$'
-  } else {
-    stop('Please define valid quant_mode (cufflinks/salmon)')
-  }
-
   if (do_pileups) {
+    # load sample info
+    if (file.exists(sample_info_path)) {
+      sample_info = fread(sample_info_path,
+                          sep = '\t',
+                          header = T,
+                          na.strings = c('', 'NA', 'N.A.'))
+    } else {
+      stop('Sample info file missing at "', sample_info_path, '", please provide correct path in argument to findRnaReadLevelEvidenceForVariants')
+    }
+
+    if (sample_info$patient_id[1] == 'place_holder') {
+      stop('Please fill in sample_info.tsv')
+    }
+
+    # make list of all unique variants found in parsed VCF
+    snv_positions = lapply(input_data,
+                           function(x) {
+                             setorder(x = unique(x[grepl(pattern = '^[0-9]{1,2}$|^[XY]$',
+                                                         x = x$chromosome) &
+                                                     !grepl(pattern = regexPatterns$gs_identifier, # rs_id's are now regarded as tumor-specific variants
+                                                            x = x$variant_id) &
+                                                     nchar(x$ref_allele) == 1 &
+                                                     nchar(x$alt_allele) == 1,
+                                                   .(chromosome, start_position), ]),
+                                      chromosome,
+                                      start_position)
+                           })
+
+    # generate position list files to feed to samtools mpileup
+    dir.create(path = file.path(rootDirectory, '1a_variants', 'poslist'), showWarnings = F)
+
+    invisible(sapply(1:length(snv_positions),
+                     function(x) write.table(x = snv_positions[[x]],
+                                             file = file.path(rootDirectory, '1a_variants', 'poslist',
+                                                              paste0(sub(regexPatterns$file_extension, '', names(snv_positions)[x]), '_poslist.tsv')),
+                                             quote = FALSE,
+                                             col.names = FALSE,
+                                             row.names = FALSE)))
+
+    # make overview of sample input files
+    regex_pattern = if (quant_mode == 'cufflinks') { 'accepted_hits\\.bam$' }
+    else if (quant_mode == 'salmon') { 'Aligned\\.sortedByCoord\\.out\\.bam$' }
+    else { stop('Please define valid quant_mode (cufflinks/salmon)') }
+
     sample_combinations = data.table(locations_file = sapply(sample_info$dna_data_prefix,
                                                              function(x) grep(pattern = x,
                                                                               x = list.files(path = file.path(rootDirectory, '1a_variants', 'poslist'),
