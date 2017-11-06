@@ -828,7 +828,7 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
                                        filter_rna_alt_expression = TRUE,
                                        vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT'),
                                        execute = TRUE) {
-  registerDoMC(runOptions$varcontext$numberOfWorkers)
+  registerDoMC(runOptions$varcontext$number_of_workers)
 
   dir.create(file.path(rootDirectory, '2_varcontext'),
              showWarnings = FALSE)
@@ -868,7 +868,7 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
 
   # generate variant contexts
   message('Step 2: Generating context for variants')
-  message('Using gene build: ', runOptions$varcontext$ensemblApi)
+  message('Using gene build: ', runOptions$varcontext$ensembl_api)
 
   generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
                                              pattern = variant_regex,
@@ -881,19 +881,39 @@ generateVarcontext = function(input_list, execute = TRUE) {
     stop('No input lists found...')
   }
 
-  setwd(runOptions$varcontext$varcontextDirectory)
+  setwd(runOptions$varcontext$varcontext_directory)
 
   commandList = sapply(1:length(input_list),
                        function(i) {
                          filename = sub(pattern = regexPatterns$file_extension, replacement = '', x = basename(input_list[i]))
 
-                         command = paste0('export ENSEMBLAPI="', runOptions$varcontext$ensemblApi, '";',
-                                          'export PERL5LIB="$PERL5LIB:', runOptions$varcontext$perlLibs,'";',
-                                          'perl ', file.path(runOptions$varcontext$varcontextDirectory, 'varcontext/create_context.pl'), ' ',
-                                          '--separator=', runOptions$varcontext$fieldSeparator, ' ',
-                                          ifelse(runOptions$varcontext$canonicalOnly, '--canonical ', ''),
-                                          ifelse(runOptions$varcontext$peptideContext, '--peptide ', ''),
-                                          ifelse(runOptions$varcontext$nmdStatus, '--nmd ', ''),
+                         command = paste0('export ENSEMBLAPI="', runOptions$varcontext$ensembl_api, '";',
+                                          'export PERL5LIB="$PERL5LIB:', runOptions$varcontext$perl_libs,'";',
+                                          paste('perl', file.path(runOptions$varcontext$varcontext_directory, 'varcontext/create_context.pl'),
+                                                paste('--separator', runOptions$varcontext$field_separator,
+                                                      '--ensembl',  runOptions$varcontext$ensembl_build,
+                                                      '--assembly', runOptions$varcontext$assembly_build,
+                                                      '--cdna_contextsize', runOptions$varcontext$cdna_context_size,
+                                                      sep = '='),
+                                                ifelse(test = runOptions$varcontext$canonical_only,
+                                                       yes = '--canonical',
+                                                       no = '--nocanonical'),
+                                                ifelse(test = runOptions$varcontext$cdna_context,
+                                                       yes = '--cdna_context',
+                                                       no = '--nocdna_context'),
+                                                ifelse(test = runOptions$varcontext$peptide_context,
+                                                       yes = '--peptide_context',
+                                                       no = '--nopeptide_context'),
+                                                ifelse(test = runOptions$varcontext$protein_context,
+                                                       yes = '--protein_context',
+                                                       no = '--noprotein_context'),
+                                                ifelse(test = runOptions$varcontext$nmd_status,
+                                                       yes = '--nmd',
+                                                       no = '--nonmd'),
+                                                ifelse(test = runOptions$varcontext$trim_overlapping_bases,
+                                                       yes = '--trim_bases',
+                                                       no = '--notrim_bases'),
+                                                sep = ' '),
                                           '"', input_list[i], '"',
                                           ' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
                                           ' 2> "', file.path(rootDirectory, '2_varcontext', 'varcontext_logs', paste(filename, 'warnings.log"', sep = '_')))
@@ -908,13 +928,19 @@ generateVarcontext = function(input_list, execute = TRUE) {
       # write run info to log
       write(x = paste0(Sys.time(),' - Varcontext run start\n\n',
                        'Branch:\t\t\t', system('git symbolic-ref --short -q HEAD', intern = TRUE), '\n',
-                       'Commit hash:\t\t', system('git rev-parse HEAD', intern = TRUE), '\n\n',
-                       'Input file:\t\t', input_list[i], '\n',
-                       'Ensembl API:\t\t', runOptions$varcontext$ensemblApi, '\n\n',
-                       'Field separator:\t', runOptions$varcontext$fieldSeparator, '\n',
-                       'Canonical transcripts:\t', runOptions$varcontext$canonicalOnly, '\n',
-                       'Peptide context:\t', runOptions$varcontext$peptideContext,'\n',
-                       'NMD status:\t', runOptions$varcontext$nmdStatus, '\n'),
+                       'Commit hash:\t', system('git rev-parse HEAD', intern = TRUE), '\n\n',
+                       'Input file:\t\t\t\t', input_list[i], '\n',
+                       'Field separator:\t\t', runOptions$varcontext$field_separator, '\n',
+                       'Trim overlapping bases:\t', runOptions$varcontext$trim_overlapping_bases, '\n\n',
+                       'Ensembl API:\t', runOptions$varcontext$ensembl_api, '\n',
+                       'Ensembl build:\t', runOptions$varcontext$ensembl_build, '\n',
+                       'Assembly build:\t', runOptions$varcontext$assembly_build, '\n\n',
+                       'Canonical transcripts:\t', runOptions$varcontext$canonical_only, '\n',
+                       'cDNA context:\t\t\t', runOptions$varcontext$cdna_context,'\n',
+                       'cDNA context size:\t\t', runOptions$varcontext$cdna_context,'\n',
+                       'Peptide context:\t\t', runOptions$varcontext$peptide_context,'\n',
+                       'Protein context:\t\t', runOptions$varcontext$protein_context,'\n',
+                       'NMD status:\t\t\t\t', runOptions$varcontext$nmd_status, '\n'),
             file = file.path(rootDirectory, '2_varcontext', 'varcontext_logs',
                              paste(filename,
                                    'runInfo.txt',
