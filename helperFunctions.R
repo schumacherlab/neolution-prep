@@ -867,7 +867,9 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
 
   # generate variant contexts
   message('Step 2: Generating context for variants')
-  message('Using gene build: ', runOptions$varcontext$ensembl_api)
+  message('Using gene build: ', runOptions$varcontext$ensembl_build)
+  message('Using assembly build: ', runOptions$varcontext$assembly_build)
+  message('Using ensembl API: ', runOptions$varcontext$ensembl_api)
 
   generateVarcontext(input_list = list.files(path = file.path(rootDirectory, '2_varcontext', 'input_lists'),
                                              pattern = variant_regex,
