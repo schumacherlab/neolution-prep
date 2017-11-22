@@ -30,13 +30,13 @@ runOptions = list(general = list(gtf_annotation = file.path(userPaths$resources_
                   varcontext = list(number_of_workers = 10,
 
                                     field_separator = '"\t"',
-                                    trim_overlapping_bases = FALSE,
+                                    print_overlapping_bases = TRUE,
 
                                     ensembl_build = 90,
                                     assembly_build = 38,
                                     canonical_only = FALSE,
                                     cdna_context = FALSE,
-                                    cdna_context_size = 54,
+                                    cdna_context_size = 30,
                                     peptide_context = FALSE,
                                     protein_context = TRUE,
                                     nmd_status = TRUE,
