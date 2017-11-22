@@ -913,7 +913,7 @@ generateVarcontext = function(input_list, execute = TRUE) {
                                                 ifelse(test = runOptions$varcontext$print_overlapping_bases,
                                                        yes = '--print_overlap',
                                                        no = '--noprint_overlap'),
-                                                sep = ' '),
+                                                sep = ' '), ' ',
                                           '"', input_list[i], '"',
                                           ' 1> "', file.path(rootDirectory, '2_varcontext', paste(filename, 'varcontext.tsv"', sep = '_')),
                                           ' 2> "', file.path(rootDirectory, '2_varcontext', 'varcontext_logs', paste(filename, 'warnings.log"', sep = '_')))
