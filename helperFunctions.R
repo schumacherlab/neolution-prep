@@ -99,7 +99,7 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
                      normal_tag = 'NORMAL', tumor_tag = 'TUMOR',
                      check_tags = FALSE, extract_fields = TRUE, write = TRUE) {
   # extract relevant info from VCF
-  message('Step 1: Parsing & extracting fields from VCF')
+  message('Step 1a: Parsing & extracting fields from VCF - Start')
 
   # make list of VCF files
   vcf_files = list.files(path = vcf_path,
@@ -146,9 +146,10 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
     vcf_data,
     seq(1, length(vcf_data))))
   } else {
+    message('Step 1a: Done')
     return(vcf_data)
   }
-
+  message('Step 1a: Done')
 }
 
 parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
@@ -513,6 +514,7 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                                                sample_info_path = file.path(rootDirectory, 'sample_info.tsv')) {
 
   registerDoMC(runOptions$samtools$numberOfWorkers)
+  message('Step 1b: Find evidence for variant expression - Start')
 
   if (!dir.exists(rna_path)) {
     message('RNAseq BAM file data directory does not exist at ', rna_path)
@@ -783,6 +785,8 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                      },
                    input_pileup_merge,
                    seq(1, length(input_pileup_merge))))
+
+  messsage('Step 1b: Done')
 }
 
 performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_reference = NULL, optional_args = c('-E'), execute = TRUE) {
@@ -829,6 +833,8 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
                                        execute = TRUE) {
   registerDoMC(runOptions$varcontext$number_of_workers)
 
+  message('Step 2: Generate tumor transcripts - Start')
+
   dir.create(file.path(rootDirectory, '2_varcontext'),
              showWarnings = FALSE)
   dir.create(file.path(rootDirectory, '2_varcontext', 'input_lists'),
@@ -866,7 +872,7 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
   seq(1, length(variant_data))))
 
   # generate variant contexts
-  message('Step 2: Generating context for variants')
+  # message('Step 2: Generating context for variants')
   message('Using gene build: ', runOptions$varcontext$ensembl_build)
   message('Using assembly build: ', runOptions$varcontext$assembly_build)
   message('Using ensembl API: ', runOptions$varcontext$ensembl_api)
@@ -875,6 +881,8 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
                                              pattern = variant_regex,
                                              full.names = TRUE),
                      execute = execute)
+
+  message('Step 2: Generating transcripts in background, check htop in a shell for status...')
 }
 
 generateVarcontext = function(input_list, execute = TRUE) {
@@ -969,6 +977,8 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
                                  rna_file_suffix = 'salmon-quant-by-ensg\\.tsv',
                                  expression_unit = 'tpm') {
 
+  message('Step 3: Generate input lists for Neolution - Start')
+
   varcontext_data = lapply(list.files(path = varcontext_path,
                                       pattern = 'varcontext\\.tsv',
                                       full.names = TRUE),
@@ -1062,11 +1072,7 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
                 row.names = FALSE,
                 quote = FALSE,
                 append = FALSE)
-
-    message('Step 3b: Generating Neolution pipeline input')
   } else {
-    message('Step 3: Generating Neolution pipeline input (no RNAseq data)')
-
     prediction_input = varcontext_data
   }
 
@@ -1079,6 +1085,8 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
                      },
                    prediction_input,
                    seq(1, length(prediction_input))))
+
+  message('Step 3: Done')
 }
 
 mergeByEnsemblId = function(variant_table, expression_table, expression_unit = 'FPKM') {
@@ -1102,7 +1110,7 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
                      filter_snps = TRUE, canon_only = TRUE, execute = TRUE) {
   #registerDoMC(2)
 
-  message('Step 4: Running snpEff')
+  message('Step 4: Run snpEff - Start')
   message('Using genome & gene builds: ', runOptions$snpeff$build)
   dir.create(path = file.path(rootDirectory, '4_snpEff'),
              showWarnings = FALSE)
@@ -1135,11 +1143,9 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 
     command = if (filter_snps) {paste(command_snpsift, command_snpeff, sep = '|')}
     else {paste(paste('cat', variantLists[i]), command_snpeff, sep = '|')}
-
-
     commandWrapper(command = command, execute = execute)
-
   })
+  message('Step 4: Done')
 }
 
 
