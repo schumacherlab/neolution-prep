@@ -768,6 +768,12 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
 
   input_pileup_merge = lapply(input_pileup_merge,
                               function(dt) {
+                                # replace 'chr' prefix, as varcontext lookups require ensembl chrom nomenclature
+                                dt[, chromosome := gsub(pattern = '^chr',
+                                                        replacement =  '',
+                                                        x =  chromosome)]
+
+                                # set colorder
                                 order = c('variant_id', 'chromosome', 'start_position', 'ref_allele' , 'alt_allele',
                                           'dna_ref_read_count', 'dna_alt_read_count', 'dna_total_read_count', 'dna_vaf',
                                           'rna_ref_read_count', 'rna_alt_read_count', 'rna_total_read_count', 'rna_vaf', 'rna_alt_expression')
