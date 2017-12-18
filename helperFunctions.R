@@ -227,7 +227,7 @@ parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
     vcf_parsed = vcf_dt[, .(chromosome, start_position, variant_id, ref_allele, alt_allele)]
 
     # replace 'chr' prefix in chromosome, if present
-    vcf_parsed[, chromosome := gsub('^chr', '', chromosome)]
+    # vcf_parsed[, chromosome := gsub('^chr', '', chromosome)]
 
     # extract genotype tag info for variants
     if ('GT' %in% tags$format_tags) {
