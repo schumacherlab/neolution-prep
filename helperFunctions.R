@@ -560,7 +560,7 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
     # make list of all unique variants found in parsed VCF
     snv_positions = lapply(input_data,
                            function(x) {
-                             setorder(x = unique(x[grepl(pattern = '^[0-9]{1,2}$|^[XY]$',
+                             setorder(x = unique(x[grepl(pattern = '^[0-9]{1,2}$|^[XY]$|^MT$|^chr',
                                                          x = x$chromosome) &
                                                      !grepl(pattern = regexPatterns$gs_identifier, # rs_id's are now regarded as tumor-specific variants
                                                             x = x$variant_id) &
