@@ -20,5 +20,7 @@ performVarcontextGeneration()
 # prepare Neolution input files (also allows optional merging with RNAseq data; skipped if no RNAseq data found)
 prepareNeolutionInput()
 
+# can now run `nohup nice -n 10 Rscript runPredictions.R > nohup_preds.out &`
+
 # generate SnpEff output
 runSnpEff()
