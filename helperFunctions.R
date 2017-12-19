@@ -99,7 +99,7 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
     return(data)
   }, vcf_files, normal_tag, tumor_tag, 1:length(vcf_files), SIMPLIFY = F)
 
-  vcf_data <- lapply(vcf_data, extract_fields_vcf)
+  vcf_data <- lapply(vcf_data, extract_fields_vcf, extract_fields = extract_fields)
 
   if (write) {
     dir.create(file.path(rootDirectory, '1a_variants', 'parsed'),
