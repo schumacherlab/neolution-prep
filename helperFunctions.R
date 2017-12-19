@@ -62,35 +62,6 @@ parseCommandlineArguments = function() {
   return(parsed_args)
 }
 
-#' Parse single VCF
-#'
-#' @param vcf \code{data.table} from VCF
-extract_fields_vcf <- function(vcf, extract_fields = TRUE) {
-  if (extract_fields) {
-    data = vcf[grepl(regexPatterns$snp_identifier, variant_id) # include SNPs
-               | sapply(1:nrow(vcf),
-                        # legacy (somSniper pipeline) support: include all indels, since sample order (NORMAL/TUMOR) is inconsistent for indel calls
-                        function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index]))
-               | genotype != '0/0' | is.na(genotype), # safety check, shouldn't happen: exclude tumor-specific variants which are ref
-               .(variant_id, chromosome, start_position, ref_allele, alt_allele,
-                 dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
-  } else {
-    data = vcf
-  }
-
-  # sort data, somatic above germline calls
-  data_sorted = rbindlist(list(data %>%
-                                 filter(!grepl(regexPatterns$gs_identifier, variant_id)) %>%
-                                 .[naturalorder(.$variant_id)],
-                               data %>%
-                                 filter(grepl(regexPatterns$gs_identifier, variant_id)) %>%
-                                 .[naturalorder(.$variant_id)])
-  )
-
-  return(data_sorted)
-}
-
-
 
 ## VCF parsing ---------------------------------------------------
 # helper functions for input file generation
@@ -491,6 +462,36 @@ extractSplitDataFromVcf = function(vcf_table, sample_tag, format_tag, split_by =
 
   return(list(split_one, split_two))
 }
+
+
+#' Parse single VCF
+#'
+#' @param vcf \code{data.table} from VCF
+extract_fields_vcf <- function(vcf, extract_fields = TRUE) {
+  if (extract_fields) {
+    data = vcf[grepl(regexPatterns$snp_identifier, variant_id) # include SNPs
+               | sapply(1:nrow(vcf),
+                        # legacy (somSniper pipeline) support: include all indels, since sample order (NORMAL/TUMOR) is inconsistent for indel calls
+                        function(index) nchar(vcf$ref_allele[index]) != nchar(vcf$alt_allele[index]))
+               | genotype != '0/0' | is.na(genotype), # safety check, shouldn't happen: exclude tumor-specific variants which are ref
+               .(variant_id, chromosome, start_position, ref_allele, alt_allele,
+                 dna_ref_read_count, dna_alt_read_count, dna_total_read_count, dna_vaf)]
+  } else {
+    data = vcf
+  }
+
+  # sort data, somatic above germline calls
+  data_sorted = rbindlist(list(data %>%
+                                 filter(!grepl(regexPatterns$gs_identifier, variant_id)) %>%
+                                 .[naturalorder(.$variant_id)],
+                               data %>%
+                                 filter(grepl(regexPatterns$gs_identifier, variant_id)) %>%
+                                 .[naturalorder(.$variant_id)])
+  )
+
+  return(data_sorted)
+}
+
 
 extractFieldsFromVCF = function(vcf_path, vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT')) {
   extractFields = paste("export SHELL=/bin/bash;",
