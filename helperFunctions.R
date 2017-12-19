@@ -117,10 +117,10 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
     vcf_data,
     seq(1, length(vcf_data))))
   } else {
-    message('Step 1a: Done')
+    message('\nStep 1a: Done')
     return(vcf_data)
   }
-  message('Step 1a: Done')
+  message('\nStep 1a: Done')
 }
 
 parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
