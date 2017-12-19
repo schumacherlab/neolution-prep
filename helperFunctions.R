@@ -794,7 +794,7 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                    input_pileup_merge,
                    seq(1, length(input_pileup_merge))))
 
-  messsage('Step 1b: Done')
+  message('Step 1b: Done')
 }
 
 performSamtoolsPileup = function(bam_file, locations_file = NULL, fasta_reference = NULL, optional_args = c('-E'), execute = TRUE) {
