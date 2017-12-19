@@ -349,7 +349,8 @@ parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
                                               }, mc.cores = 20))]
     }
   } else {
-    vcf_parsed = vcf_dt
+    vcf_parsed = vcf_dt[, .(chromosome, start_position, variant_id, ref_allele, alt_allele)]
+    vcf_parsed[, c('dna_ref_read_count', 'dna_alt_read_count', 'dna_total_read_count', 'dna_vaf') := NA]
   }
 
   # # if multiple variant_ids are present:
