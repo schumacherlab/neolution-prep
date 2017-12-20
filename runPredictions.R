@@ -62,7 +62,8 @@ invisible(foreach(i = 1:nrow(samples_by_hla)) %dopar% {
                                             },
                                             if (runOptions$neolution$selflist) {
                                               '--selflist'
-                                            })
+                                            },
+                                            '--panversion', runOptions$neolution$panversion)
                      )
                    })
   )

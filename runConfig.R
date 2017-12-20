@@ -62,7 +62,8 @@ runOptions = list(general = list(gtf_annotation = file.path(commonPaths$resource
                                    xmer = c(9:11),
                                    selfsim_filter = TRUE,
                                    selfsim_filter_mode = 'simple',
-                                   selflist = FALSE),
+                                   selflist = FALSE,
+                                   panversion = 4),
 
                   # set snpEff locations
                   snpeff = list(path = file.path(commonPaths$libs_path, 'snpEff'),
