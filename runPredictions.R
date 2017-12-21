@@ -48,13 +48,14 @@ invisible(foreach(i = 1:nrow(samples_by_hla)) %dopar% {
   invisible(sapply(seq(1, length(runOptions$neolution$xmer)),
                    function(y) {
                      system(command = paste('Rscript performPredictions.R',
-                                            '-f', samples_by_hla$filepath[i],
-                                            '-m', samples_by_hla$hla_type[i],
-                                            # '-a', samples_by_hla$affinity_cutoff[i],
-                                            # '-r', runOptions$neolution$rankCutoff,
-                                            # '-p', runOptions$neolution$processingCutoff,
-                                            '-d', runOptions$neolution$model_cutoff,
-                                            '-l', runOptions$neolution$xmer[y],
+                                            '--file', samples_by_hla$filepath[i],
+                                            '--mhc', samples_by_hla$hla_type[i],
+                                            '--length', runOptions$neolution$xmer[y],
+                                            # '--affinity', samples_by_hla$affinity_cutoff[i],
+                                            # '--rank', runOptions$neolution$rankCutoff,
+                                            # '--processing', runOptions$neolution$processingCutoff,
+                                            '--model', runOptions$neolution$model_cutoff,
+                                            '--expression', runOptions$neolution$expression_cutoff,
                                             if (runOptions$neolution$selfsim_filter_mode == 'simple') {
                                               '--selfsim'
                                             } else if (runOptions$neolution$selfsim_filter_mode == 'extended') {
