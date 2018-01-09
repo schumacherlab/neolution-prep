@@ -21,7 +21,8 @@ context_files = list.files(path = file.path(project_directory, '3_neolution'),
 sample_info = fread(input = 'sample_info.tsv', na.strings = c('', 'NA', 'N.A.'))
 
 sample_info[, filepath := sapply(dna_data_prefix, function(x) {context_files[grep(pattern = x,
-                                                                                  x = context_files)]}, USE.NAMES = FALSE)]
+                                                                                  x = context_files)]},
+                                 USE.NAMES = FALSE)]
 
 samples_by_hla = as.data.table(sample_info %>% gather(hla_allele, hla_type, c(4:9)) %>% dplyr::filter(!is.na(hla_type)))
 samples_by_hla = unique(x = samples_by_hla[naturalorder(samples_by_hla$dna_data_prefix)],
@@ -29,7 +30,7 @@ samples_by_hla = unique(x = samples_by_hla[naturalorder(samples_by_hla$dna_data_
 samples_by_hla[, hla_type := gsub(pattern = 'HLA-|\\*|\\:', replacement = '', x = hla_type)]
 
 # optional: exclude C alleles
-# samples_by_hla[hla_allele != 'hla_c_1' & hla_allele != 'hla_c_2']
+# samples_by_hla = samples_by_hla[!grepl(pattern = 'hla_c', x = hla_allele), ]
 
 if (any(nchar(samples_by_hla$hla_type) < 5)) {
   stop('Please check HLA type input: HLA types with irregular name(s) found.\n', paste(samples_by_hla[nchar(hla_type) < 5, hla_type], collapse = ', '))

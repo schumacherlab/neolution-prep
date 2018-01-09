@@ -14,7 +14,7 @@ commonPaths = list(libs_path = '/DATA/users/l.fanchi/libs',
                    resources_path = '/DATA/resources')
 
 runOptions = list(general = list(gtf_annotation = file.path(commonPaths$resources_path,
-                                                            'ensembl_90/gtf/Homo_sapiens.GRCh38.90.gtf')),
+                                                            'ensembl_88/gtf/Homo_sapiens.GRCh38.88.gtf')),
 
                   # set samtools mpileup options
                   samtools = list(samtoolsPath = file.path(commonPaths$libs_path,
@@ -31,7 +31,7 @@ runOptions = list(general = list(gtf_annotation = file.path(commonPaths$resource
                                     field_separator = '"\t"',
                                     print_overlapping_bases = TRUE,
 
-                                    ensembl_build = 90,
+                                    ensembl_build = 88,
                                     assembly_build = 38,
                                     canonical_only = FALSE,
                                     cdna_context = FALSE,
@@ -41,7 +41,7 @@ runOptions = list(general = list(gtf_annotation = file.path(commonPaths$resource
                                     nmd_status = TRUE,
 
                                     varcontext_directory = file.path(commonPaths$resources_path, 'pipeline/varcontext'),
-                                    ensembl_api = file.path(commonPaths$libs_path, 'ensembl_90/'),
+                                    ensembl_api = file.path(commonPaths$libs_path, 'ensembl_88/'),
                                     perl_libs = paste(c(file.path(commonPaths$libs_path,
                                                                  c('perl5/lib/perl5', 'bioperl-live'))),
                                                      collapse = ':')),
