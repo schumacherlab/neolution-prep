@@ -1290,7 +1290,7 @@ plotSignaturesSmallLabels = function(sigs.output, sub = "")
 
 
 # Peptide order -----------------------------------------------------------
-parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '_epitopes\\.csv') {
+parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '_epitopes[.]csv$') {
   require(stringr)
   require(data.table)
 
@@ -1303,7 +1303,7 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
   short_names = sub(pattern = '.+[/]', replacement = '', x = files)
   short_names = sub(pattern = pattern, replacement = '', x = short_names)
 
-  # get data in & sort by tumor peptide affinity
+  # get data in
   predictions = lapply(seq(1, length(files)),
                        function(i) {
                          data = fread(files[i])
@@ -1315,9 +1315,6 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
 
                          return(data)
                        })
-
-  sapply(predictions,
-         function(x) setkeyv(x = x, grep(pattern = 'tumor_.+affinity', x = names(x), value = TRUE)))
 
   # set table names
   predictions = setNames(object = predictions,
@@ -1343,7 +1340,8 @@ applyCutoffs = function(predictions, model = NULL, rank = NULL, affinity = NULL,
     subsets = lapply(seq(1, length(predictions), 1),
                      function(x) {
                        if (is.numeric(model)) {
-                         data_subset = predictions[[x]][model_prediction >= model & (rna_expression > expression | is.na(rna_expression))]
+                         data_subset = predictions[[x]][model_prediction >= model
+                                                        & (rna_expression > expression | is.na(rna_expression))]
                          if (selfsim) {data_subset = data_subset[different_from_self == TRUE]}
 
                        } else if (is.numeric(rank)) {
@@ -1351,7 +1349,8 @@ applyCutoffs = function(predictions, model = NULL, rank = NULL, affinity = NULL,
                                               subset = predictions[[x]][[grep(pattern = 'tumor.+rank',
                                                                               x = names(predictions[[x]]),
                                                                               value = T)]] <= rank)
-                         data_subset = data_subset[tumor_processing_score >= processing & (rna_expression > expression | is.na(rna_expression))]
+                         data_subset = data_subset[tumor_processing_score >= processing
+                                                   & (rna_expression > expression | is.na(rna_expression))]
                          if (selfsim) {data_subset = data_subset[different_from_self == TRUE]}
 
                        } else if (is.numeric(affinity)) {
@@ -1359,7 +1358,8 @@ applyCutoffs = function(predictions, model = NULL, rank = NULL, affinity = NULL,
                                               subset = predictions[[x]][[grep(pattern = 'tumor.+affinity',
                                                                               x = names(predictions[[x]]),
                                                                               value = T)]] <= affinity)
-                         data_subset = data_subset[tumor_processing_score >= processing & (rna_expression > expression | is.na(rna_expression))]
+                         data_subset = data_subset[tumor_processing_score >= processing
+                                                   & (rna_expression > expression | is.na(rna_expression))]
                          if (selfsim) {data_subset = data_subset[different_from_self == TRUE]}
 
                        } else {
@@ -1373,7 +1373,8 @@ applyCutoffs = function(predictions, model = NULL, rank = NULL, affinity = NULL,
     subsets = lapply(seq(1, length(predictions), 1),
                      function(x) {
                        if (is.numeric(model)) {
-                         data_subset = predictions[[x]][model_prediction < model & rna_expression <= expression]
+                         data_subset = predictions[[x]][model_prediction < model
+                                                        & rna_expression <= expression]
                          if (selfsim) {data_subset = data_subset[different_from_self == FALSE | is.na(different_from_self)]}
 
                        } else if (is.numeric(rank)) {
@@ -1381,7 +1382,8 @@ applyCutoffs = function(predictions, model = NULL, rank = NULL, affinity = NULL,
                                               subset = predictions[[x]][[grep(pattern = 'tumor.+rank',
                                                                               x = names(predictions[[x]]),
                                                                               value = T)]] > rank)
-                         data_subset = data_subset[tumor_processing_score < processing & rna_expression <= expression]
+                         data_subset = data_subset[tumor_processing_score < processing
+                                                   & rna_expression <= expression]
                          if (selfsim) {data_subset = data_subset[different_from_self == FALSE | is.na(different_from_self)]}
 
                        } else if (is.numeric(affinity)) {
@@ -1389,7 +1391,8 @@ applyCutoffs = function(predictions, model = NULL, rank = NULL, affinity = NULL,
                                               subset = predictions[[x]][[grep(pattern = 'tumor.+affinity',
                                                                               x = names(predictions[[x]]),
                                                                               value = T)]] > affinity)
-                         data_subset = data_subset[tumor_processing_score < processing & rna_expression <= expression]
+                         data_subset = data_subset[tumor_processing_score < processing
+                                                   & rna_expression <= expression]
                          if (selfsim) {data_subset = data_subset[different_from_self == FALSE | is.na(different_from_self)]}
 
                        } else {
