@@ -58,10 +58,12 @@ Epitopes were predicted using in-house epitope prediction pipeline, using random
 * Transcript effects of called variants were determined by our in-house 'varcontext' tool with the following parameters:  
 
 ```{r varcontext_info}
-varcontext_dt = data.table(parameter = c('Ensembl version',
+varcontext_dt = data.table(parameter = c('Ensembl build',
+                                         'Genome assembly',
                                          'Mutant allele expression filter',
                                          'Canonical transcripts only'),
-                           value = c('81 (GRCh38)',
+                           value = c(runOptions$varcontext$ensembl_build,
+                                     runOptions$varcontext$assembly_build,
                                      'TRUE',
                                      'FALSE'))
 
