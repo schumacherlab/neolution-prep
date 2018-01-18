@@ -37,7 +37,7 @@ This document contains in-depth analysis of variants & predictions for the ## PR
 
 ```{r variant_snpEff_info}
 snpeff_output = list.files(path = '4_snpEff',
-                           pattern = 'genes\\.txt',
+                           pattern = 'genes[.]txt$',
                            full.names = T)
 snpeff_output = snpeff_output[!grepl(pattern = 'snps', x = snpeff_output, fixed = TRUE)]
 
@@ -70,11 +70,11 @@ knitr::kable(effects_table)
 ```{r load_prediction_data, message = FALSE}
 # parse data
 project_predictions = parseEpitopePredictions(path = '3_neolution/predictions_output',
-                                              pattern = '_epitopes_no_selfsim\\.csv')
+                                              pattern = '_epitopes[.]csv$')
 
 # parse unfiltered data to calculate some stats
-project_predictions_unfiltered = parseEpitopePredictions(path = '3_neolution/predictions_output', 
-                                                         pattern = '_epitopes_unfiltered\\.csv')
+# project_predictions_unfiltered = parseEpitopePredictions(path = '3_neolution/predictions_output', 
+#                                                          pattern = '_epitopes_unfiltered\\.csv')
 
 # take subsets based on cutoffs specified in runConfig (same as used in predictions, but can be altered, if required)
 project_predictions_subset = applyCutoffs(predictions = project_predictions,
@@ -85,8 +85,8 @@ project_predictions_subset = applyCutoffs(predictions = project_predictions,
 # exclude alleles
 project_predictions_subset = project_predictions_subset[!grepl(pattern = regexPatterns$allele_exclusion,
                                                                x = names(project_predictions_subset))]
-project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = regexPatterns$allele_exclusion,
-                                                                       x = names(project_predictions_unfiltered))]
+# project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = regexPatterns$allele_exclusion,
+#                                                                        x = names(project_predictions_unfiltered))]
 
 # split by xmer
 project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
@@ -112,7 +112,7 @@ predictions_by_patient = setNames(object = lapply(sample_info$dna_data_prefix,
                                   nm = sample_info$patient_id)
 
 # prepare unfiltered predictions to generate some stats
-all_predictions_unfiltered = rbindlist(project_predictions_unfiltered)
+all_predictions_unfiltered = rbindlist(project_predictions)
 setnames(x = all_predictions_unfiltered,
          old = grep('affinity|percentile_rank', names(all_predictions_unfiltered), value = T),
          new = c('tumor_affinity_nM', 'tumor_affinity_rank', 'normal_affinity_nM', 'normal_affinity_rank'))
