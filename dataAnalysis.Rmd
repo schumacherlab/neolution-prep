@@ -72,10 +72,6 @@ knitr::kable(effects_table)
 project_predictions = parseEpitopePredictions(path = '3_neolution/predictions_output',
                                               pattern = '_epitopes[.]csv$')
 
-# parse unfiltered data to calculate some stats
-# project_predictions_unfiltered = parseEpitopePredictions(path = '3_neolution/predictions_output', 
-#                                                          pattern = '_epitopes_unfiltered\\.csv')
-
 # take subsets based on cutoffs specified in runConfig (same as used in predictions, but can be altered, if required)
 project_predictions_subset = applyCutoffs(predictions = project_predictions,
                                           model = runOptions$neolution$model_cutoff,
@@ -85,8 +81,6 @@ project_predictions_subset = applyCutoffs(predictions = project_predictions,
 # exclude alleles
 project_predictions_subset = project_predictions_subset[!grepl(pattern = regexPatterns$allele_exclusion,
                                                                x = names(project_predictions_subset))]
-# project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = regexPatterns$allele_exclusion,
-#                                                                        x = names(project_predictions_unfiltered))]
 
 # split by xmer
 project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
