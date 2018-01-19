@@ -694,8 +694,8 @@ findRnaReadLevelEvidenceForVariants = function(variant_input_path = file.path(ro
                                       str_count(string = read_bases,
                                                 pattern = alt_allele)
                                     } else if (identical(x = chartr(old = 'ATGC',
-                                                                new = 'TACG',
-                                                                x = ref_allele),
+                                                                    new = 'TACG',
+                                                                    x = ref_allele),
                                                          y = ref_base)) {
                                       str_count(string = read_bases,
                                                 pattern = chartr(old = 'ATGC',

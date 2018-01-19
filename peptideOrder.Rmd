@@ -39,8 +39,8 @@ Samples were sequenced by GCF at the Netherlands Cancer Institute, data can be f
 The GCF performed the following:  
 
 1. DNA (exome) and RNA sequencing  
-2. variant calling using the somaticSniper/somaticIndelCaller (GATK) pipeline (alignment with bwa)  
-3. generation of VCF files containing SNVs and indels  
+2. variant calling using GATK MuTect2 & HaplotypeCaller for somatic and germline calls, respectively  
+3. generation of VCF files containing somatic and germline calls  
 
 I further processed the resulting VCF files and RNAseq data by:  
 
@@ -75,7 +75,7 @@ knitr::kable(varcontext_dt, align = 'c') %>%
 
 <br>
 
-* The following default filtering parameters were used for epitope selection:  
+* The following filtering parameters were used for epitope prediction:  
 
 ```{r epitope_pred_info}
 prediction_dt = data.table(parameter = c('netMHCpan rank cutoff',
@@ -147,11 +147,7 @@ knitr::kable(effects_table) %>%
 project_predictions = parseEpitopePredictions(path = '3_neolution/predictions_output',
                                               pattern = '_epitopes[.]csv$')
 
-# parse unfiltered data to calculate some stats
-# # project_predictions_unfiltered = parseEpitopePredictions(path = '3_neolution/predictions_output', 
-#                                                          pattern = '_epitopes_unfiltered\\.csv')
-
-# take subsets based on epitopes per non-syn mutations + indels
+# take subsets based on desired cutoffs
 project_predictions_subset = applyCutoffs(predictions = project_predictions,
                                           model = runOptions$neolution$model_cutoff,
                                           expression = runOptions$neolution$expression_cutoff,
@@ -160,8 +156,6 @@ project_predictions_subset = applyCutoffs(predictions = project_predictions,
 # exclude alleles
 project_predictions_subset = project_predictions_subset[!grepl(pattern = regexPatterns$allele_exclusion,
                                                                x = names(project_predictions_subset))]
-# project_predictions_unfiltered = project_predictions_unfiltered[!grepl(pattern = regexPatterns$allele_exclusion,
-#                                                                        x = names(project_predictions_unfiltered))]
 
 # split by xmer
 project_predictions_by_xmer = prepareEpitopeLists(list_of_predictions = project_predictions_subset)
@@ -258,7 +252,7 @@ knitr::kable(x = unique(x = subset(x = all_predictions,
 
 #### Predicted epitopes - __Individual patients__ - list for combi-coding setups
 - __epitopes predicted to bind to multiple alleles are shown in bold__
-- __epitopes are sorted by xmer first, then by hla\_allele__
+- __epitopes are sorted by xmer first, hla\_allele second, then model_prediction score__
 ```{r knit_setup_lists, results = 'asis'}
 # multimer combi-coding setup list: all epitopes and alleles, sorted by xmer and hla_allele
 for (i in 1:length(predictions_by_patient)) {
