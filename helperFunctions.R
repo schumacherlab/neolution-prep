@@ -1423,7 +1423,14 @@ prepareEpitopeLists = function(list_of_predictions, split_by= c('9mer', '10mer',
                            join_by_xmer = rbindlist(list_of_predictions[grepl(pattern = x,
                                                                               x = names(list_of_predictions))])
                            subset_by_xmer = subset(x = join_by_xmer,
-                                                   select = c('patient_id', 'sample_prefix', 'hla_allele', 'tumor_peptide'))
+                                                   select = c('patient_id', 'sample_prefix', 'hla_allele',
+                                                              'tumor_peptide', grep('tumor.+rank', names(join_by_xmer), value = T),
+                                                              'model_prediction', 'different_from_self'))
+
+                           setnames(x = subset_by_xmer,
+                                    old = grep('tumor.+rank', names(subset_by_xmer), value = T),
+                                    new = 'tumor_affinity_rank')
+
                            subset_by_xmer[, hla_allele := gsub(pattern = "*",
                                                                replacement = "\\*",
                                                                x = subset_by_xmer$hla_allele,

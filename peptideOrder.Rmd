@@ -181,7 +181,7 @@ predictions_by_patient = setNames(object = lapply(sample_info$dna_data_prefix,
                                                     data_unique = unique(x = data_subset,
                                                                          by = c('hla_allele', 'tumor_peptide'))
                                                     
-                                                    setkey(x = data_unique, xmer, hla_allele)
+                                                    setorder(x = data_unique, xmer, hla_allele, -model_prediction)
                                                     return(data_unique)
                                                   }),
                                   nm = sample_info$patient_id)
@@ -248,7 +248,8 @@ __Total number of unique selected epitopes: `r nrow(unique(all_predictions, by =
 ```{r knit_order_list}
 # peptide synth facility list: list all unique epitopes, sorted by xmer and last residue
 knitr::kable(x = unique(x = subset(x = all_predictions,
-                                   select = names(all_predictions) %nin% c('sample_prefix', 'hla_allele')),
+                                   select = names(all_predictions) %nin% c('sample_prefix', 'hla_allele',
+                                                                           'tumor_affinity_rank', 'model_prediction', 'different_from_self')),
                         by = 'tumor_peptide')) %>%
   kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
