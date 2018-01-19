@@ -64,7 +64,8 @@ effects_table = effects_table[naturalorder(effects_table$patient_id)]
 
 # pander(sample_info, split.table = Inf, missing = '')
 
-knitr::kable(effects_table)
+knitr::kable(effects_table) %>%
+  kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
 
 ```{r load_prediction_data, message = FALSE}
@@ -126,18 +127,24 @@ _Yield rates are defined as unique epitopes per non-synonymous coding variant_
 
 ```{r generate_prediction_summary, results = 'hide'}
 prediction_table = merge(x = data.table(patient_id = names(predictions_by_patient),
-                                        alleles_included = sapply(names(all_predictions_unfiltered_by_patient),
-                                                                  function(id) {
-                                                                    length(all_predictions_unfiltered_by_patient[[id]][, unique(hla_allele)])
-                                                                  }),
-                                        `total_epitopes_\npredicted` = sapply(all_predictions_unfiltered_by_patient, function(dt) dt[!duplicated(tumor_peptide), .N]),
-                                        `selected_epitopes_\npredicted` = sapply(predictions_by_patient, function(dt) dt[!duplicated(tumor_peptide), .N])),
+                                        total_alleles = sapply(names(all_predictions_unfiltered_by_patient),
+                                                         function(id) {
+                                                           length(all_predictions_unfiltered_by_patient[[id]][, unique(hla_allele)])
+                                                         }),
+                                        `total_epitopes_\npredicted` = sapply(all_predictions_unfiltered_by_patient,
+                                                                              function(dt) dt[!duplicated(tumor_peptide), .N]),
+                                        selected_alleles = sapply(names(predictions_by_patient),
+                                                         function(id) {
+                                                           length(predictions_by_patient[[id]][, unique(hla_allele)])
+                                                         }),
+                                        `selected_epitopes_\npredicted` = sapply(predictions_by_patient,
+                                                                                 function(dt) dt[!duplicated(tumor_peptide), .N])),
                          y = effects_table[, -c('syn_coding_variants'), with = F],
                          by = 'patient_id')
 prediction_table = prediction_table[naturalorder(patient_id)]
-prediction_table[, `total_epitope_\nyield_rate_per_allele` := round(x = `total_epitopes_\npredicted` / non_syn_coding_variants / alleles_included,
-                                                                    digits = 0)]
-prediction_table[, `selected_epitope_\nyield_rate_per_allele` := round(x = `selected_epitopes_\npredicted` / non_syn_coding_variants / alleles_included,
+prediction_table[, `total_epitope_\nyield_rate_per_allele` := round(x = `total_epitopes_\npredicted` / non_syn_coding_variants / total_alleles,
+                                                                    digits = 1)]
+prediction_table[, `selected_epitope_\nyield_rate_per_allele` := round(x = `selected_epitopes_\npredicted` / non_syn_coding_variants / selected_alleles,
                                                                        digits = 2)]
 setcolorder(x = prediction_table,
             neworder = c('patient_id', 'alleles_included',
@@ -150,7 +157,7 @@ setcolorder(x = prediction_table,
 ```
 
 ```{r knit_prediction_summary}
-knitr::kable(prediction_table) %>%
+knitr::kable(prediction_table[, -grep('variants', names(prediction_table), value = T), with = F]) %>%
   kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
 
