@@ -1290,6 +1290,12 @@ plotSignaturesSmallLabels = function(sigs.output, sub = "")
 
 
 # Peptide order -----------------------------------------------------------
+setCellSpec = function(...) { cell_spec(..., 'html', color = 'white',
+                                        background = ifelse(test = grepl(pattern = regexPatterns$allele_exclusion,
+                                                                         x = ...),
+                                                            yes = 'red',
+                                                            no = 'green')) }
+
 parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '_epitopes[.]csv$') {
   require(stringr)
   require(data.table)

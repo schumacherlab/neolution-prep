@@ -104,6 +104,7 @@ knitr::kable(prediction_dt, align = 'c') %>%
 <br>
 
 #### Sample information
+__Selected alleles included in output are highlighted in green, excluded alleles in red__
 
 ```{r variant_snpEff_info}
 snpeff_output = list.files(path = '4_snpEff',
@@ -132,7 +133,9 @@ effects_table = rbindlist(lapply(snpeff_output,
 
 effects_table = effects_table[naturalorder(effects_table$patient_id)]
 
-knitr::kable(sample_info) %>%
+sample_info %>% as_tibble() %>%
+  mutate_if(grepl(pattern = 'hla_[abc]_[12]', x = names(.)), setCellSpec) %>%
+  knitr::kable('html', escape = F) %>%
   kable_styling(bootstrap_options = c('striped', 'hover'))
 
 knitr::kable(effects_table) %>%
