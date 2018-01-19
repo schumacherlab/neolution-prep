@@ -1159,7 +1159,7 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 
 # Mutation analysis -------------------------------------------------------
 
-mutationalSignatureAnalysis = function(table, genome_build = 'GRCh38') {
+mutationalSignatureAnalysis = function(table, genome_build) {
   required_colnames = c('patient_id', 'chromosome', 'start_position', 'end_position', 'ref_allele', 'alt_allele')
   if (any(required_colnames %nin% names(table))) {
     stop('Please make sure all required cols are present in input table. \n', paste(required_colnames, collapse = ', '))
@@ -1179,6 +1179,8 @@ mutationalSignatureAnalysis = function(table, genome_build = 'GRCh38') {
     }
 
     genome = getBSgenome('BSgenome.Hsapiens.UCSC.hg19')
+  } else {
+    stop('Please provide a genome build (\'hg19\', \'GRCh37\', \'GRCh38\')')
   }
 
   # make sure we take only SNVs

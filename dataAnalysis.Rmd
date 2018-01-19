@@ -378,7 +378,8 @@ For mutational signature information, click <a href="http://cancer.sanger.ac.uk/
 
 ```{r mutational_signature_analysis, warning = FALSE, message = FALSE, cache = TRUE, fig.width = 10, fig.heigth = 7}
 mutational_signatures = mutationalSignatureAnalysis(table = rbindlist(varcontext_output)[!grepl(regexPatterns$gs_identifier, variant_id)
-                                                                                         & (nchar(ref_allele) == 1 & nchar(alt_allele) == 1)])
+                                                                                         & (nchar(ref_allele) == 1 & nchar(alt_allele) == 1)],
+                                                    genome_build = )
 mutational_signatures = mutational_signatures[naturalorder(names(mutational_signatures))]
 
 analysed_mutation_counts = sapply(names(mutational_signatures), 
