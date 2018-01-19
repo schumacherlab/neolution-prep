@@ -220,14 +220,14 @@ prediction_table[, `total_epitope_\nyield_rate_per_allele` := round(x = `total_e
                                                                     digits = 1)]
 prediction_table[, `selected_epitope_\nyield_rate_per_allele` := round(x = `selected_epitopes_\npredicted` / non_syn_coding_variants / selected_alleles,
                                                                        digits = 2)]
+
+order_first = c('patient_id',
+                'total_alleles', 'total_epitopes_\npredicted', 'total_epitope_\nyield_rate_per_allele',
+                'selected_alleles', 'selected_epitopes_\npredicted', 'selected_epitope_\nyield_rate_per_allele')
 setcolorder(x = prediction_table,
-            neworder = c('patient_id', 'alleles_included',
-                         'total_epitopes_\npredicted', 'total_epitope_\nyield_rate_per_allele',
-                         'selected_epitopes_\npredicted', 'selected_epitope_\nyield_rate_per_allele', 
+            neworder = c(order_first, 
                          setdiff(x = names(prediction_table),
-                                 y = c('patient_id', 'alleles_included',
-                                       'total_epitopes_\npredicted', 'total_epitope_\nyield_rate_per_allele',
-                                       'selected_epitopes_\npredicted', 'selected_epitope_\nyield_rate_per_allele'))))
+                                 y = order_first)))
 ```
 
 ```{r knit_prediction_summary}
