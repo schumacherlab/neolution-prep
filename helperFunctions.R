@@ -1000,8 +1000,10 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
                            fread,
                            colClasses = list(character = c('chromosome', 'nmd_remark')))
   varcontext_data = setNames(object = varcontext_data,
-                             nm = list.files(path = varcontext_path,
-                                             pattern = 'varcontext\\.tsv'))
+                             nm = gsub(pattern = regexPatterns$file_extension,
+                                       replacement = '',
+                                       x = list.files(path = varcontext_path,
+                                                      pattern = 'varcontext\\.tsv')))
 
   dir.create(file.path(rootDirectory, '3_neolution'),
              showWarnings = FALSE)
@@ -1032,13 +1034,15 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
     sample_info = fread(sample_info_path,
                         na.strings = c('', 'NA', 'N.A.'))
 
-    sample_combinations = data.table(variants = sapply(sample_info$dna_data_prefix, function(x) grep(pattern = x,
-                                                                                                     x = names(varcontext_data),
-                                                                                                     value = T),
+    sample_combinations = data.table(variants = sapply(sample_info$dna_data_prefix,
+                                                       function(x) grep(pattern = x,
+                                                                        x = names(varcontext_data),
+                                                                        value = T),
                                                        USE.NAMES = FALSE),
-                                     rna_expression_data = sapply(sample_info$rna_data_prefix, function(x) grep(pattern = x,
-                                                                                                                x = names(rnaseq_data),
-                                                                                                                value = T),
+                                     rna_expression_data = sapply(sample_info$rna_data_prefix,
+                                                                  function(x) grep(pattern = x,
+                                                                                   x = names(rnaseq_data),
+                                                                                   value = T),
                                                                   USE.NAMES = FALSE)
     )
 
@@ -1088,7 +1092,15 @@ prepareNeolutionInput = function(varcontext_path = file.path(rootDirectory, '2_v
                 quote = FALSE,
                 append = FALSE)
   } else {
-    prediction_input = varcontext_data
+    if (!file.exists(rna_path)) {
+      warning('No RNA data found at:\'', rna_path, '\'; adding empty rna_expression column to varcontext output')
+    } else if (!file.exists(sample_info_path)) {
+      warning('Sample info not found at:\'', sample_info_path, '\'; adding empty rna_expression column to varcontext output')
+    }
+    prediction_input = lapply(varcontext_data,
+                              function(dt) {
+                                dt[, rna_expression := NA]
+                              })
   }
 
   invisible(mapply(FUN =
