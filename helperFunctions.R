@@ -862,11 +862,18 @@ performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '
                           nm = list.files(path = variant_path,
                                           pattern = variant_regex))
 
+  # remove 'chr' prefix from chromosome name, as lookups are on ensembl data
+  variant_data = lapply(variant_data,
+                        function(variants) {
+                          return(variants[, chromosome := gsub('^chr', '', chromosome)])
+                        })
+
   # remove variants without rna_alt_expression
   if (filter_rna_alt_expression) {
     variant_data = lapply(variant_data,
                           function(variants) {
-                            return(variants[rna_alt_expression == TRUE | is.na(rna_alt_expression)])
+                            return(variants[rna_alt_expression == TRUE
+                                            | is.na(rna_alt_expression)])
                           })
   }
 
