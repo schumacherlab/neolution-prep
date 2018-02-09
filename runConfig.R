@@ -51,12 +51,12 @@ runOptions = list(general = list(gtf_annotation = file.path(commonPaths$resource
                                    numberOfWorkers = 3, # number of sample threads for predictions
                                                         # (each thread spawns 'machine_cores/6' children during self-sim checking)
 
-                                   rank_cutoff = NA,
-                                   processing_cutoff = NA,
                                    model_cutoff = 0.02, # use 0.01 for TIL screens
                                                         # (more inclusive; we picked up low magnitude TIL hits at low prob scores)
                                                         # use 0.02 for PBMC screens
                                                         # (more stringent; we're unlikely to pick up low magnitude responses with low prob scores)
+                                   rank_cutoff = NA,
+                                   processing_cutoff = NA,
                                    expression_cutoff = 0,
                                    random_forest_model = TRUE,
                                    xmer = c(9:11),

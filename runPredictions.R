@@ -52,15 +52,21 @@ invisible(foreach(i = 1:nrow(samples_by_hla)) %dopar% {
                                             '--file', samples_by_hla$filepath[i],
                                             '--mhc', samples_by_hla$hla_type[i],
                                             '--length', runOptions$neolution$xmer[y],
-                                            if (runOptions$random_forest_model & is.numeric(runOptions$neolution$model_cutoff)) {
+
+                                            if (runOptions$neolution$random_forest_model & is.numeric(runOptions$neolution$model_cutoff)) {
                                               paste('--model', runOptions$neolution$model_cutoff)
                                             } else if (is.numeric(runOptions$neolution$rank_cutoff)) {
                                               paste('--rank', runOptions$neolution$rank_cutoff)
                                             } else {
                                               stop('Please provide a model/rank cutoff value')
                                             },
-                                            # '--processing', runOptions$neolution$processing_cutoff,
+
+                                            if (is.numeric(runOptions$neolution$processing_cutoff)) {
+                                              paste('--processing', runOptions$neolution$processing_cutoff)
+                                            },
+
                                             '--expression', runOptions$neolution$expression_cutoff,
+
                                             if (runOptions$neolution$selfsim_filter_mode == 'simple') {
                                               '--selfsim'
                                             } else if (runOptions$neolution$selfsim_filter_mode == 'extended') {
