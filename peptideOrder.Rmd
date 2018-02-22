@@ -264,14 +264,17 @@ for (i in 1:length(predictions_by_patient)) {
   
   # highlight duplicates (epitopes binding to multiple alleles)
   if (any(duplicated(predictions_by_patient[[i]][, tumor_peptide]))) {
-    knitr::kable(predictions_by_patient[[i]][, -c('sample_prefix', 'tumor_peptide_trunc', 'tumor_peptide_resin'), with = FALSE]) %>%
-      kable_styling(bootstrap_options = c('striped', 'hover')) %>%
-      row_spec(row = predictions_by_patient[[i]][duplicated(tumor_peptide, fromLast = F) | duplicated(tumor_peptide, fromLast = T),
-                                                 unique(.I)],
+    predictions_by_patient[[i]][, -c('sample_prefix', 'tumor_peptide_trunc', 'tumor_peptide_resin'), with = FALSE] %>% as_tibble %>%
+      mutate_if(grepl(pattern = 'tumor_affinity_rank', x = names(.)), setCellSpec, mark_value = 20) %>%
+      knitr::kable('html', escape = F) %>%
+      row_spec(row = predictions_by_patient[[i]][, .I[duplicated(tumor_peptide) | duplicated(tumor_peptide, fromLast = T)]] %>% unique,
                bold = T) %>%
+      kable_styling(bootstrap_options = c('striped', 'hover')) %>%
       print()
   } else {
-    knitr::kable(predictions_by_patient[[i]][, -c('sample_prefix', 'tumor_peptide_trunc', 'tumor_peptide_resin'), with = FALSE]) %>%
+    predictions_by_patient[[i]][, -c('sample_prefix', 'tumor_peptide_trunc', 'tumor_peptide_resin'), with = FALSE] %>% as_tibble %>%
+      mutate_if(grepl(pattern = 'tumor_affinity_rank', x = names(.)), setCellSpec, mark_value = 20) %>%
+      knitr::kable('html', escape = F) %>%
       kable_styling(bootstrap_options = c('striped', 'hover')) %>%
       print()
   }
