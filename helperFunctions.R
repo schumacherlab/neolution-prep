@@ -1311,11 +1311,22 @@ plotSignaturesSmallLabels = function(sigs.output, sub = "")
 
 
 # Peptide order -----------------------------------------------------------
-setCellSpec = function(...) { cell_spec(..., 'html', color = 'white',
-                                        background = ifelse(test = grepl(pattern = regexPatterns$allele_exclusion,
-                                                                         x = ...),
-                                                            yes = 'red',
-                                                            no = 'green')) }
+setCellSpec = function(..., mark_value) {
+  if (is.numeric(mark_value)) {
+    cell_spec(..., 'html', color = 'white',
+              background = ifelse(test = ... >= mark_value,
+                                  yes = 'red',
+                                  no = 'green'))
+  } else if (is.character(mark_value)) {
+    cell_spec(..., 'html', color = 'white',
+              background = ifelse(test = grepl(pattern = mark_value,
+                                               x = ...),
+                                  yes = 'red',
+                                  no = 'green'))
+  } else {
+    stop('Please provide mark_value of type \'character\' or \'numeric\'')
+  }
+}
 
 parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '_epitopes[.]csv$') {
   require(stringr)
