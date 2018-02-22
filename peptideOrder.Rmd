@@ -245,10 +245,10 @@ __Total number of unique selected epitopes: `r nrow(unique(all_predictions, by =
 - __epitopes are sorted by xmer and subsequently by resin__
 ```{r knit_order_list}
 # peptide synth facility list: list all unique epitopes, sorted by xmer and last residue
-knitr::kable(x = unique(x = subset(x = all_predictions,
-                                   select = names(all_predictions) %nin% c('sample_prefix', 'hla_allele',
-                                                                           'tumor_affinity_rank', 'model_prediction', 'different_from_self')),
-                        by = 'tumor_peptide')) %>%
+knitr::kable(all_predictions[, names(all_predictions) %nin%
+                               c('sample_prefix', 'hla_allele',
+                                 'tumor_affinity_rank', 'model_prediction', 'different_from_self'),
+                             with = F] %>% unique(by = 'tumor_peptide')) %>%
   kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
 
