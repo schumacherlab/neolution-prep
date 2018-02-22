@@ -134,7 +134,7 @@ effects_table = rbindlist(lapply(snpeff_output,
 effects_table = effects_table[naturalorder(effects_table$patient_id)]
 
 sample_info %>% as_tibble() %>%
-  mutate_if(grepl(pattern = 'hla_[abc]_[12]', x = names(.)), setCellSpec) %>%
+  mutate_if(grepl(pattern = 'hla_[abc]_[12]', x = names(.)), setCellSpec, mark_value = regexPatterns$allele_exclusion) %>%
   knitr::kable('html', escape = F) %>%
   kable_styling(bootstrap_options = c('striped', 'hover'))
 
