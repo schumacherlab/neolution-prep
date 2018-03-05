@@ -1345,10 +1345,16 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
   predictions = lapply(seq(1, length(files)),
                        function(i) {
                          data = fread(files[i])
-                         data[, sample_prefix := sub(pattern = regexPatterns$seqdata_prefix,
-                                                     replacement = '\\1',
-                                                     x = short_names[i],
-                                                     perl = T)]
+
+                         prefix = sub(pattern = regexPatterns$seqdata_prefix,
+                                      replacement = '\\1',
+                                      x = short_names[i],
+                                      perl = T)
+
+                         data[, sample_prefix := prefix]
+
+                         if (prefix %nin% sample_table$dna_data_prefix) stop('Can\'t match prefix: \'', prefix, '\' to any patient listed in sample_info')
+
                          data[, patient_id := sample_table[dna_data_prefix == data[, unique(sample_prefix)], patient_id]]
 
                          return(data)

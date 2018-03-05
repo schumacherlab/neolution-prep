@@ -119,10 +119,17 @@ effects_table = rbindlist(lapply(snpeff_output,
                                  function(path) {
                                    data = fread(path, skip = 1)
                                    
-                                   data.table(patient_id = sample_info[dna_data_prefix == gsub(pattern = regexPatterns$seqdata_prefix,
-                                                                                               replacement = '\\1',
-                                                                                               x = basename(path),
-                                                                                               perl = T),
+                                   sample_prefix = gsub(pattern = regexPatterns$seqdata_prefix,
+                                                        replacement = '\\1',
+                                                        x = basename(path),
+                                                        perl = T)
+                                   
+                                   if (sample_prefix %nin% sample_info$dna_data_prefix) {
+                                     message(sample_prefix, ' not found in sample info file; please check DNA data prefix')
+                                     return(data.table())
+                                   }
+                                   
+                                   data.table(patient_id = sample_info[dna_data_prefix == sample_prefix,
                                                                        patient_id],
                                               syn_coding_variants = sum(data$variants_effect_synonymous_variant),
                                               non_syn_coding_variants = sum(data$variants_effect_missense_variant),
