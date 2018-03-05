@@ -836,7 +836,7 @@ performSambambaPileup = function(bam_file, locations_file = NULL, fasta_referenc
 # Varcontext generation ---------------------------------------------------
 performVarcontextGeneration = function(variant_path = file.path(rootDirectory, '1a_variants', 'parsed'),
                                        variant_regex = '\\.tsv$',
-                                       filter_rna_alt_expression = TRUE,
+                                       filter_rna_alt_expression = runOptions$varcontext$mutant_allele_expression_filter,
                                        vcf_fields = c('ID', 'CHROM', 'POS', 'REF', 'ALT'),
                                        execute = TRUE) {
   registerDoMC(runOptions$varcontext$number_of_workers)

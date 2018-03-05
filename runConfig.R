@@ -30,6 +30,7 @@ runOptions = list(general = list(gtf_annotation = file.path(commonPaths$resource
 
                                     field_separator = '"\t"',
                                     print_overlapping_bases = TRUE,
+                                    mutant_allele_expression_filter = TRUE,
 
                                     ensembl_build = 88,
                                     assembly_build = 38,
