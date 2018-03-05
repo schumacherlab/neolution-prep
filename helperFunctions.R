@@ -1336,6 +1336,14 @@ setCellSpec = function(..., mark_test) {
   }
 }
 
+setCellSpec2 = function(..., bg_test, bg_test_true = 'green', bg_test_false = 'red') {
+  cell_spec(..., 'html',
+            color = 'white',
+            background = ifelse(test = eval(parse(text = bg_test)),
+                                yes = bg_test_true,
+                                no = bg_test_false))
+}
+
 parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '_epitopes[.]csv$') {
   require(stringr)
   require(data.table)
