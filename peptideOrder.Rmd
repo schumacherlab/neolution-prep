@@ -263,6 +263,7 @@ knitr::kable(all_predictions[, names(all_predictions) %nin%
 
 #### Predicted epitopes - __Individual patients__ - list for combi-coding setups
 - __epitopes predicted to bind to multiple alleles are shown in bold__
+- __epitopes with affinity_rank_score >= 20 are marked red to indicate weak HLA binding__
 - __epitopes are sorted by xmer first, hla\_allele second, then model_prediction score__
 ```{r knit_setup_lists, results = 'asis'}
 # multimer combi-coding setup list: all epitopes and alleles, sorted by xmer and hla_allele
