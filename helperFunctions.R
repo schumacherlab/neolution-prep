@@ -1311,20 +1311,28 @@ plotSignaturesSmallLabels = function(sigs.output, sub = "")
 
 
 # Peptide order -----------------------------------------------------------
-setCellSpec = function(..., mark_value) {
-  if (is.numeric(mark_value)) {
-    cell_spec(..., 'html', color = 'white',
-              background = ifelse(test = ... >= mark_value,
+setCellSpec = function(..., mark_test) {
+  if (is.numeric(mark_test)) {
+    cell_spec(..., 'html',
+              color = 'white',
+              background = ifelse(test = ... >= mark_test,
                                   yes = 'red',
                                   no = 'green'))
-  } else if (is.character(mark_value)) {
-    cell_spec(..., 'html', color = 'white',
-              background = ifelse(test = grepl(pattern = mark_value,
+  } else if (is.character(mark_test)) {
+    cell_spec(..., 'html',
+              color = 'white',
+              background = ifelse(test = grepl(pattern = mark_test,
                                                x = ...),
                                   yes = 'red',
                                   no = 'green'))
+  } else if (is.logical(mark_test)) {
+    cell_spec(..., 'html',
+              color = 'white',
+              background = ifelse(test = mark_test,
+                                  yes = 'red',
+                                  no = 'green'))
   } else {
-    stop('Please provide mark_value of type \'character\' or \'numeric\'')
+    stop('Please provide mark_test of type \'character\', \'numeric\' or \'logical\'')
   }
 }
 
