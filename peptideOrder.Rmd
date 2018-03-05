@@ -143,8 +143,7 @@ effects_table = effects_table[naturalorder(effects_table$patient_id)]
 sample_info %>% as_tibble() %>%
   mutate_if(grepl(pattern = 'hla_[abc]_[12]', x = names(.)),
             setCellSpec2,
-            bg_test = 'grepl(pattern = regexPatterns$allele_exclusion, x = ...)',
-            bg_test_true = 'red', bg_test_false = 'green') %>%
+            bg_test = '!grepl(pattern = regexPatterns$allele_exclusion, x = ...)') %>%
   knitr::kable('html', escape = F) %>%
   kable_styling(bootstrap_options = c('striped', 'hover'))
 
