@@ -64,8 +64,8 @@ varcontext_dt = data.table(parameter = c('Ensembl build',
                                          'Canonical transcripts only'),
                            value = c(runOptions$varcontext$ensembl_build,
                                      runOptions$varcontext$assembly_build,
-                                     'TRUE',
-                                     'FALSE'))
+                                     as.character(runOptions$varcontext$mutant_allele_expression_filter),
+                                     as.character(runOptions$varcontext$canonical_only)))
 
 knitr::kable(varcontext_dt, align = 'c') %>%
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = F, position = 'left') %>%
