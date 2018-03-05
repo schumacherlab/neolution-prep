@@ -1353,7 +1353,10 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
 
                          data[, sample_prefix := prefix]
 
-                         if (prefix %nin% sample_table$dna_data_prefix) stop('Can\'t match prefix: \'', prefix, '\' to any patient listed in sample_info')
+                         if (prefix %nin% sample_table$dna_data_prefix) {
+                           message('Can\'t match prefix: \'', prefix, '\' to any patient listed in sample_info')
+                           return(NULL)
+                         }
 
                          data[, patient_id := sample_table[dna_data_prefix == data[, unique(sample_prefix)], patient_id]]
 
@@ -1363,6 +1366,8 @@ parseEpitopePredictions = function(path, sample_table = sample_info, pattern = '
   # set table names
   predictions = setNames(object = predictions,
                          nm = short_names)
+
+  predictions = predictions[!vapply(predictions, is.null, logical(1))]
 
   return(predictions)
 }
