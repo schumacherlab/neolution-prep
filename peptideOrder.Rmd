@@ -131,11 +131,18 @@ effects_table = rbindlist(lapply(snpeff_output,
                                    
                                    data.table(patient_id = sample_info[dna_data_prefix == sample_prefix,
                                                                        patient_id],
-                                              syn_coding_variants = sum(data$variants_effect_synonymous_variant),
-                                              non_syn_coding_variants = sum(data$variants_effect_missense_variant),
-                                              stop_gained_variants = sum(data$variants_effect_stop_gained),
-                                              inframe_insertion_variants = sum(data$variant_effect_inframe_insertion),
-                                              frameshift_variants = sum(data$variants_effect_frameshift_variant))
+                                              syn_coding_variants = data %>%
+                                                .[, grepl('synonymous_variant', names(.)), with = F] %>% sum,
+                                              non_syn_coding_variants = data %>%
+                                                .[, grepl('missense_variant', names(.)), with = F] %>% sum,
+                                              stop_gained_variants = data %>%
+                                                .[, grepl('stop_gained', names(.)), with = F] %>% sum,
+                                              stop_lost_variants = data %>%
+                                                .[, grepl('stop_lost', names(.)), with = F] %>% sum,
+                                              inframe_indel_variants = data %>%
+                                                .[, grepl('inframe_(inser|dele)tion', names(.)), with = F] %>% sum,
+                                              frameshift_variants = data %>%
+                                                .[, grepl('frameshift_variant', names(.)), with = F] %>% sum)
                                  }))
 
 effects_table = effects_table[naturalorder(effects_table$patient_id)]
