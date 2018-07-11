@@ -1191,7 +1191,14 @@ mutationalSignatureAnalysis = function(table, genome_build) {
     }
 
     genome = getBSgenome('BSgenome.Hsapiens.NCBI.GRCh38')
-  } else if (genome_build == 'hg19' | genome_build == 'GRCh37') {
+  } else if (genome_build == 'GRCh37') {
+    if (!require('BSgenome.Hsapiens.1000genomes.hs37d5')) {
+      library(BiocInstaller)
+      biocLite('BSgenome.Hsapiens.1000genomes.hs37d5', suppressUpdates = T)
+    }
+
+    genome = getBSgenome('BSgenome.Hsapiens.1000genomes.hs37d5')
+  } else if (genome_build == 'hg19') {
     if (!require('BSgenome.Hsapiens.UCSC.hg19')) {
       library(BiocInstaller)
       biocLite('BSgenome.Hsapiens.UCSC.hg19', suppressUpdates = T)
