@@ -68,7 +68,7 @@ parseCommandlineArguments = function() {
 parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
                      vcf_regex = '\\.vcf$',
                      normal_tag = 'NORMAL', tumor_tag = 'TUMOR',
-                     check_tags = FALSE, extract_fields = TRUE, write = TRUE) {
+                     check_tags = FALSE, extract_info = FALSE, extract_fields = TRUE, write = TRUE) {
   # extract relevant info from VCF
   message('Step 1a: Parsing & extracting fields from VCF - Start')
 
@@ -94,6 +94,7 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
                           n_tag = n,
                           t_tag = t,
                           check_tags = check_tags,
+                          extract_info = extract_info,
                           extract_fields = extract_fields)
     setpb(progress_bar, i)
     return(data)
@@ -124,7 +125,7 @@ parseVcfs = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'),
 }
 
 parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
-                           extract_fields = NULL) {
+                           extract_info = FALSE, extract_fields = NULL) {
   if (!file.exists(vcf_path)) stop('VCF not found')
   if (grepl('.gz$', vcf_path)) {
     unzipped_path <- gsub('[.]gz$', '', vcf_path)
@@ -349,7 +350,8 @@ parseVcfFields <- function(vcf_path, n_tag, t_tag, check_tags = TRUE,
                                               }, mc.cores = 20))]
     }
   } else {
-    vcf_parsed = vcf_dt[, .(chromosome, start_position, variant_id, ref_allele, alt_allele)]
+    if (extract_info) vcf_parsed = vcf_dt[, .(chromosome, start_position, variant_id, ref_allele, alt_allele, info)]
+    else vcf_parsed = vcf_dt[, .(chromosome, start_position, variant_id, ref_allele, alt_allele)]
     vcf_parsed[, c('dna_ref_read_count', 'dna_alt_read_count', 'dna_total_read_count', 'dna_vaf') := NA]
   }
 

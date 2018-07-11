@@ -423,7 +423,7 @@ for (i in 1:length(mutational_signatures)) {
 ifng_symbols = c('IFN', 'JAK', 'STAT', 'IRF', 'SOCS', 'DAPK', 'SLFN')
 ag_pres_symbols = c('B2M', 'HLA', 'PSM', 'TAP', 'ERAP')
 
-vcfs_parsed = parseVcfs(vcf_path = '4_snpEff', extract_fields = F, write = F)
+vcfs_parsed = parseVcfs(vcf_path = '4_snpEff', extract_info = T, extract_fields = F, write = F)
 
 vcfs_muts = lapply(vcfs_parsed,
                    function(vcf_dt) {
