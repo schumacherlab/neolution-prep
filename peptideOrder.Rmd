@@ -115,7 +115,7 @@ snpeff_output = snpeff_output[!grepl(pattern = 'snps', x = snpeff_output, fixed 
 sample_info = fread('sample_info.tsv')
 sample_info = sample_info[naturalorder(sample_info$patient_id)]
 
-effects_table = rbindlist(lapply(snpeff_output,
+effects_table = lapply(snpeff_output,
                                  function(path) {
                                    data = fread(path, skip = 1)
                                    
@@ -132,18 +132,24 @@ effects_table = rbindlist(lapply(snpeff_output,
                                    data.table(patient_id = sample_info[dna_data_prefix == sample_prefix,
                                                                        patient_id],
                                               syn_coding_variants = data %>%
-                                                .[, grepl('synonymous_variant', names(.)), with = F] %>% sum,
+                                                .[, grepl('synonymous_variant', names(.)), with = F] %>% 
+                                                { if (length(.) < 1) { 0 } else { sum(.) } },
                                               non_syn_coding_variants = data %>%
-                                                .[, grepl('missense_variant', names(.)), with = F] %>% sum,
+                                                .[, grepl('missense_variant', names(.)), with = F] %>%
+                                                { if (length(.) < 1) { 0 } else { sum(.) } },
                                               stop_gained_variants = data %>%
-                                                .[, grepl('stop_gained', names(.)), with = F] %>% sum,
+                                                .[, grepl('stop_gained', names(.)), with = F] %>%
+                                                { if (length(.) < 1) { 0 } else { sum(.) } },
                                               stop_lost_variants = data %>%
-                                                .[, grepl('stop_lost', names(.)), with = F] %>% sum,
+                                                .[, grepl('stop_lost', names(.)), with = F] %>%
+                                                { if (length(.) < 1) { 0 } else { sum(.) } },
                                               inframe_indel_variants = data %>%
-                                                .[, grepl('inframe_(inser|dele)tion', names(.)), with = F] %>% sum,
+                                                .[, grepl('inframe_(inser|dele)tion', names(.)), with = F] %>%
+                                                { if (length(.) < 1) { 0 } else { sum(.) } },
                                               frameshift_variants = data %>%
-                                                .[, grepl('frameshift_variant', names(.)), with = F] %>% sum)
-                                 }))
+                                                .[, grepl('frameshift_variant', names(.)), with = F] %>%
+                                                { if (length(.) < 1) { 0 } else { sum(.) } })
+                                 }) %>% rbindlist
 
 effects_table = effects_table[naturalorder(effects_table$patient_id)]
 
