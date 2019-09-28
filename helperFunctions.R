@@ -1152,7 +1152,7 @@ runSnpEff = function(vcf_path = file.path(rootDirectory, '1a_variants', 'vcf'), 
 
   invisible(foreach(i = 1:length(variantLists)) %do% {
     command_snpsift = paste('java -Xmx4g -jar', file.path(runOptions$snpeff$path, 'SnpSift.jar'),
-                            'filter " (ID "\'!\'"~ \'gs[0-9]+\') "',
+                            'filter " (ID "\'!\'"~ \'gs[0-9]+\') & (set "\'!\'"=\'GERMLINE\') "',
                             variantLists[i])
 
     command_snpeff = paste('java -Xmx4g -jar', file.path(runOptions$snpeff$path, 'snpEff.jar'),
